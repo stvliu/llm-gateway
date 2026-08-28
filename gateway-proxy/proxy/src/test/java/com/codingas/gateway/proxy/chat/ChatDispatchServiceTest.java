@@ -76,6 +76,9 @@ class ChatDispatchServiceTest {
     @Mock
     private ChannelFailoverInvoker channelFailoverInvoker;
 
+    @Mock
+    private RuntimeDeprecationDetector deprecationDetector;
+
     private ChatDispatchServiceImpl dispatchService;
 
     private Identity testIdentity;
@@ -84,7 +87,7 @@ class ChatDispatchServiceTest {
     @BeforeEach
     void setUp() {
         dispatchService = new ChatDispatchServiceImpl(routingResolver,
-                auditRepository, eventPublisher, channelFailoverInvoker);
+                auditRepository, eventPublisher, channelFailoverInvoker, deprecationDetector);
 
         testIdentity = Identity.of(1L, "USER", 1L, 7L);
         openAIContext = new RoutingContext(10L, 20L, "https://api.openai.com/v1",
@@ -314,6 +317,70 @@ class ChatDispatchServiceTest {
                             && "上游调用失败".equals(log.getErrorMessage())
                             && log.getDurationMs() != null));
         }
+
+        @Test
+        @DisplayName("MODEL_NOT_FOUND 异常触发废弃检测（modelName 取 ue.getModel()）")
+        void dispatch_modelNotFound_triggersDetector() {
+            // given — invoke 抛 UpstreamException(MODEL_NOT_FOUND, model="gpt-4")
+            OpenAIChatRequest request = OpenAIChatRequest.builder()
+                    .model("gpt-4o")
+                    .messages(List.of(OpenAIChatRequest.Message.builder().role("user").content("hello").build()))
+                    .build();
+
+            UpstreamException modelNotFound = new UpstreamException(ProviderErrorType.MODEL_NOT_FOUND,
+                    "模型不存在", "trace-1", "gpt-4", "openai", 20L, 30);
+            lenient().when(routingResolver.resolveCandidates("gpt-4o", Protocol.OPENAI, 7L, 1L, "USER", RoutingStrategy.WEIGHTED))
+                    .thenReturn(List.of(openAIContext));
+            lenient().when(channelFailoverInvoker.invoke(eq(openAIContext), anyList(), any(ProtocolRequest.class),
+                    eq(Protocol.OPENAI), eq(7L), anyString())).thenThrow(modelNotFound);
+
+            // when & then — 错误原样抛出，同时触发废弃检测（不阻断错误返回）
+            assertThatThrownBy(() -> dispatchService.dispatch(request, testIdentity, RoutingStrategy.WEIGHTED))
+                    .isSameAs(modelNotFound);
+            verify(deprecationDetector).onModelNotFound("gpt-4");
+        }
+
+        @Test
+        @DisplayName("MODEL_NOT_FOUND 且 ue 未携带 model 时回退 request.getModel() 触发检测")
+        void dispatch_modelNotFound_modelNull_usesRequestModel() {
+            // given — UpstreamException 简构（model 为 null），回退 request.getModel()
+            OpenAIChatRequest request = OpenAIChatRequest.builder()
+                    .model("gpt-4o")
+                    .messages(List.of(OpenAIChatRequest.Message.builder().role("user").content("hello").build()))
+                    .build();
+
+            UpstreamException modelNotFound = new UpstreamException(ProviderErrorType.MODEL_NOT_FOUND, "404 模型不存在");
+            lenient().when(routingResolver.resolveCandidates("gpt-4o", Protocol.OPENAI, 7L, 1L, "USER", RoutingStrategy.WEIGHTED))
+                    .thenReturn(List.of(openAIContext));
+            lenient().when(channelFailoverInvoker.invoke(eq(openAIContext), anyList(), any(ProtocolRequest.class),
+                    eq(Protocol.OPENAI), eq(7L), anyString())).thenThrow(modelNotFound);
+
+            // when & then
+            assertThatThrownBy(() -> dispatchService.dispatch(request, testIdentity, RoutingStrategy.WEIGHTED))
+                    .isSameAs(modelNotFound);
+            verify(deprecationDetector).onModelNotFound("gpt-4o");
+        }
+
+        @Test
+        @DisplayName("非 MODEL_NOT_FOUND 异常不触发废弃检测")
+        void dispatch_otherError_doesNotTriggerDetector() {
+            // given — invoke 抛 INVALID_REQUEST（非模型不存在）
+            OpenAIChatRequest request = OpenAIChatRequest.builder()
+                    .model("gpt-4o")
+                    .messages(List.of(OpenAIChatRequest.Message.builder().role("user").content("hello").build()))
+                    .build();
+
+            UpstreamException invalidRequest = new UpstreamException(ProviderErrorType.INVALID_REQUEST, "400 参数错误");
+            lenient().when(routingResolver.resolveCandidates("gpt-4o", Protocol.OPENAI, 7L, 1L, "USER", RoutingStrategy.WEIGHTED))
+                    .thenReturn(List.of(openAIContext));
+            lenient().when(channelFailoverInvoker.invoke(eq(openAIContext), anyList(), any(ProtocolRequest.class),
+                    eq(Protocol.OPENAI), eq(7L), anyString())).thenThrow(invalidRequest);
+
+            // when & then
+            assertThatThrownBy(() -> dispatchService.dispatch(request, testIdentity, RoutingStrategy.WEIGHTED))
+                    .isSameAs(invalidRequest);
+            verify(deprecationDetector, never()).onModelNotFound(anyString());
+        }
     }
 
     @Nested
@@ -477,6 +544,86 @@ class ChatDispatchServiceTest {
                             && log.getErrorMessage().contains("unknown_error")));
             verify(userCallback).onError(argThat(t ->
                     t instanceof RuntimeException && t.getMessage().contains("unknown_error")));
+        }
+
+        @Test
+        @DisplayName("流式 onError（MODEL_NOT_FOUND）触发废弃检测（modelName 取 ue.getModel()）")
+        void dispatchStream_onError_modelNotFound_triggersDetector() {
+            // given
+            OpenAIChatRequest request = OpenAIChatRequest.builder()
+                    .model("gpt-4o")
+                    .messages(List.of(OpenAIChatRequest.Message.builder().role("user").content("hello").build()))
+                    .build();
+
+            lenient().when(routingResolver.resolveCandidates("gpt-4o", Protocol.OPENAI, 7L, 1L, "USER", RoutingStrategy.WEIGHTED))
+                    .thenReturn(List.of(openAIContext));
+
+            StreamCallback userCallback = mock(StreamCallback.class);
+            ArgumentCaptor<StreamCallback> auditCaptor = ArgumentCaptor.forClass(StreamCallback.class);
+            dispatchService.dispatchStream(request, testIdentity, RoutingStrategy.WEIGHTED, userCallback);
+            verify(channelFailoverInvoker).invokeStream(eq(openAIContext), anyList(), any(ProtocolRequest.class),
+                    eq(Protocol.OPENAI), eq(7L), anyString(), auditCaptor.capture());
+
+            // when — MODEL_NOT_FOUND 触发废弃检测，错误仍按原样回调用户
+            UpstreamException pe = new UpstreamException(ProviderErrorType.MODEL_NOT_FOUND,
+                    "模型不存在", "trace-1", "gpt-4", "openai", 20L, 30);
+            auditCaptor.getValue().onError(pe);
+
+            // then
+            verify(deprecationDetector).onModelNotFound("gpt-4");
+            verify(userCallback).onError(any());
+        }
+
+        @Test
+        @DisplayName("流式 onError（MODEL_NOT_FOUND 且 ue 未携带 model）回退 request.getModel() 触发检测")
+        void dispatchStream_onError_modelNotFound_modelNull_usesRequestModel() {
+            // given
+            OpenAIChatRequest request = OpenAIChatRequest.builder()
+                    .model("gpt-4o")
+                    .messages(List.of(OpenAIChatRequest.Message.builder().role("user").content("hello").build()))
+                    .build();
+
+            lenient().when(routingResolver.resolveCandidates("gpt-4o", Protocol.OPENAI, 7L, 1L, "USER", RoutingStrategy.WEIGHTED))
+                    .thenReturn(List.of(openAIContext));
+
+            StreamCallback userCallback = mock(StreamCallback.class);
+            ArgumentCaptor<StreamCallback> auditCaptor = ArgumentCaptor.forClass(StreamCallback.class);
+            dispatchService.dispatchStream(request, testIdentity, RoutingStrategy.WEIGHTED, userCallback);
+            verify(channelFailoverInvoker).invokeStream(eq(openAIContext), anyList(), any(ProtocolRequest.class),
+                    eq(Protocol.OPENAI), eq(7L), anyString(), auditCaptor.capture());
+
+            // when — UpstreamException 简构（model 为 null）
+            auditCaptor.getValue().onError(new UpstreamException(ProviderErrorType.MODEL_NOT_FOUND, "404 模型不存在"));
+
+            // then — 回退 request.getModel()，错误仍按原样回调用户
+            verify(deprecationDetector).onModelNotFound("gpt-4o");
+            verify(userCallback).onError(any());
+        }
+
+        @Test
+        @DisplayName("流式 onError（非 MODEL_NOT_FOUND）不触发废弃检测")
+        void dispatchStream_onError_otherError_doesNotTriggerDetector() {
+            // given
+            OpenAIChatRequest request = OpenAIChatRequest.builder()
+                    .model("gpt-4o")
+                    .messages(List.of(OpenAIChatRequest.Message.builder().role("user").content("hello").build()))
+                    .build();
+
+            lenient().when(routingResolver.resolveCandidates("gpt-4o", Protocol.OPENAI, 7L, 1L, "USER", RoutingStrategy.WEIGHTED))
+                    .thenReturn(List.of(openAIContext));
+
+            StreamCallback userCallback = mock(StreamCallback.class);
+            ArgumentCaptor<StreamCallback> auditCaptor = ArgumentCaptor.forClass(StreamCallback.class);
+            dispatchService.dispatchStream(request, testIdentity, RoutingStrategy.WEIGHTED, userCallback);
+            verify(channelFailoverInvoker).invokeStream(eq(openAIContext), anyList(), any(ProtocolRequest.class),
+                    eq(Protocol.OPENAI), eq(7L), anyString(), auditCaptor.capture());
+
+            // when — RATE_LIMIT_ERROR（非模型不存在）
+            auditCaptor.getValue().onError(new UpstreamException(ProviderErrorType.RATE_LIMIT_ERROR, "限流"));
+
+            // then
+            verify(deprecationDetector, never()).onModelNotFound(anyString());
+            verify(userCallback).onError(any());
         }
     }
 }

@@ -17,6 +17,7 @@ package com.codingas.gateway.proxy.chat;
 
 import com.codingas.gateway.proxy.invoker.ChannelFailoverInvoker;
 import com.codingas.gateway.proxy.routing.RoutingResolver;
+import com.codingas.gateway.common.enums.ProviderErrorType;
 import com.codingas.gateway.audit.CallLog;
 import com.codingas.gateway.audit.AuditLogRepository;
 import com.codingas.gateway.protocol.*;
@@ -56,15 +57,18 @@ public class ChatDispatchServiceImpl implements ChatDispatchService {
     private final AuditLogRepository auditRepository;
     private final BizEventPublisher eventPublisher;
     private final ChannelFailoverInvoker channelFailoverInvoker;
+    private final RuntimeDeprecationDetector deprecationDetector;
 
     public ChatDispatchServiceImpl(RoutingResolver routingResolver,
                                    AuditLogRepository auditRepository,
                                    BizEventPublisher eventPublisher,
-                                   ChannelFailoverInvoker channelFailoverInvoker) {
+                                   ChannelFailoverInvoker channelFailoverInvoker,
+                                   RuntimeDeprecationDetector deprecationDetector) {
         this.routingResolver = routingResolver;
         this.auditRepository = auditRepository;
         this.eventPublisher = eventPublisher;
         this.channelFailoverInvoker = channelFailoverInvoker;
+        this.deprecationDetector = deprecationDetector;
     }
 
     @Override
@@ -104,6 +108,11 @@ public class ChatDispatchServiceImpl implements ChatDispatchService {
 
             return response;
         } catch (Exception e) {
+            // 模型不存在信号：触发废弃检测（仅确认计数，不阻断错误返回）
+            if (e instanceof UpstreamException ue
+                    && ue.getErrorType() == ProviderErrorType.MODEL_NOT_FOUND) {
+                deprecationDetector.onModelNotFound(ue.getModel() != null ? ue.getModel() : request.getModel());
+            }
             callLog.setDurationMs(System.currentTimeMillis() - startTime);
             callLog.setSuccess(false);
             callLog.setErrorMessage(e.getMessage());
@@ -149,6 +158,11 @@ public class ChatDispatchServiceImpl implements ChatDispatchService {
 
             @Override
             public void onError(Throwable t) {
+                // 模型不存在信号：触发废弃检测（仅确认计数，不阻断错误返回）
+                if (t instanceof UpstreamException ue
+                        && ue.getErrorType() == ProviderErrorType.MODEL_NOT_FOUND) {
+                    deprecationDetector.onModelNotFound(ue.getModel() != null ? ue.getModel() : request.getModel());
+                }
                 String errorJson;
                 if (t instanceof UpstreamException pe) {
                     errorJson = SseErrorFormatter.format(pe);
