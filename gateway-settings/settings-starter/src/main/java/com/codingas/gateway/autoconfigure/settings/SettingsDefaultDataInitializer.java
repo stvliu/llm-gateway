@@ -30,9 +30,10 @@ import java.util.List;
 /**
  * 系统设置默认配置项种子加载器
  *
- * <p>应用启动时，若 {@code system_settings} 表为空则写入 3 个默认配置项
- * （审计保留天数、目录自动同步开关、目录自动同步周期），
- * 供审计清理（Task 4）与同步自动执行（Task 5）等后续功能消费。</p>
+ * <p>应用启动时，若 {@code system_settings} 表为空则写入 8 个默认配置项
+ * （审计保留天数、目录自动同步开关/周期、模型废弃自动化开关/运行检查/
+ * 废弃确认次数/上游探测开关/探测周期），供审计清理（Task 4）、同步自动执行
+ * （Task 5）与模型生命周期管理（模型废弃自动化）等后续功能消费。</p>
  *
  * <p>优先级取最低（{@link Ordered#LOWEST_PRECEDENCE}），确保在业务数据加载
  * （如 BuiltinDataLoader）之后执行，避免与其它种子逻辑竞争。</p>
@@ -81,7 +82,12 @@ public class SettingsDefaultDataInitializer implements ApplicationRunner {
         List<SystemSetting> defaults = List.of(
                 setting("audit.retention.days", "90", "NUMBER", "AUDIT", "审计日志保留天数", true),
                 setting("catalog.sync.enabled", "true", "BOOLEAN", "CATALOG", "是否启用模型目录自动同步", true),
-                setting("catalog.sync.interval", "DAILY", "ENUM", "CATALOG", "模型目录自动同步周期", true)
+                setting("catalog.sync.interval", "DAILY", "ENUM", "CATALOG", "模型目录自动同步周期", true),
+                setting("catalog.deprecation.enabled", "true", "BOOLEAN", "CATALOG", "模型废弃自动化总开关", true),
+                setting("catalog.deprecation.runtime.enabled", "true", "BOOLEAN", "CATALOG", "调用中自动检查模型废弃", true),
+                setting("catalog.deprecation.confirm-count", "3", "NUMBER", "CATALOG", "废弃确认次数（防误判）", true),
+                setting("catalog.deprecation.probe.enabled", "true", "BOOLEAN", "CATALOG", "上游列表探测（提前预警）", true),
+                setting("catalog.deprecation.probe.interval", "WEEKLY", "ENUM", "CATALOG", "上游列表探测周期", true)
         );
         defaults.forEach(this::saveWithRaceTolerance);
         log.info("已写入 {} 条默认配置项", defaults.size());
