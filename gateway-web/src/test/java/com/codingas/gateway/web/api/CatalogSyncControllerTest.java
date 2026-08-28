@@ -19,6 +19,7 @@ import com.codingas.gateway.provider.catalog.sync.CatalogSyncLog;
 import com.codingas.gateway.provider.catalog.sync.CatalogSyncLogRepository;
 import com.codingas.gateway.provider.catalog.sync.CatalogSyncReport;
 import com.codingas.gateway.provider.catalog.sync.ModelCatalogSyncService;
+import com.codingas.gateway.web.advice.ApiResponseWrapperAdvice;
 import com.codingas.gateway.web.advice.GlobalExceptionHandler;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -37,6 +38,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -64,13 +66,14 @@ class CatalogSyncControllerTest {
     @BeforeEach
     void setUp() {
         CatalogSyncController controller = new CatalogSyncController(syncService, logRepository);
-        // 装配 GlobalExceptionHandler 以便异常被转为统一响应（与生产 Web 上下文一致）；
+        // 装配 ApiResponseWrapperAdvice 模拟生产统一响应包装（sync 返回普通 POJO 会被包装）；
+        // GlobalExceptionHandler 以便异常被转为统一响应（与生产 Web 上下文一致）；
         // Jackson 关闭时间戳输出（与 Spring Boot 自动配置一致，Instant 序列化为 ISO-8601）
         ObjectMapper objectMapper = Jackson2ObjectMapperBuilder.json()
                 .featuresToDisable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
                 .build();
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
-                .setControllerAdvice(new GlobalExceptionHandler())
+                .setControllerAdvice(new ApiResponseWrapperAdvice(), new GlobalExceptionHandler())
                 .setMessageConverters(new MappingJackson2HttpMessageConverter(objectMapper))
                 .build();
     }
@@ -87,15 +90,19 @@ class CatalogSyncControllerTest {
         when(syncService.sync()).thenReturn(report);
 
         // when & then
+        // sync() 返回普通 POJO，生产环境由 ApiResponseWrapperAdvice 包装为
+        // {success, data: {…}, traceId, timestamp}；报告字段透出在 data 内
         mockMvc.perform(post("/api/v1/catalog/sync"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.addedCount").value(100))
-                .andExpect(jsonPath("$.updatedCount").value(20))
-                .andExpect(jsonPath("$.skippedCount").value(0))
-                .andExpect(jsonPath("$.failedCount").value(0))
-                .andExpect(jsonPath("$.messages[0]").value("同步完成"))
-                .andExpect(jsonPath("$.syncedAt").value("2026-08-28T00:00:00Z"));
+                .andExpect(jsonPath("$.data.success").value(true))
+                .andExpect(jsonPath("$.data.addedCount").value(100))
+                .andExpect(jsonPath("$.data.updatedCount").value(20))
+                .andExpect(jsonPath("$.data.skippedCount").value(0))
+                .andExpect(jsonPath("$.data.failedCount").value(0))
+                .andExpect(jsonPath("$.data.messages[0]").value("同步完成"))
+                .andExpect(jsonPath("$.data.syncedAt").value("2026-08-28T00:00:00Z"));
+        verify(syncService).sync();
     }
 
     @Test
