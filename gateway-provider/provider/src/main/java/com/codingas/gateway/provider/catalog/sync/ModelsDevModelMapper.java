@@ -17,6 +17,9 @@ package com.codingas.gateway.provider.catalog.sync;
 
 import com.codingas.gateway.provider.model.Model;
 
+import java.time.LocalDate;
+import java.time.YearMonth;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -55,8 +58,8 @@ public final class ModelsDevModelMapper {
         model.setModelFamily(dto.family());
         model.setSource(SOURCE);
         model.setExternalId(dto.id());
-        model.setReleaseDate(dto.releaseDate());
-        model.setLastUpdated(dto.lastUpdated());
+        model.setReleaseDate(parseDate(dto.releaseDate()));
+        model.setLastUpdated(parseDate(dto.lastUpdated()));
         model.setLicense(dto.license());
         model.setOpenWeights(dto.openWeights());
         model.setBenchmarks(dto.benchmarks());
@@ -89,8 +92,8 @@ public final class ModelsDevModelMapper {
         }
         if (!locked.contains("capabilities")) existing.setCapabilities(toCapabilities(dto));
         if (!locked.contains("modalities")) existing.setModalities(toModalities(dto));
-        if (!locked.contains("releaseDate")) existing.setReleaseDate(dto.releaseDate());
-        if (!locked.contains("lastUpdated")) existing.setLastUpdated(dto.lastUpdated());
+        if (!locked.contains("releaseDate")) existing.setReleaseDate(parseDate(dto.releaseDate()));
+        if (!locked.contains("lastUpdated")) existing.setLastUpdated(parseDate(dto.lastUpdated()));
         if (!locked.contains("license")) existing.setLicense(dto.license());
         if (!locked.contains("openWeights")) existing.setOpenWeights(dto.openWeights());
         if (!locked.contains("benchmarks")) existing.setBenchmarks(dto.benchmarks());
@@ -113,6 +116,25 @@ public final class ModelsDevModelMapper {
 
     private static Integer intValue(Long value) {
         return value == null ? null : value.intValue();
+    }
+
+    /**
+     * 容错解析数据源日期字符串
+     *
+     * <p>models.dev 的 release_date/last_updated 存在 YYYY-MM（缺日）格式，
+     * 先按 YYYY-MM-DD 解析，失败回退 YYYY-MM 补 01，仍失败置空（不阻断同步）。</p>
+     */
+    private static LocalDate parseDate(String value) {
+        if (value == null || value.isBlank()) return null;
+        try {
+            return LocalDate.parse(value);
+        } catch (DateTimeParseException e) {
+            try {
+                return YearMonth.parse(value).atDay(1);
+            } catch (DateTimeParseException e2) {
+                return null;
+            }
+        }
     }
 
     /** 能力映射：attachment→vision、reasoning、tool_call→function_calling、structured_output */

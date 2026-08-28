@@ -17,7 +17,6 @@ package com.codingas.gateway.provider.catalog.sync;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
@@ -33,8 +32,8 @@ public record ModelCatalogDto(
         @JsonProperty("tool_call") Boolean toolCall,
         @JsonProperty("structured_output") Boolean structuredOutput,
         Boolean temperature, String knowledge,
-        @JsonProperty("release_date") LocalDate releaseDate,
-        @JsonProperty("last_updated") LocalDate lastUpdated,
+        @JsonProperty("release_date") String releaseDate,
+        @JsonProperty("last_updated") String lastUpdated,
         @JsonProperty("open_weights") Boolean openWeights,
         ModalitiesDto modalities, LimitDto limit,
         String license,

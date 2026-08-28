@@ -46,7 +46,7 @@ class ModelsDevModelMapperTest {
         ModelCatalogDto dto = new ModelCatalogDto(
                 "openai/gpt-4o", "GPT-4o", "Omnilingual multimodal", "gpt",
                 true, false, true, true, true, "2023-10",
-                LocalDate.of(2024, 5, 13), LocalDate.of(2026, 8, 1), false,
+                "2024-05-13", "2026-08-01", false,
                 new ModelCatalogDto.ModalitiesDto(List.of("text", "image"), List.of("text")),
                 new ModelCatalogDto.LimitDto(128000L, 16384L, 128000L),
                 "Proprietary",
@@ -87,7 +87,7 @@ class ModelsDevModelMapperTest {
         ModelCatalogDto dto = new ModelCatalogDto(
                 "minimal/minimal-model", "Minimal", "desc", null,
                 false, false, false, null, true, null,
-                LocalDate.of(2026, 1, 1), LocalDate.of(2026, 1, 1), false,
+                "2026-01-01", "2026-01-01", false,
                 new ModelCatalogDto.ModalitiesDto(List.of("text"), List.of("text")),
                 new ModelCatalogDto.LimitDto(8192L, null, null), null, null, null);
 
@@ -101,12 +101,31 @@ class ModelsDevModelMapperTest {
     }
 
     @Test
+    @DisplayName("日期字段容错解析：YYYY-MM 补日、非法值置空")
+    void toNewModel_dateFormats_parseLeniently() {
+        ModelCatalogDto dto = new ModelCatalogDto(
+                "openai/gpt-4o", "GPT-4o", "desc", "gpt",
+                true, false, true, true, true, "2023-10",
+                "2026-01", "invalid-date", false,
+                new ModelCatalogDto.ModalitiesDto(List.of("text"), List.of("text")),
+                new ModelCatalogDto.LimitDto(128000L, 16384L, 128000L),
+                "Proprietary", List.of(), List.of());
+
+        Model model = ModelsDevModelMapper.toNewModel(dto);
+
+        // YYYY-MM 缺日 → 补 01
+        assertThat(model.getReleaseDate()).isEqualTo(LocalDate.of(2026, 1, 1));
+        // 非法日期 → 置空不阻断
+        assertThat(model.getLastUpdated()).isNull();
+    }
+
+    @Test
     @DisplayName("merge 跳过人工锁定字段")
     void merge_skipsLockedFields() {
         ModelCatalogDto dto = new ModelCatalogDto(
                 "openai/gpt-4o", "GPT-4o new", "new desc", "gpt-new",
                 true, true, true, true, true, "2024-01",
-                LocalDate.of(2025, 1, 1), LocalDate.of(2026, 8, 1), false,
+                "2025-01-01", "2026-08-01", false,
                 new ModelCatalogDto.ModalitiesDto(List.of("text"), List.of("text")),
                 new ModelCatalogDto.LimitDto(200000L, 100000L, 200000L),
                 "MIT", List.of(), List.of());

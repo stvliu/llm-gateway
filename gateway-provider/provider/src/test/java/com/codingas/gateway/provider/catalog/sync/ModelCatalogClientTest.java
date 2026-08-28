@@ -30,7 +30,6 @@ import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.net.http.HttpClient;
 import java.time.Duration;
-import java.time.LocalDate;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -97,7 +96,7 @@ class ModelCatalogClientTest {
         assertThat(gpt4o.name()).isEqualTo("GPT-4o");
         assertThat(gpt4o.attachment()).isTrue();
         assertThat(gpt4o.toolCall()).isTrue();
-        assertThat(gpt4o.releaseDate()).isEqualTo(LocalDate.of(2024, 5, 13));
+        assertThat(gpt4o.releaseDate()).isEqualTo("2024-05-13");
         assertThat(gpt4o.limit().context()).isEqualTo(128000L);
         assertThat(gpt4o.modalities().input()).containsExactly("text", "image");
         assertThat(gpt4o.benchmarks()).hasSize(1);

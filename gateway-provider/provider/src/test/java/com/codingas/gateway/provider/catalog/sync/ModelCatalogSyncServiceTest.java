@@ -27,7 +27,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionStatus;
 
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -59,7 +58,7 @@ class ModelCatalogSyncServiceTest {
     private final ModelCatalogDto gpt4o = new ModelCatalogDto(
             "openai/gpt-4o", "GPT-4o", "desc", "gpt",
             true, false, true, true, true, "2023-10",
-            LocalDate.of(2024, 5, 13), LocalDate.of(2026, 8, 1), false,
+            "2024-05-13", "2026-08-01", false,
             new ModelCatalogDto.ModalitiesDto(List.of("text", "image"), List.of("text")),
             new ModelCatalogDto.LimitDto(128000L, 16384L, 128000L),
             "Proprietary", List.of(), List.of());
@@ -67,7 +66,7 @@ class ModelCatalogSyncServiceTest {
     private final ModelCatalogDto deepseek = new ModelCatalogDto(
             "deepseek/deepseek-v4-flash", "DeepSeek V4 Flash", "desc2", "deepseek-flash",
             false, true, true, false, true, "2025-12",
-            LocalDate.of(2026, 4, 24), LocalDate.of(2026, 8, 10), true,
+            "2026-04-24", "2026-08-10", true,
             new ModelCatalogDto.ModalitiesDto(List.of("text"), List.of("text")),
             new ModelCatalogDto.LimitDto(1000000L, 128000L, 1000000L),
             "MIT", List.of(), List.of());
