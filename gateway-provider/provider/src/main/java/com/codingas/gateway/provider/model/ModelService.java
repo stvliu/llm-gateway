@@ -58,6 +58,14 @@ public interface ModelService {
     Model update(Long id, Model model);
 
     /**
+     * 清除模型字段人工锁定（清空 lockedFields，恢复同步覆盖权限）
+     *
+     * @param id 模型 ID
+     * @return 清除锁定后的模型实体
+     */
+    Model unlockFields(Long id);
+
+    /**
      * 删除模型（软删除）
      *
      * @param id 模型 ID

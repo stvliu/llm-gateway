@@ -35,6 +35,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
@@ -133,6 +134,26 @@ class ModelControllerTest {
 
             // then
             assertThat(result).isNotNull();
+        }
+    }
+
+    @Nested
+    @DisplayName("unlock 方法测试")
+    class UnlockTests {
+
+        @Test
+        @DisplayName("清除字段锁定成功")
+        void unlock_existingId_returnsUpdated() {
+            // given
+            Model model = createTestModel();
+            when(modelService.unlockFields(1L)).thenReturn(model);
+
+            // when
+            ModelResponse result = controller.unlockFields(1L);
+
+            // then
+            assertThat(result.getModelName()).isEqualTo("gpt-4");
+            verify(modelService).unlockFields(1L);
         }
     }
 

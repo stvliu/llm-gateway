@@ -380,9 +380,9 @@ class ModelServiceTest {
         }
 
         @Test
-        @DisplayName("更新字段时自动加入人工锁定集合")
+        @DisplayName("更新字段值实际变化时自动加入人工锁定集合")
         void update_editsField_addsToLockedFields() {
-            // given
+            // given：原值 displayName=GPT-4, contextWindow=8000，请求提交了不同值
             when(modelRepository.findById(1L)).thenReturn(Optional.of(testModel));
             when(modelRepository.save(any(Model.class))).thenAnswer(inv -> inv.getArgument(0));
 
@@ -391,11 +391,46 @@ class ModelServiceTest {
             // when
             modelService.update(1L, request);
 
-            // then
+            // then：值实际变化的字段才被锁定
             ArgumentCaptor<Model> captor = ArgumentCaptor.forClass(Model.class);
             verify(modelRepository).save(captor.capture());
             assertThat(captor.getValue().getLockedFields())
                     .contains("displayName", "contextWindow");
+        }
+
+        @Test
+        @DisplayName("请求值与原值相同则不更新也不锁定")
+        void update_sameValues_doesNotLock() {
+            // given：testModel 原值 displayName=GPT-4, contextWindow=8000，请求提交相同值
+            when(modelRepository.findById(1L)).thenReturn(Optional.of(testModel));
+            when(modelRepository.save(any(Model.class))).thenAnswer(inv -> inv.getArgument(0));
+
+            Model request = modelEntity("gpt-4", "GPT-4", 8000, Map.of("vision", false, "function_calling", true));
+
+            // when
+            modelService.update(1L, request);
+
+            // then：没有任何字段被锁定，实体也未被改动
+            ArgumentCaptor<Model> captor = ArgumentCaptor.forClass(Model.class);
+            verify(modelRepository).save(captor.capture());
+            assertThat(captor.getValue().getLockedFields()).isNullOrEmpty();
+            assertThat(captor.getValue().getDisplayName()).isEqualTo("GPT-4");
+        }
+
+        @Test
+        @DisplayName("unlockFields 清除字段人工锁定集合")
+        void unlockFields_clearsLockedFields() {
+            // given：模型已有锁定字段
+            testModel.setLockedFields(new ArrayList<>(List.of("displayName", "contextWindow")));
+            when(modelRepository.findById(1L)).thenReturn(Optional.of(testModel));
+            when(modelRepository.save(any(Model.class))).thenAnswer(inv -> inv.getArgument(0));
+
+            // when
+            Model result = modelService.unlockFields(1L);
+
+            // then：锁定集合被清空，同步可再次覆盖这些字段
+            assertThat(result.getLockedFields()).isNullOrEmpty();
+            verify(modelRepository).save(testModel);
         }
     }
 

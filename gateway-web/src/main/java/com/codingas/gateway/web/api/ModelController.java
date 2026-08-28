@@ -69,6 +69,14 @@ public class ModelController {
     }
 
     /**
+     * 清除字段人工锁定（恢复 models.dev 同步覆盖权限）
+     */
+    @PostMapping("/{id}/unlock")
+    public ModelResponse unlockFields(@PathVariable Long id) {
+        return ModelResponse.from(modelService.unlockFields(id));
+    }
+
+    /**
      * 删除模型
      */
     @DeleteMapping("/{id}")

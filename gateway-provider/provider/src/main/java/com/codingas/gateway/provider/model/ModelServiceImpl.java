@@ -25,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -106,41 +107,52 @@ public class ModelServiceImpl implements ModelService {
         Model existing = modelRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Model", id));
 
-        // 记录本次人工修改的字段，加入锁定集合（同步时跳过这些字段，避免覆盖人工编辑）
+        // 记录本次人工修改的字段，加入锁定集合（同步时跳过这些字段，避免覆盖人工编辑）。
+        // 仅当请求值非 null 且与原值不同才更新实体并锁定；值相同或未提交的字段既不更新也不锁定，
+        // 避免前端编辑抽屉一次全量提交 6 个字段就永久锁定全部字段。
         List<String> changedFields = new ArrayList<>();
-        if (model.getModelName() != null) {
+        if (model.getModelName() != null
+                && !Objects.equals(model.getModelName(), existing.getModelName())) {
             existing.setModelName(model.getModelName());
             changedFields.add("modelName");
         }
-        if (model.getDisplayName() != null) {
+        if (model.getDisplayName() != null
+                && !Objects.equals(model.getDisplayName(), existing.getDisplayName())) {
             existing.setDisplayName(model.getDisplayName());
             changedFields.add("displayName");
         }
-        if (model.getModelFamily() != null) {
+        if (model.getModelFamily() != null
+                && !Objects.equals(model.getModelFamily(), existing.getModelFamily())) {
             existing.setModelFamily(model.getModelFamily());
             changedFields.add("modelFamily");
         }
-        if (model.getContextWindow() != null) {
+        if (model.getContextWindow() != null
+                && !Objects.equals(model.getContextWindow(), existing.getContextWindow())) {
             existing.setContextWindow(model.getContextWindow());
             changedFields.add("contextWindow");
         }
-        if (model.getMaxInputTokens() != null) {
+        if (model.getMaxInputTokens() != null
+                && !Objects.equals(model.getMaxInputTokens(), existing.getMaxInputTokens())) {
             existing.setMaxInputTokens(model.getMaxInputTokens());
             changedFields.add("maxInputTokens");
         }
-        if (model.getMaxOutputTokens() != null) {
+        if (model.getMaxOutputTokens() != null
+                && !Objects.equals(model.getMaxOutputTokens(), existing.getMaxOutputTokens())) {
             existing.setMaxOutputTokens(model.getMaxOutputTokens());
             changedFields.add("maxOutputTokens");
         }
-        if (model.getCapabilities() != null) {
+        if (model.getCapabilities() != null
+                && !Objects.equals(model.getCapabilities(), existing.getCapabilities())) {
             existing.setCapabilities(model.getCapabilities());
             changedFields.add("capabilities");
         }
-        if (model.getModalities() != null) {
+        if (model.getModalities() != null
+                && !Objects.equals(model.getModalities(), existing.getModalities())) {
             existing.setModalities(model.getModalities());
             changedFields.add("modalities");
         }
-        if (model.getKnowledgeCutoff() != null) {
+        if (model.getKnowledgeCutoff() != null
+                && !Objects.equals(model.getKnowledgeCutoff(), existing.getKnowledgeCutoff())) {
             existing.setKnowledgeCutoff(model.getKnowledgeCutoff());
             changedFields.add("knowledgeCutoff");
         }
@@ -155,6 +167,21 @@ public class ModelServiceImpl implements ModelService {
         Model saved = modelRepository.save(existing);
         log.info("模型更新成功, id={}, modelName={}", id, saved.getModelName());
         return saved;
+    }
+
+    /**
+     * 清除模型字段人工锁定（清空 lockedFields，恢复 models.dev 同步对全部字段的覆盖权限）
+     *
+     * @param id 模型 ID
+     * @return 清除锁定后的模型实体
+     */
+    @Override
+    @Transactional
+    public Model unlockFields(Long id) {
+        Model model = modelRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Model", id));
+        model.setLockedFields(null);
+        return modelRepository.save(model);
     }
 
     /**
