@@ -50,6 +50,12 @@
             <artifactId>gateway-provider</artifactId>
             <version>${revision}</version>
         </dependency>
+        <!-- 跨域门面：运行期废弃检测读取系统设置开关（SystemSettingService / RuntimeDeprecationDetector） -->
+        <dependency>
+            <groupId>com.codingas.gateway</groupId>
+            <artifactId>gateway-settings</artifactId>
+            <version>${revision}</version>
+        </dependency>
         <!-- 身份与访问管理域（依赖 Application/ApplicationChannel/Identity） -->
         <dependency>
             <groupId>com.codingas.gateway</groupId>
