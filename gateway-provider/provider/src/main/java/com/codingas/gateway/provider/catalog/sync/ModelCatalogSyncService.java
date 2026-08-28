@@ -135,8 +135,9 @@ public class ModelCatalogSyncService {
                 report.addMessage("modelName 冲突跳过: " + existing.getModelName()
                         + " (externalId=" + existing.getExternalId() + ")");
             } else {
-                // 存量模型（无 externalId）：补写 externalId 后合并更新
+                // 存量模型（无 externalId）：补写 externalId 并接管为 models.dev 数据源后合并更新
                 existing.setExternalId(dto.id());
+                existing.setSource(ModelsDevModelMapper.SOURCE);
                 ModelsDevModelMapper.merge(dto, existing);
                 modelRepository.save(existing);
                 report.incrementUpdated();

@@ -162,7 +162,7 @@ class ModelCatalogSyncServiceTest {
     }
 
     @Test
-    @DisplayName("存量模型无 externalId：按 modelName 匹配并补写 externalId")
+    @DisplayName("存量模型无 externalId：按 modelName 匹配并补写 externalId，接管为 MODELS_DEV 源")
     void sync_existingModelWithoutExternalId_backfillsExternalId() {
         Model legacy = new Model();
         legacy.setId(3L);
@@ -179,6 +179,28 @@ class ModelCatalogSyncServiceTest {
 
         assertThat(report.getUpdatedCount()).isEqualTo(1);
         assertThat(legacy.getExternalId()).isEqualTo("openai/gpt-4o");
-        assertThat(legacy.getSource()).isEqualTo("BUILTIN");  // 不改变来源标记
+        assertThat(legacy.getSource()).isEqualTo("MODELS_DEV");  // 被 models.dev 数据源接管
+    }
+
+    @Test
+    @DisplayName("存量模型 source=null（BuiltinVendorLoader 场景）：接管为 MODELS_DEV 源并补写 externalId")
+    void sync_existingModelWithoutExternalId_sourceNull_adoptsModelsDev() {
+        // 模拟 BuiltinVendorLoader 从 data/builtin/vendors/*.json 创建的模型（source=null）
+        Model legacy = new Model();
+        legacy.setId(4L);
+        legacy.setModelName("deepseek-v4-flash");
+        legacy.setSource(null);
+
+        when(client.fetch()).thenReturn(List.of(deepseek));
+        when(modelRepository.findByExternalId("deepseek/deepseek-v4-flash")).thenReturn(Optional.empty());
+        when(modelRepository.findByModelName("deepseek-v4-flash")).thenReturn(Optional.of(legacy));
+        when(modelRepository.save(any(Model.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(logRepository.save(any(CatalogSyncLog.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        CatalogSyncReport report = service.sync();
+
+        assertThat(report.getUpdatedCount()).isEqualTo(1);
+        assertThat(legacy.getExternalId()).isEqualTo("deepseek/deepseek-v4-flash");
+        assertThat(legacy.getSource()).isEqualTo("MODELS_DEV");
     }
 }
