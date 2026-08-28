@@ -113,16 +113,10 @@ export default function Models() {
 
   const columns = [
     {
-      title: 'ID',
-      dataIndex: 'id',
-      key: 'id',
-      width: 60,
-    },
-    {
       title: t('modelName', { defaultValue: '模型标识' }),
       dataIndex: 'modelName',
       key: 'modelName',
-      width: 160,
+      width: 190,
     },
     {
       title: t('displayName', { defaultValue: '显示名称' }),
@@ -146,17 +140,10 @@ export default function Models() {
       render: (val: string) => val || '-',
     },
     {
-      title: t('license', { defaultValue: '许可证' }),
-      dataIndex: 'license',
-      key: 'license',
-      width: 100,
-      render: (val: string) => val || '-',
-    },
-    {
       title: t('source', { defaultValue: '来源' }),
       dataIndex: 'source',
       key: 'source',
-      width: 110,
+      width: 100,
       render: (val: string) =>
         val ? (
           <Tag color={SOURCE_COLOR[val] ?? 'default'} style={{ fontSize: 11 }}>
@@ -165,66 +152,6 @@ export default function Models() {
         ) : (
           '-'
         ),
-    },
-    {
-      title: t('releaseDate', { defaultValue: '发布日期' }),
-      dataIndex: 'releaseDate',
-      key: 'releaseDate',
-      width: 110,
-      render: (val: string) => val || '-',
-    },
-    {
-      title: t('openWeights', { defaultValue: '开源权重' }),
-      dataIndex: 'openWeights',
-      key: 'openWeights',
-      width: 100,
-      render: (val?: boolean) => (val == null ? '-' : val ? '是' : '否'),
-    },
-    {
-      title: t('description', { defaultValue: '描述' }),
-      dataIndex: 'description',
-      key: 'description',
-      width: 240,
-      ellipsis: true,
-      render: (val: string) =>
-        val ? (
-          <Tooltip title={val}>
-            <span>{val}</span>
-          </Tooltip>
-        ) : (
-          '-'
-        ),
-    },
-    {
-      title: t('benchmarks', { defaultValue: '基准测试' }),
-      key: 'benchmarks',
-      width: 200,
-      render: (_: unknown, record: Model) => {
-        const benches = record.benchmarks;
-        if (!benches || benches.length === 0) return '-';
-        // 有值才显示，最多渲染前 3 条 name:score
-        return (
-          <Space size={4} wrap>
-            {benches.slice(0, 3).map((b, i) => (
-              <Tag key={i} color="geekblue" style={{ fontSize: 11 }}>
-                {`${String(b?.name ?? '-')}: ${String(b?.score ?? '-')}`}
-              </Tag>
-            ))}
-          </Space>
-        );
-      },
-    },
-    {
-      title: t('pricing', { defaultValue: '定价' }),
-      key: 'pricing',
-      width: 140,
-      render: (_: unknown, record: Model) => {
-        const p = record.pricing;
-        if (!p?.inputPricePerMillion && !p?.outputPricePerMillion) return '-';
-        const input = p.inputPricePerMillion != null ? `$${p.inputPricePerMillion}` : '-';
-        const output = p.outputPricePerMillion != null ? `$${p.outputPricePerMillion}` : '-';
-        return <span style={{ fontSize: 12 }}>{input} / {output}</span>;
-      },
     },
     {
       title: t('contextWindow', { defaultValue: '上下文窗口' }),
@@ -236,20 +163,31 @@ export default function Models() {
     {
       title: t('capabilities', { defaultValue: '能力' }),
       key: 'capabilities',
-      width: 200,
-      render: (_: unknown, record: Model) => (
-        <Space size={4} wrap>
-          {record.capabilities
-            ? Object.entries(record.capabilities)
-                .filter(([, v]) => v)
-                .map(([k]) => (
-                  <Tag key={k} color="blue" style={{ fontSize: 11 }}>
-                    {k}
-                  </Tag>
-                ))
-            : '-'}
-        </Space>
-      ),
+      width: 170,
+      render: (_: unknown, record: Model) => {
+        const caps = record.capabilities
+          ? Object.entries(record.capabilities)
+              .filter(([, v]) => v)
+              .map(([k]) => k)
+          : [];
+        if (caps.length === 0) return '-';
+        // 最多展示 2 个能力标签，其余折叠为 +N，保持列宽紧凑
+        const shown = caps.slice(0, 2);
+        return (
+          <Space size={4}>
+            {shown.map((k) => (
+              <Tag key={k} color="blue" style={{ fontSize: 11 }}>
+                {k}
+              </Tag>
+            ))}
+            {caps.length > 2 && (
+              <Tooltip title={caps.slice(2).join(', ')}>
+                <Tag style={{ fontSize: 11 }}>+{caps.length - 2}</Tag>
+              </Tooltip>
+            )}
+          </Space>
+        );
+      },
     },
     {
       title: t('state', { defaultValue: '状态' }),
@@ -267,17 +205,9 @@ export default function Models() {
       ),
     },
     {
-      title: t('createdAt', { defaultValue: '创建时间' }),
-      dataIndex: 'createdAt',
-      key: 'createdAt',
-      width: 160,
-      render: (val: string) =>
-        val ? new Date(val).toLocaleString('zh-CN') : '-',
-    },
-    {
       title: t('actions', { defaultValue: '操作' }),
       key: 'actions',
-      width: 120,
+      width: 110,
       render: (_: unknown, record: Model) => (
         <Space>
           <Tooltip title={t('edit', { defaultValue: '编辑' })}>
