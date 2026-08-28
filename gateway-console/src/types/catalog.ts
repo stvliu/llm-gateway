@@ -124,3 +124,39 @@ export interface ProvisionRequest {
 export interface BatchProvisionRequest {
   planCodes?: string[];
 }
+
+/** 模型目录同步报告（与后端 CatalogSyncReportResponse 对齐，POST /api/v1/catalog/sync） */
+export interface CatalogSyncReport {
+  /** 同步是否成功 */
+  success: boolean;
+  /** 新增模型数 */
+  addedCount: number;
+  /** 更新模型数 */
+  updatedCount: number;
+  /** 跳过模型数 */
+  skippedCount: number;
+  /** 失败模型数 */
+  failedCount: number;
+  /** 同步消息明细 */
+  messages: string[];
+  /** 同步开始时间 */
+  syncedAt: string;
+}
+
+/** 最近同步状态（与后端 CatalogSyncStatusResponse 对齐，GET /api/v1/catalog/sync/status） */
+export interface CatalogSyncStatusResponse {
+  /** 同步结果：SUCCESS / FAILURE */
+  result: 'SUCCESS' | 'FAILURE';
+  /** 新增模型数 */
+  addedCount: number;
+  /** 更新模型数 */
+  updatedCount: number;
+  /** 跳过模型数 */
+  skippedCount: number;
+  /** 失败模型数 */
+  failedCount: number;
+  /** 同步结果描述 */
+  message: string;
+  /** 同步完成时间 */
+  syncedAt: string;
+}

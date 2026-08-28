@@ -35,6 +35,13 @@ import ModelCreateModal from './ModelCreateModal';
 import ModelEditDrawer from './ModelEditDrawer';
 import type { Model } from '@/types/model';
 
+/** 模型来源标签颜色配置 */
+const SOURCE_COLOR: Record<string, string> = {
+  MODELS_DEV: 'blue',
+  BUILTIN: 'default',
+  MANUAL: 'orange',
+};
+
 export default function Models() {
   const { t } = useTranslation('models');
   const { message } = App.useApp();
@@ -137,6 +144,41 @@ export default function Models() {
       key: 'providerName',
       width: 120,
       render: (val: string) => val || '-',
+    },
+    {
+      title: t('license', { defaultValue: '许可证' }),
+      dataIndex: 'license',
+      key: 'license',
+      width: 100,
+      render: (val: string) => val || '-',
+    },
+    {
+      title: t('source', { defaultValue: '来源' }),
+      dataIndex: 'source',
+      key: 'source',
+      width: 110,
+      render: (val: string) =>
+        val ? (
+          <Tag color={SOURCE_COLOR[val] ?? 'default'} style={{ fontSize: 11 }}>
+            {val}
+          </Tag>
+        ) : (
+          '-'
+        ),
+    },
+    {
+      title: t('releaseDate', { defaultValue: '发布日期' }),
+      dataIndex: 'releaseDate',
+      key: 'releaseDate',
+      width: 110,
+      render: (val: string) => val || '-',
+    },
+    {
+      title: t('openWeights', { defaultValue: '开源权重' }),
+      dataIndex: 'openWeights',
+      key: 'openWeights',
+      width: 100,
+      render: (val?: boolean) => (val == null ? '-' : val ? '是' : '否'),
     },
     {
       title: t('pricing', { defaultValue: '定价' }),

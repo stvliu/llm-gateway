@@ -14,15 +14,41 @@
  * limitations under the License.
  */
 import { useState } from 'react';
-import { Card, Breadcrumb, Button } from 'antd';
+import { Card, Breadcrumb, Button, Tag, Space, App, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
-import { HomeOutlined } from '@ant-design/icons';
+import { HomeOutlined, SyncOutlined } from '@ant-design/icons';
 import PlanCatalogView from './PlanCatalogView';
 import { ChannelCreateWizard } from '@/pages/Channels/ChannelCreateWizard';
+import {
+  useCatalogSync,
+  useCatalogSyncStatus,
+} from '@/services/query/useCatalogSync';
+
+const { Text } = Typography;
 
 /** 目录管理主页面 — 套餐目录浏览 */
 export default function CatalogPage() {
   const { t } = useTranslation('catalog');
+  const { message } = App.useApp();
+
+  // 模型目录（models.dev）同步状态与触发
+  const {
+    data: syncStatus,
+    isLoading: syncStatusLoading,
+  } = useCatalogSyncStatus();
+  const syncMutation = useCatalogSync();
+
+  /** 手工触发模型目录同步 */
+  const handleSync = async () => {
+    try {
+      const report = await syncMutation.mutateAsync();
+      message.success(
+        `同步完成：新增 ${report.addedCount}、更新 ${report.updatedCount}、跳过 ${report.skippedCount}、失败 ${report.failedCount}`,
+      );
+    } catch {
+      message.error(t('sync.syncFailed', { defaultValue: '模型目录同步失败' }));
+    }
+  };
 
   // 套餐导航状态
   const [providerCode, setProviderCode] = useState<string | undefined>();
@@ -126,6 +152,52 @@ export default function CatalogPage() {
 
   return (
     <div>
+      {/* 模型目录同步区域 */}
+      <Card
+        size="small"
+        title={t('sync.modelsDevTitle', { defaultValue: '模型目录同步' })}
+        style={{ marginBottom: 16 }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+          <div>
+            {syncStatusLoading ? (
+              <Text type="secondary" style={{ fontSize: 12 }}>
+                {t('sync.loading', { defaultValue: '加载中...' })}
+              </Text>
+            ) : syncStatus ? (
+              <Space direction="vertical" size={2}>
+                <Text type="secondary" style={{ fontSize: 12 }}>
+                  {t('sync.lastSyncAt', { defaultValue: '最近同步' })}：
+                  {new Date(syncStatus.syncedAt).toLocaleString('zh-CN')}
+                </Text>
+                <Text style={{ fontSize: 12 }}>
+                  {t('sync.result', { defaultValue: '结果' })}：
+                  <Tag color={syncStatus.result === 'SUCCESS' ? 'success' : 'error'}>
+                    {syncStatus.result === 'SUCCESS' ? '成功' : '失败'}
+                  </Tag>
+                  （{t('sync.added', { defaultValue: '新增' })} {syncStatus.addedCount} /{' '}
+                  {t('sync.updated', { defaultValue: '更新' })} {syncStatus.updatedCount} /{' '}
+                  {t('sync.skipped', { defaultValue: '跳过' })} {syncStatus.skippedCount} /{' '}
+                  {t('sync.failed', { defaultValue: '失败' })} {syncStatus.failedCount}）
+                </Text>
+              </Space>
+            ) : (
+              <Text type="secondary" style={{ fontSize: 12 }}>
+                {t('sync.notSynced', { defaultValue: '尚未同步' })}
+              </Text>
+            )}
+          </div>
+          <Button
+            type="primary"
+            icon={<SyncOutlined />}
+            loading={syncMutation.isPending}
+            onClick={handleSync}
+          >
+            {t('sync.modelsDev', { defaultValue: '同步模型目录' })}
+          </Button>
+        </div>
+      </Card>
+
       <Card>
         {/* 面包屑导航 */}
         <div style={{ marginBottom: 16 }}>

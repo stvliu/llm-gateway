@@ -53,6 +53,24 @@ export interface Model {
   state: ModelState;
   createdAt: string;
   updatedAt: string;
+  /** 模型描述（来自数据源） */
+  description?: string;
+  /** 发布日期 */
+  releaseDate?: string;
+  /** 数据源最后更新日期 */
+  lastUpdated?: string;
+  /** 许可证（如 MIT） */
+  license?: string;
+  /** 是否开源权重 */
+  openWeights?: boolean;
+  /** 基准测试分数 [{name, score, metric, source}] */
+  benchmarks?: Array<Record<string, unknown>>;
+  /** 权重/模型卡片链接 [{label, url}] */
+  weights?: Array<Record<string, unknown>>;
+  /** 数据来源：MODELS_DEV / BUILTIN / MANUAL */
+  source?: string;
+  /** 数据源外部 ID（如 openai/gpt-4o），同步幂等匹配键 */
+  externalId?: string;
 }
 
 /** 创建模型请求 */
