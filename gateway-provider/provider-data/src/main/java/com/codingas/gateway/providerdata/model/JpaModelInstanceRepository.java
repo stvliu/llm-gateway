@@ -32,6 +32,10 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class JpaModelInstanceRepository implements ModelInstanceRepository {
 
+    /** 可路由状态集合（与 ModelInstance.State.isRoutable() 语义一致：ACTIVE + DEPRECATED） */
+    private static final List<String> ROUTABLE_STATES = List.of(
+            ModelInstance.State.ACTIVE.name(), ModelInstance.State.DEPRECATED.name());
+
     private final ModelInstanceJpaRepository modelInstanceRepository;
 
     @Override
@@ -58,13 +62,13 @@ public class JpaModelInstanceRepository implements ModelInstanceRepository {
 
     @Override
     public List<ModelInstance> findActiveByChannelId(Long channelId) {
-        return modelInstanceRepository.findByChannelIdAndState(channelId, ModelInstance.State.ACTIVE.name())
+        return modelInstanceRepository.findByChannelIdAndStateIn(channelId, ROUTABLE_STATES)
                 .stream().map(this::toEntity).toList();
     }
 
     @Override
     public List<ModelInstance> findActiveByModelIdOrderByPriority(Long modelId) {
-        return modelInstanceRepository.findByModelIdAndStateOrderByPriorityAsc(modelId, ModelInstance.State.ACTIVE.name())
+        return modelInstanceRepository.findByModelIdAndStateInOrderByPriorityAsc(modelId, ROUTABLE_STATES)
                 .stream().map(this::toEntity).toList();
     }
 

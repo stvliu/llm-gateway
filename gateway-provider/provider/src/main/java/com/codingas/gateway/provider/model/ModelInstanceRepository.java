@@ -40,7 +40,7 @@ public interface ModelInstanceRepository {
     List<ModelInstance> findByChannelId(Long channelId);
 
     /**
-     * 根据渠道ID查找活跃的模型实例
+     * 根据渠道ID查找可路由的模型实例（ACTIVE/DEPRECATED，即将废弃继续路由）
      */
     List<ModelInstance> findActiveByChannelId(Long channelId);
 
@@ -53,7 +53,7 @@ public interface ModelInstanceRepository {
     List<ModelInstance> findByModelId(Long modelId);
 
     /**
-     * 根据模型规格ID查找活跃的模型实例（按优先级排序）
+     * 根据模型规格ID查找可路由的模型实例（ACTIVE/DEPRECATED，按优先级升序）
      */
     List<ModelInstance> findActiveByModelIdOrderByPriority(Long modelId);
 

@@ -36,5 +36,15 @@ public interface ModelInstanceJpaRepository extends JpaRepository<ModelInstanceD
 
     List<ModelInstanceDo> findByModelIdAndStateOrderByPriorityAsc(Long modelId, String state);
 
+    /**
+     * 按渠道 + 可路由状态集合（ACTIVE/DEPRECATED）查询模型实例
+     */
+    List<ModelInstanceDo> findByChannelIdAndStateIn(Long channelId, List<String> states);
+
+    /**
+     * 按模型 + 可路由状态集合（ACTIVE/DEPRECATED）查询模型实例（按优先级升序）
+     */
+    List<ModelInstanceDo> findByModelIdAndStateInOrderByPriorityAsc(Long modelId, List<String> states);
+
     List<ModelInstanceDo> findByIdIn(List<Long> ids);
 }

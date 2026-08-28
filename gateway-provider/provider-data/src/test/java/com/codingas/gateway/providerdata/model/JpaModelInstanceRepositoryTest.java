@@ -163,28 +163,45 @@ class ModelInstanceGatewayImplTest {
     }
 
     @Test
-    @DisplayName("findActiveByChannelId：按渠道+ACTIVE 状态查询并转换")
+    @DisplayName("findActiveByChannelId：按渠道+可路由状态(ACTIVE/DEPRECATED)查询并转换")
     void findActiveByChannelId_queriesActiveState() {
-        when(modelInstanceRepository.findByChannelIdAndState(10L, "ACTIVE"))
+        when(modelInstanceRepository.findByChannelIdAndStateIn(10L, List.of("ACTIVE", "DEPRECATED")))
                 .thenReturn(List.of(sampleDo(1L, 10L, 100L, "ACTIVE")));
 
         List<ModelInstance> result = gateway.findActiveByChannelId(10L);
 
         assertThat(result).hasSize(1);
         assertThat(result.get(0).getModelId()).isEqualTo(100L);
-        verify(modelInstanceRepository).findByChannelIdAndState(10L, "ACTIVE");
+        verify(modelInstanceRepository).findByChannelIdAndStateIn(10L, List.of("ACTIVE", "DEPRECATED"));
     }
 
     @Test
-    @DisplayName("findActiveByModelIdOrderByPriority：按优先级升序查询并转换")
+    @DisplayName("findActiveByChannelId 包含 ACTIVE 与 DEPRECATED，排除 SUSPENDED/RETIRED")
+    void findActiveByChannelId_includesDeprecated() {
+        // mock 模拟 JPA 按可路由状态（ACTIVE+DEPRECATED）过滤后的查询结果：RETIRED/SUSPENDED 不在状态集合内
+        when(modelInstanceRepository.findByChannelIdAndStateIn(10L, List.of("ACTIVE", "DEPRECATED")))
+                .thenReturn(List.of(
+                        sampleDo(1L, 10L, 100L, "ACTIVE"),
+                        sampleDo(2L, 10L, 101L, "DEPRECATED")));
+
+        List<ModelInstance> active = gateway.findActiveByChannelId(10L);
+
+        // ACTIVE + DEPRECATED 均返回（即将废弃继续路由），RETIRED/SUSPENDED 被排除
+        assertThat(active).extracting(ModelInstance::getState)
+                .containsExactlyInAnyOrder(ModelInstance.State.ACTIVE, ModelInstance.State.DEPRECATED);
+        verify(modelInstanceRepository).findByChannelIdAndStateIn(10L, List.of("ACTIVE", "DEPRECATED"));
+    }
+
+    @Test
+    @DisplayName("findActiveByModelIdOrderByPriority：按优先级升序+可路由状态(ACTIVE/DEPRECATED)查询并转换")
     void findActiveByModelIdOrderByPriority_queriesOrdered() {
-        when(modelInstanceRepository.findByModelIdAndStateOrderByPriorityAsc(100L, "ACTIVE"))
+        when(modelInstanceRepository.findByModelIdAndStateInOrderByPriorityAsc(100L, List.of("ACTIVE", "DEPRECATED")))
                 .thenReturn(List.of(sampleDo(1L, 10L, 100L, "ACTIVE")));
 
         List<ModelInstance> result = gateway.findActiveByModelIdOrderByPriority(100L);
 
         assertThat(result).hasSize(1);
-        verify(modelInstanceRepository).findByModelIdAndStateOrderByPriorityAsc(100L, "ACTIVE");
+        verify(modelInstanceRepository).findByModelIdAndStateInOrderByPriorityAsc(100L, List.of("ACTIVE", "DEPRECATED"));
     }
 
     @Test
