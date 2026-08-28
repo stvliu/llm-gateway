@@ -23,4 +23,9 @@ public class CatalogSyncException extends RuntimeException {
     public CatalogSyncException(String message, Throwable cause) {
         super(message, cause);
     }
+
+    /** 构造同步/探测异常（无原因链） */
+    public CatalogSyncException(String message) {
+        super(message);
+    }
 }
