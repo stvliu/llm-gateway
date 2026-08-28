@@ -67,6 +67,9 @@
         <module>gateway-alert/alert</module>
         <module>gateway-alert/alert-data</module>
         <module>gateway-alert/alert-starter</module>
+        <module>gateway-settings/settings</module>
+        <module>gateway-settings/settings-data</module>
+        <module>gateway-settings/settings-starter</module>
         <module>gateway-resilience/resilience</module>
         <module>gateway-resilience/resilience-data</module>
         <module>gateway-resilience/resilience-starter</module>
