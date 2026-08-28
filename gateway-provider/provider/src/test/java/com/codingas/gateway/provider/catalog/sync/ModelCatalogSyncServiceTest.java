@@ -24,6 +24,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionStatus;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -32,6 +34,8 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -70,7 +74,11 @@ class ModelCatalogSyncServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new ModelCatalogSyncService(client, modelRepository, logRepository);
+        // 真实 TransactionTemplate + mock 事务管理器：同步回调同步执行，upsert 逻辑照常跑；
+        // lenient：拉取失败用例不会走到事务模板执行，该 stub 属非必要
+        PlatformTransactionManager txManager = mock(PlatformTransactionManager.class);
+        lenient().when(txManager.getTransaction(any())).thenReturn(mock(TransactionStatus.class));
+        service = new ModelCatalogSyncService(client, modelRepository, logRepository, txManager);
     }
 
     @Test
@@ -104,6 +112,15 @@ class ModelCatalogSyncServiceTest {
                 .filter(m -> m.getExternalId().equals("deepseek/deepseek-v4-flash")).findFirst().orElseThrow();
         assertThat(added.getSource()).isEqualTo("MODELS_DEV");
         assertThat(added.getModelName()).isEqualTo("deepseek-v4-flash");
+        // 成功路径写入 SUCCESS 日志，计数与报告一致
+        ArgumentCaptor<CatalogSyncLog> logCaptor = ArgumentCaptor.forClass(CatalogSyncLog.class);
+        verify(logRepository).save(logCaptor.capture());
+        CatalogSyncLog savedLog = logCaptor.getValue();
+        assertThat(savedLog.getResult()).isEqualTo("SUCCESS");
+        assertThat(savedLog.getAddedCount()).isEqualTo(1);
+        assertThat(savedLog.getUpdatedCount()).isEqualTo(1);
+        assertThat(savedLog.getSkippedCount()).isZero();
+        assertThat(savedLog.getFailedCount()).isZero();
     }
 
     @Test
@@ -138,6 +155,11 @@ class ModelCatalogSyncServiceTest {
         ArgumentCaptor<CatalogSyncLog> captor = ArgumentCaptor.forClass(CatalogSyncLog.class);
         verify(logRepository).save(captor.capture());
         assertThat(captor.getValue().getResult()).isEqualTo("FAILURE");
+        // 拉取失败：日志中无已处理计数
+        assertThat(captor.getValue().getAddedCount()).isZero();
+        assertThat(captor.getValue().getUpdatedCount()).isZero();
+        assertThat(captor.getValue().getSkippedCount()).isZero();
+        assertThat(captor.getValue().getFailedCount()).isZero();
     }
 
     @Test

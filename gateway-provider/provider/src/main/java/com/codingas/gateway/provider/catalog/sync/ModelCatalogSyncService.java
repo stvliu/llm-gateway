@@ -17,10 +17,10 @@ package com.codingas.gateway.provider.catalog.sync;
 
 import com.codingas.gateway.provider.model.Model;
 import com.codingas.gateway.provider.model.ModelRepository;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -34,28 +34,52 @@ import java.util.Optional;
  * 新增模型写入完整信息；已有模型由 {@link ModelsDevModelMapper#merge} 更新并跳过
  * 人工锁定字段；modelName 冲突的模型跳过并计入报告。不删除 models.dev 未出现的
  * 现有模型。结果写入 catalog_sync_logs。</p>
+ *
+ * <p>事务边界：仅模型 upsert 循环运行在独立事务内（{@link TransactionTemplate}）；
+ * 拉取与同步日志写入均在事务之外，保证失败场景下 FAILURE 日志能独立落库，
+ * 不被事务回滚。</p>
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class ModelCatalogSyncService {
 
     private final ModelCatalogClient client;
     private final ModelRepository modelRepository;
     private final CatalogSyncLogRepository logRepository;
+    private final TransactionTemplate transactionTemplate;
+
+    /**
+     * 构造同步编排服务
+     *
+     * <p>由 {@link PlatformTransactionManager} 构建独立 {@link TransactionTemplate}，
+     * 用于包裹模型 upsert 的事务边界（事务外拉取与写日志）。</p>
+     *
+     * @param client             models.dev 目录数据源客户端
+     * @param modelRepository    模型持久化接口
+     * @param logRepository      同步日志持久化接口
+     * @param transactionManager 事务管理器
+     */
+    public ModelCatalogSyncService(ModelCatalogClient client,
+                                   ModelRepository modelRepository,
+                                   CatalogSyncLogRepository logRepository,
+                                   PlatformTransactionManager transactionManager) {
+        this.client = client;
+        this.modelRepository = modelRepository;
+        this.logRepository = logRepository;
+        this.transactionTemplate = new TransactionTemplate(transactionManager);
+    }
 
     /**
      * 执行模型目录同步
      *
-     * <p>拉取 models.dev 模型主数据，按 external_id（次选 model_name）幂等 upsert：
-     * 新增模型写入完整信息；已有模型由 {@link ModelsDevModelMapper#merge} 更新并跳过
-     * 人工锁定字段；modelName 冲突的模型跳过并计入报告。不删除 models.dev 未出现的
-     * 现有模型。结果写入 catalog_sync_logs。</p>
+     * <p>拉取（事务外）→ 模型幂等 upsert（独立事务内，整体成功或回滚）→ 写 SUCCESS 日志
+     * （事务外）→ 返回报告。任意 {@link RuntimeException}（含拉取失败与 upsert 异常）
+     * 都会先记录 FAILURE 日志（事务外独立落库，不被回滚）后再抛出。模型 upsert 幂等，
+     * 部分失败后重跑可恢复。</p>
      *
      * @return 同步报告
      * @throws CatalogSyncException 拉取失败（已记录 FAILURE 日志）
      */
-    @Transactional
     public CatalogSyncReport sync() {
         Instant startedAt = Instant.now();
         CatalogSyncReport report = CatalogSyncReport.builder()
@@ -64,16 +88,21 @@ public class ModelCatalogSyncService {
                 .messages(new ArrayList<>())
                 .build();
         try {
+            // 事务外拉取：拉取失败不影响 FAILURE 日志独立落库
             List<ModelCatalogDto> models = client.fetch();
-            for (ModelCatalogDto dto : models) {
-                upsertModel(dto, report);
-            }
+            // 事务内模型 upsert：全部成功或整体回滚，重跑可恢复
+            transactionTemplate.executeWithoutResult(status -> {
+                for (ModelCatalogDto dto : models) {
+                    upsertModel(dto, report);
+                }
+            });
             saveLog(report, null, startedAt);
             log.info("模型目录同步完成: added={}, updated={}, skipped={}, failed={}",
                     report.getAddedCount(), report.getUpdatedCount(),
                     report.getSkippedCount(), report.getFailedCount());
             return report;
-        } catch (CatalogSyncException e) {
+        } catch (RuntimeException e) {
+            // 事务外记录 FAILURE 日志（独立落库、失败仅告警），再抛出异常
             saveLog(report, e.getMessage(), startedAt);
             log.error("模型目录同步失败: {}", e.getMessage(), e);
             throw e;
