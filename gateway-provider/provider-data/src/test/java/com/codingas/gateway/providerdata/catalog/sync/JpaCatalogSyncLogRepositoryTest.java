@@ -36,7 +36,7 @@ import static org.mockito.Mockito.when;
  * JpaCatalogSyncLogRepository 单元测试：mock JpaRepository 验证委托与
  * CatalogSyncLog ↔ CatalogSyncLogDo 双向转换。
  *
- * <p>覆盖 JpaCatalogSyncLogRepository 全部 public 方法（save/findLatest）。</p>
+ * <p>覆盖 JpaCatalogSyncLogRepository 全部 public 方法（save/findLatest/findLatestByTriggeredBy）。</p>
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("JpaCatalogSyncLogRepository 单元测试")
@@ -147,5 +147,27 @@ class JpaCatalogSyncLogRepositoryTest {
         when(jpaRepository.findTopByOrderBySyncedAtDesc()).thenReturn(Optional.empty());
 
         assertThat(repository.findLatest()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("findLatestByTriggeredBy：按来源过滤返回该来源最新一条")
+    void findLatestByTriggeredBy_filtersBySource() {
+        when(jpaRepository.findTopByTriggeredByOrderBySyncedAtDesc("PROBE"))
+                .thenReturn(Optional.of(sampleDo(3L, "上游列表探测完成", 0, 2, 0, 0)));
+
+        Optional<CatalogSyncLog> latest = repository.findLatestByTriggeredBy("PROBE");
+
+        assertThat(latest).isPresent();
+        assertThat(latest.get().getMessage()).isEqualTo("上游列表探测完成");
+        assertThat(latest.get().getUpdatedCount()).isEqualTo(2);
+        verify(jpaRepository).findTopByTriggeredByOrderBySyncedAtDesc("PROBE");
+    }
+
+    @Test
+    @DisplayName("findLatestByTriggeredBy：指定来源无记录时返回空")
+    void findLatestByTriggeredBy_returnsEmptyWhenNoLogsForSource() {
+        when(jpaRepository.findTopByTriggeredByOrderBySyncedAtDesc("PROBE")).thenReturn(Optional.empty());
+
+        assertThat(repository.findLatestByTriggeredBy("PROBE")).isEmpty();
     }
 }

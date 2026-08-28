@@ -221,6 +221,8 @@ class CatalogProbeServiceTest {
         verify(logRepository).save(captor.capture());
         assertThat(captor.getValue().getResult()).isEqualTo("FAILURE");
         assertThat(captor.getValue().getFailedCount()).isEqualTo(1);
+        // 探测日志触发来源标记 PROBE（与目录同步 SYNC 区分）
+        assertThat(captor.getValue().getTriggeredBy()).isEqualTo("PROBE");
         verify(deprecationService, never()).markInstanceDeprecated(any());
         verify(deprecationService, never()).restoreInstance(any());
     }

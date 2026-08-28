@@ -158,6 +158,8 @@ public class ModelCatalogSyncService {
      */
     private void saveLog(CatalogSyncReport report, String error, Instant syncedAt) {
         CatalogSyncLog syncLog = new CatalogSyncLog();
+        // 触发来源标记 SYNC：与上游探测（PROBE）区分，供探测周期按来源独立判断
+        syncLog.setTriggeredBy("SYNC");
         syncLog.setResult(error == null ? "SUCCESS" : "FAILURE");
         syncLog.setAddedCount(report.getAddedCount());
         syncLog.setUpdatedCount(report.getUpdatedCount());

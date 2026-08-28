@@ -44,6 +44,11 @@ public class JpaCatalogSyncLogRepository implements CatalogSyncLogRepository {
         return jpaRepository.findTopByOrderBySyncedAtDesc().map(this::toEntity);
     }
 
+    @Override
+    public Optional<CatalogSyncLog> findLatestByTriggeredBy(String triggeredBy) {
+        return jpaRepository.findTopByTriggeredByOrderBySyncedAtDesc(triggeredBy).map(this::toEntity);
+    }
+
     /**
      * DO → 领域实体转换（计数缺省按 0 兜底，避免 NPE）
      */

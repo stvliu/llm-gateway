@@ -36,7 +36,8 @@ import static org.mockito.Mockito.when;
  * CatalogProbeTask 单元测试
  *
  * <p>验证上游列表探测的调度判定：探测开关关闭跳过、未达周期跳过、
- * 无历史记录（达周期）时执行探测。</p>
+ * 无历史记录（达周期）时执行探测；周期仅按 PROBE 来源日志判断，
+ * 目录同步日志不抑制探测。</p>
  */
 @ExtendWith(MockitoExtension.class)
 class CatalogProbeTaskTest {
@@ -72,7 +73,7 @@ class CatalogProbeTaskTest {
                 SyncInterval.class, SyncInterval.WEEKLY)).thenReturn(SyncInterval.WEEKLY);
         CatalogSyncLog log = new CatalogSyncLog();
         log.setSyncedAt(Instant.now().minus(1, ChronoUnit.HOURS));
-        when(logRepository.findLatest()).thenReturn(Optional.of(log));
+        when(logRepository.findLatestByTriggeredBy("PROBE")).thenReturn(Optional.of(log));
 
         task.check();
 
@@ -86,7 +87,25 @@ class CatalogProbeTaskTest {
         when(settingService.getBoolean("catalog.deprecation.probe.enabled", true)).thenReturn(true);
         when(settingService.getEnum("catalog.deprecation.probe.interval",
                 SyncInterval.class, SyncInterval.WEEKLY)).thenReturn(SyncInterval.WEEKLY);
-        when(logRepository.findLatest()).thenReturn(Optional.empty());
+        when(logRepository.findLatestByTriggeredBy("PROBE")).thenReturn(Optional.empty());
+        when(probeService.probe()).thenReturn(CatalogSyncReport.builder().success(true).build());
+
+        task.check();
+
+        verify(probeService).probe();
+    }
+
+    @Test
+    @DisplayName("最近同步日志较新但探测日志已过期时仍执行探测")
+    void syncLogFreshButProbeDue_executesProbe() {
+        when(settingService.getBoolean("catalog.deprecation.enabled", true)).thenReturn(true);
+        when(settingService.getBoolean("catalog.deprecation.probe.enabled", true)).thenReturn(true);
+        when(settingService.getEnum("catalog.deprecation.probe.interval",
+                SyncInterval.class, SyncInterval.WEEKLY)).thenReturn(SyncInterval.WEEKLY);
+        // 最近探测日志已超过 7 天（过期），即使存在较新的同步日志也应执行探测
+        CatalogSyncLog probeLog = new CatalogSyncLog();
+        probeLog.setSyncedAt(Instant.now().minus(8, ChronoUnit.DAYS));
+        when(logRepository.findLatestByTriggeredBy("PROBE")).thenReturn(Optional.of(probeLog));
         when(probeService.probe()).thenReturn(CatalogSyncReport.builder().success(true).build());
 
         task.check();

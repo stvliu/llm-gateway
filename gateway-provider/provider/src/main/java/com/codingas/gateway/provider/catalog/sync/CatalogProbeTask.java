@@ -33,8 +33,9 @@ import java.util.Optional;
  * <p>每小时检查一次是否需要执行探测：先读 {@code catalog.deprecation.enabled} 与
  * {@code catalog.deprecation.probe.enabled}（关闭则跳过），再读
  * {@code catalog.deprecation.probe.interval} 周期（DAILY=24h / WEEKLY=7d / MONTHLY=30d），
- * 按最近一次探测时间（{@link CatalogSyncLogRepository#findLatest}）判断是否达间隔。
- * 失败仅记录 error 日志，不向调度器抛异常。</p>
+ * 按最近一次探测时间（{@link CatalogSyncLogRepository#findLatestByTriggeredBy}，来源 PROBE）
+ * 判断是否达间隔——探测与目录同步按来源（triggeredBy=PROBE/SYNC）独立判断周期，
+ * 互不抑制。失败仅记录 error 日志，不向调度器抛异常。</p>
  */
 /**
  * 定时装配开关：{@code gateway.catalog.probe.auto-enabled} 为 true（默认，matchIfMissing）
@@ -63,8 +64,8 @@ public class CatalogProbeTask {
      * <p>总开关或探测子开关关闭、未达探测间隔时跳过并输出 debug 日志；达到间隔时调用
      * {@link CatalogProbeService#probe()}，探测失败捕获 {@link RuntimeException}
      * 记录 error 日志，避免中断调度线程。
-     * 注：{@code findLatest} 返回的日志同时包含目录同步与探测两类记录，周期判断共用
-     * 最新一条即可（现有 {@link CatalogSyncLogRepository} 无按类型过滤方法）。</p>
+     * 周期判断仅取来源为 PROBE 的最近日志（{@link CatalogSyncLogRepository#findLatestByTriggeredBy}），
+     * 目录同步（SYNC）日志不再参与探测周期判定。</p>
      */
     @Scheduled(fixedRate = 3600_000) // 每小时检查一次
     public void check() {
@@ -80,7 +81,7 @@ public class CatalogProbeTask {
             case WEEKLY -> 24 * 7;
             case MONTHLY -> 24 * 30;
         };
-        Optional<CatalogSyncLog> latest = logRepository.findLatest();
+        Optional<CatalogSyncLog> latest = logRepository.findLatestByTriggeredBy("PROBE");
         boolean shouldProbe = latest.isEmpty()
                 || latest.get().getSyncedAt() == null
                 || latest.get().getSyncedAt().isBefore(Instant.now().minus(thresholdHours, ChronoUnit.HOURS));

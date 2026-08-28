@@ -38,4 +38,12 @@ public interface CatalogSyncLogRepository {
      * @return 最近一次同步日志，无记录时返回空
      */
     Optional<CatalogSyncLog> findLatest();
+
+    /**
+     * 按触发来源查找最近一条同步/探测日志（区分目录同步与上游探测的周期判断）
+     *
+     * @param triggeredBy 触发来源（SYNC=目录同步 / PROBE=上游探测）
+     * @return 最近一条指定来源的日志，无则返回空
+     */
+    Optional<CatalogSyncLog> findLatestByTriggeredBy(String triggeredBy);
 }

@@ -197,6 +197,8 @@ public class CatalogProbeService {
         boolean hasChannelFailure = report.getFailedCount() > 0;
         boolean failed = error != null || hasChannelFailure;
         CatalogSyncLog syncLog = new CatalogSyncLog();
+        // 触发来源标记 PROBE：与目录同步（SYNC）区分，供探测周期按来源独立判断
+        syncLog.setTriggeredBy("PROBE");
         syncLog.setResult(failed ? "FAILURE" : "PROBE");
         syncLog.setAddedCount(0);
         syncLog.setUpdatedCount(report.getUpdatedCount());

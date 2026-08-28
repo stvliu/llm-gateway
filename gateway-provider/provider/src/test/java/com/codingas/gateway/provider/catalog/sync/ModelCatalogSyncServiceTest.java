@@ -116,6 +116,8 @@ class ModelCatalogSyncServiceTest {
         verify(logRepository).save(logCaptor.capture());
         CatalogSyncLog savedLog = logCaptor.getValue();
         assertThat(savedLog.getResult()).isEqualTo("SUCCESS");
+        // 同步日志触发来源标记 SYNC（与上游探测 PROBE 区分）
+        assertThat(savedLog.getTriggeredBy()).isEqualTo("SYNC");
         assertThat(savedLog.getAddedCount()).isEqualTo(1);
         assertThat(savedLog.getUpdatedCount()).isEqualTo(1);
         assertThat(savedLog.getSkippedCount()).isZero();

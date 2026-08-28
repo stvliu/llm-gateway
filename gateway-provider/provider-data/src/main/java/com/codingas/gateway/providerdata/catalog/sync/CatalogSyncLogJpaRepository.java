@@ -30,4 +30,12 @@ public interface CatalogSyncLogJpaRepository extends JpaRepository<CatalogSyncLo
      * @return 最新同步日志，无记录时返回空
      */
     Optional<CatalogSyncLogDo> findTopByOrderBySyncedAtDesc();
+
+    /**
+     * 按触发来源查询该来源最新的一条日志（按 synced_at 倒序取首条）
+     *
+     * @param triggeredBy 触发来源（SYNC=目录同步 / PROBE=上游探测）
+     * @return 指定来源的最新日志，无记录时返回空
+     */
+    Optional<CatalogSyncLogDo> findTopByTriggeredByOrderBySyncedAtDesc(String triggeredBy);
 }
