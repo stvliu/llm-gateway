@@ -62,20 +62,28 @@ public class AuditController {
      *
      * <p>按 {@code days}（保留 N 天前）或 {@code before}（ISO-8601 时间点）计算截止时间，
      * 删除 createdAt 早于截止时间的审计日志；两者至少提供一个，同时提供时以 {@code days} 为准。
+     * 边界校验：{@code days} 必须大于 0（否则静默全量清空），{@code before} 不能晚于当前时间
+     * （否则静默删除 0 条），校验失败抛 {@link IllegalArgumentException} 由 GlobalExceptionHandler 映射 400。
      * 返回删除条数（生产环境由 ApiResponseWrapperAdvice 包装为 {@code {data: {deleted: N}}}）。</p>
      *
      * @param days   保留天数（可选，N 天前的日志将被删除）
      * @param before 截止时间（可选，ISO-8601 格式）
      * @return 包含删除条数 {@code deleted} 的映射
-     * @throws IllegalArgumentException days 与 before 均未提供时抛出
+     * @throws IllegalArgumentException days 与 before 均未提供、days 小于 1 或 before 晚于当前时间时抛出
      */
     @DeleteMapping
     public Map<String, Integer> delete(@RequestParam(required = false) Integer days,
                                        @RequestParam(required = false) Instant before) {
         Instant cutoff;
         if (days != null) {
+            if (days < 1) {
+                throw new IllegalArgumentException("清理天数必须大于 0");
+            }
             cutoff = Instant.now().minus(days, ChronoUnit.DAYS);
         } else if (before != null) {
+            if (before.isAfter(Instant.now())) {
+                throw new IllegalArgumentException("清理截止时间不能晚于当前时间");
+            }
             cutoff = before;
         } else {
             throw new IllegalArgumentException("days 与 before 至少提供一个");

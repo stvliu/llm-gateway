@@ -87,6 +87,41 @@ class AuditControllerTest {
     }
 
     @Test
+    @DisplayName("DELETE /api/v1/audit-logs?days=0 校验失败返回 400（拒绝静默全量清空）")
+    void deleteAuditLogs_daysZero_returnsBadRequest() throws Exception {
+        mockMvc.perform(delete("/api/v1/audit-logs").param("days", "0"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.code").value("BAD_REQUEST"))
+                .andExpect(jsonPath("$.error.message").value("清理天数必须大于 0"));
+    }
+
+    @Test
+    @DisplayName("DELETE /api/v1/audit-logs?days=-1 校验失败返回 400（拒绝负数保留天数）")
+    void deleteAuditLogs_negativeDays_returnsBadRequest() throws Exception {
+        mockMvc.perform(delete("/api/v1/audit-logs").param("days", "-1"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.code").value("BAD_REQUEST"))
+                .andExpect(jsonPath("$.error.message").value("清理天数必须大于 0"));
+    }
+
+    @Test
+    @DisplayName("DELETE /api/v1/audit-logs?before=未来时间 校验失败返回 400（拒绝未来截止时间）")
+    void deleteAuditLogs_futureBefore_returnsBadRequest() throws Exception {
+        mockMvc.perform(delete("/api/v1/audit-logs").param("before", "2999-01-01T00:00:00Z"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.code").value("BAD_REQUEST"))
+                .andExpect(jsonPath("$.error.message").value("清理截止时间不能晚于当前时间"));
+    }
+
+    @Test
+    @DisplayName("DELETE /api/v1/audit-logs?before=非法格式 返回 400（MethodArgumentTypeMismatchException 映射）")
+    void deleteAuditLogs_invalidBeforeFormat_returnsBadRequest() throws Exception {
+        mockMvc.perform(delete("/api/v1/audit-logs").param("before", "not-a-date"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.code").value("BAD_REQUEST"));
+    }
+
+    @Test
     @DisplayName("query 透传筛选条件并返回分页响应 DTO")
     void query_passesFiltersAndMapsResponse() {
         // given
