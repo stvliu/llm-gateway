@@ -19,6 +19,7 @@ import com.codingas.gateway.audit.AuditLogRepository;
 import com.codingas.gateway.settings.SystemSettingService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -32,9 +33,15 @@ import java.time.temporal.ChronoUnit;
  * 计算保留截止时间，删除 createdAt 早于截止时间的审计日志。
  * {@code @EnableScheduling} 已由 {@code GatewayApplication} 开启。</p>
  */
+/**
+ * 定时装配开关：{@code gateway.audit.cleanup.enabled} 为 true（默认，matchIfMissing）时才注册本任务。
+ * 测试环境显式关闭，避免 @SpringBootTest 启动后在集成测试期间执行清理、干扰测试数据。
+ */
 @Slf4j
 @Component
 @RequiredArgsConstructor
+@ConditionalOnProperty(prefix = "gateway.audit.cleanup", name = "enabled",
+        havingValue = "true", matchIfMissing = true)
 public class AuditCleanupTask {
 
     /** 审计日志保留天数配置键 */

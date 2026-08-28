@@ -30,6 +30,16 @@ spring:
   flyway:
     enabled: false
 
+gateway:
+  catalog:
+    sync:
+      # 测试环境关闭定时自动同步，避免启动即触发真实 models.dev 拉取与数据初始化竞态
+      auto-enabled: false
+  audit:
+    cleanup:
+      # 测试环境关闭定时清理，避免集成测试期间清理审计日志干扰测试数据
+      enabled: false
+
 logging:
   level:
     com.codingas.gateway: DEBUG

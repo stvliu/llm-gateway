@@ -19,6 +19,7 @@ import com.codingas.gateway.settings.SyncInterval;
 import com.codingas.gateway.settings.SystemSettingService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -34,9 +35,16 @@ import java.util.Optional;
  * WEEKLY=7d / MONTHLY=30d），最后按最近一次同步时间（{@link CatalogSyncLogRepository#findLatest}，
  * 无记录视为需同步）判断是否达到间隔。同步失败仅记录 error 日志，不向调度器抛出异常。</p>
  */
+/**
+ * 定时装配开关：{@code gateway.catalog.sync.auto-enabled} 为 true（默认，matchIfMissing）时才注册本任务。
+ * 测试环境显式关闭，避免 @SpringBootTest 启动后（initialDelay=0）立即触发真实同步拉取 models.dev，
+ * 与数据初始化（BuiltinVendorLoader）产生同名模型竞态。
+ */
 @Slf4j
 @Component
 @RequiredArgsConstructor
+@ConditionalOnProperty(prefix = "gateway.catalog.sync", name = "auto-enabled",
+        havingValue = "true", matchIfMissing = true)
 public class CatalogSyncTask {
 
     /** 目录同步编排服务 */
