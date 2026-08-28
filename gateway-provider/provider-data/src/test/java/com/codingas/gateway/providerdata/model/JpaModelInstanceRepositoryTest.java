@@ -188,6 +188,32 @@ class ModelInstanceGatewayImplTest {
     }
 
     @Test
+    @DisplayName("findByModelId：同模型多实例（含不同状态）全量转换返回")
+    void findByModelId_convertsAllStates() {
+        when(modelInstanceRepository.findByModelId(100L)).thenReturn(List.of(
+                sampleDo(1L, 10L, 100L, "ACTIVE"),
+                sampleDo(2L, 20L, 100L, "DEPRECATED"),
+                sampleDo(3L, 30L, 100L, "RETIRED")));
+
+        List<ModelInstance> result = gateway.findByModelId(100L);
+
+        assertThat(result).hasSize(3);
+        assertThat(result).extracting(ModelInstance::getId).containsExactly(1L, 2L, 3L);
+        assertThat(result).extracting(ModelInstance::getState)
+                .containsExactly(ModelInstance.State.ACTIVE, ModelInstance.State.DEPRECATED, ModelInstance.State.RETIRED);
+        verify(modelInstanceRepository).findByModelId(100L);
+    }
+
+    @Test
+    @DisplayName("findByModelId：无实例返回空列表")
+    void findByModelId_emptyWhenAbsent() {
+        when(modelInstanceRepository.findByModelId(999L)).thenReturn(List.of());
+
+        assertThat(gateway.findByModelId(999L)).isEmpty();
+        verify(modelInstanceRepository).findByModelId(999L);
+    }
+
+    @Test
     @DisplayName("deleteById：委托 Repository 删除")
     void deleteById_delegates() {
         gateway.deleteById(1L);

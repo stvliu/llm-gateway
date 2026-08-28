@@ -52,6 +52,11 @@ public class JpaModelInstanceRepository implements ModelInstanceRepository {
     }
 
     @Override
+    public List<ModelInstance> findByModelId(Long modelId) {
+        return modelInstanceRepository.findByModelId(modelId).stream().map(this::toEntity).toList();
+    }
+
+    @Override
     public List<ModelInstance> findActiveByChannelId(Long channelId) {
         return modelInstanceRepository.findByChannelIdAndState(channelId, ModelInstance.State.ACTIVE.name())
                 .stream().map(this::toEntity).toList();

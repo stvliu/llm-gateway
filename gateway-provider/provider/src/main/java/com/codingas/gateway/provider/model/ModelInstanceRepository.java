@@ -45,6 +45,14 @@ public interface ModelInstanceRepository {
     List<ModelInstance> findActiveByChannelId(Long channelId);
 
     /**
+     * 按模型 ID 查找全部模型实例（含各状态，供自动标记废弃时批量下线）
+     *
+     * @param modelId 模型 ID
+     * @return 模型实例实体列表
+     */
+    List<ModelInstance> findByModelId(Long modelId);
+
+    /**
      * 根据模型规格ID查找活跃的模型实例（按优先级排序）
      */
     List<ModelInstance> findActiveByModelIdOrderByPriority(Long modelId);

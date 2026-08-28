@@ -67,6 +67,12 @@
             <artifactId>gateway-settings</artifactId>
             <version>${revision}</version>
         </dependency>
+        <!-- 跨域门面：模型废弃/实例状态流转写管理操作审计（AuditLogRepository） -->
+        <dependency>
+            <groupId>com.codingas.gateway</groupId>
+            <artifactId>gateway-audit</artifactId>
+            <version>${revision}</version>
+        </dependency>
         <!-- Jackson（BuiltinDataLoader 内置数据 JSON 序列化） -->
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
