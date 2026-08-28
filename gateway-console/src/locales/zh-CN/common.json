@@ -11,6 +11,7 @@
     "tokenLimits": "Token 限额",
     "resilience": "容灾",
     "catalog": "目录",
+    "settings": "系统设置",
     "changePassword": "修改密码",
     "group": {
       "supply": "模型供给",

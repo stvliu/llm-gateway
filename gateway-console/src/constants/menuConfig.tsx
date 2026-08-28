@@ -23,6 +23,7 @@ import {
   FileSearchOutlined,
   SafetyOutlined,
   AccountBookOutlined,
+  SettingOutlined,
 } from '@ant-design/icons';
 import type { Permission } from '@/constants/permissions';
 
@@ -126,6 +127,12 @@ export const menuGroups: MenuGroupConfig[] = [
         icon: <FileSearchOutlined />,
         label: 'menu.auditLogs',
         permission: 'audit:read',
+      },
+      {
+        key: '/settings',
+        icon: <SettingOutlined />,
+        label: 'menu.settings',
+        permission: 'settings:read',
       },
     ],
   },

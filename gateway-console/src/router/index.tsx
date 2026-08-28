@@ -28,6 +28,7 @@ import ApplicationsPage from '@/pages/Applications';
 import OverviewPage from '@/pages/resilience/overview';
 import AuditLogs from '@/pages/AuditLogs';
 import TokenLimits from '@/pages/TokenLimits';
+import Settings from '@/pages/Settings';
 import { P } from '@/constants/permissions';
 
 export const router = createBrowserRouter([
@@ -95,6 +96,10 @@ export const router = createBrowserRouter([
       {
         path: 'token-limits',
         element: <PermissionGuard permission={P.TOKEN_LIMIT}><TokenLimits /></PermissionGuard>,
+      },
+      {
+        path: 'settings',
+        element: <PermissionGuard permission={P.SETTINGS_READ}><Settings /></PermissionGuard>,
       },
     ],
   },
