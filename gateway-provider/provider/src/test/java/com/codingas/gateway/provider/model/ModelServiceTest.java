@@ -418,6 +418,44 @@ class ModelServiceTest {
         }
 
         @Test
+        @DisplayName("capabilities 仅 true 键集合相同则不锁定（前端只提交 true 键 Map 场景）")
+        void update_capabilitiesSemanticSame_doesNotLock() {
+            // given：存量 capabilities 为全键位 Map（含 false 键），前端仅提交 true 键 Map
+            when(modelRepository.findById(1L)).thenReturn(Optional.of(testModel));
+            when(modelRepository.save(any(Model.class))).thenAnswer(inv -> inv.getArgument(0));
+
+            Model request = modelEntity(null, null, null, Map.of("function_calling", true));
+
+            // when
+            modelService.update(1L, request);
+
+            // then：true 键集合相同，不锁定 capabilities，实体保留原全键位 Map
+            ArgumentCaptor<Model> captor = ArgumentCaptor.forClass(Model.class);
+            verify(modelRepository).save(captor.capture());
+            assertThat(captor.getValue().getLockedFields()).isNullOrEmpty();
+            assertThat(captor.getValue().getCapabilities())
+                    .isEqualTo(Map.of("vision", false, "function_calling", true));
+        }
+
+        @Test
+        @DisplayName("capabilities true 键集合变化则锁定")
+        void update_capabilitiesSemanticChanged_locksCapabilities() {
+            // given：存量 true 键集合为 {function_calling}，请求新增 reasoning
+            when(modelRepository.findById(1L)).thenReturn(Optional.of(testModel));
+            when(modelRepository.save(any(Model.class))).thenAnswer(inv -> inv.getArgument(0));
+
+            Model request = modelEntity(null, null, null, Map.of("function_calling", true, "reasoning", true));
+
+            // when
+            modelService.update(1L, request);
+
+            // then：true 键集合变化，capabilities 被锁定
+            ArgumentCaptor<Model> captor = ArgumentCaptor.forClass(Model.class);
+            verify(modelRepository).save(captor.capture());
+            assertThat(captor.getValue().getLockedFields()).contains("capabilities");
+        }
+
+        @Test
         @DisplayName("unlockFields 清除字段人工锁定集合")
         void unlockFields_clearsLockedFields() {
             // given：模型已有锁定字段

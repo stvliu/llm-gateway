@@ -25,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -141,8 +142,10 @@ public class ModelServiceImpl implements ModelService {
             existing.setMaxOutputTokens(model.getMaxOutputTokens());
             changedFields.add("maxOutputTokens");
         }
+        // capabilities 采用语义比较：models.dev 同步存全键位 Map（含 false 键），
+        // 前端编辑只提交 true 键 Map，直接 equals 几乎恒不等；改比较 true 键集合
         if (model.getCapabilities() != null
-                && !Objects.equals(model.getCapabilities(), existing.getCapabilities())) {
+                && !sameCapabilitySet(model.getCapabilities(), existing.getCapabilities())) {
             existing.setCapabilities(model.getCapabilities());
             changedFields.add("capabilities");
         }
@@ -167,6 +170,34 @@ public class ModelServiceImpl implements ModelService {
         Model saved = modelRepository.save(existing);
         log.info("模型更新成功, id={}, modelName={}", id, saved.getModelName());
         return saved;
+    }
+
+    /**
+     * 语义比较能力集合：只比较 value 为 true 的键集合，忽略 false 键差异。
+     * 任一为 null 时按引用/值相等处理（null 与 null 视为相同）。
+     *
+     * @param a 能力 Map A（可能为 null）
+     * @param b 能力 Map B（可能为 null）
+     * @return true 键集合相同返回 true
+     */
+    private boolean sameCapabilitySet(Map<String, Boolean> a, Map<String, Boolean> b) {
+        if (a == null || b == null) {
+            return a == b;
+        }
+        return trueKeys(a).equals(trueKeys(b));
+    }
+
+    /**
+     * 提取能力 Map 中 value 为 true 的键集合
+     *
+     * @param map 能力 Map
+     * @return 启用能力键集合
+     */
+    private Set<String> trueKeys(Map<String, Boolean> map) {
+        return map.entrySet().stream()
+            .filter(e -> Boolean.TRUE.equals(e.getValue()))
+            .map(Map.Entry::getKey)
+            .collect(Collectors.toSet());
     }
 
     /**
