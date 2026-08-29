@@ -16,6 +16,7 @@
 package com.codingas.gateway.provider.model;
 
 import com.codingas.gateway.common.dto.PageResponse;
+import com.codingas.gateway.common.exception.DuplicateResourceException;
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
 import com.codingas.gateway.provider.vendor.Provider;
 import com.codingas.gateway.provider.vendor.ProviderRepository;
@@ -561,6 +562,112 @@ class ModelServiceTest {
             // then：锁定集合被清空，同步可再次覆盖这些字段
             assertThat(result.getLockedFields()).isNullOrEmpty();
             verify(modelRepository).save(testModel);
+        }
+    }
+
+    // ==================== copy 测试 ====================
+
+    @Nested
+    @DisplayName("copy 复制模型")
+    class CopyTests {
+
+        @Test
+        @DisplayName("复制继承源模型全量规格并重置生命周期字段")
+        void copy_inheritsFullSpecAndResetsLifecycle() {
+            // given：源模型（含描述/限额/能力/模态/元信息/废弃字段）
+            Model source = createTestModel(1L, "gpt-4", testProvider, "GPT-4", true);
+            source.setDescription("desc");
+            source.setMaxInputTokens(128000);
+            source.setMaxOutputTokens(4096);
+            source.setKnowledgeCutoff("2023-10");
+            source.setLicense("MIT");
+            source.setOpenWeights(false);
+            source.setBenchmarks(List.of(Map.of("name", "MMLU", "score", 86)));
+            source.setWeights(List.of(Map.of("label", "card", "url", "http://x")));
+            source.setSource("MODELS_DEV");
+            source.setExternalId("openai/gpt-4");
+            source.setLockedFields(List.of("displayName"));
+            source.setDeprecatedAt(Instant.parse("2026-01-01T00:00:00Z"));
+            source.setScheduledRetiredAt(Instant.parse("2026-06-01T00:00:00Z"));
+            source.setDeprecationMessage("old");
+            when(modelRepository.findById(1L)).thenReturn(Optional.of(source));
+            when(modelRepository.save(any(Model.class))).thenAnswer(inv -> {
+                Model m = inv.getArgument(0);
+                m.setId(2L);
+                return m;
+            });
+
+            // when：覆盖 modelName
+            Model override = new Model();
+            override.setModelName("gpt-4o");
+            Model result = modelService.copy(1L, override);
+
+            // then：继承全量 + 覆盖 + 重置
+            assertThat(result.getId()).isEqualTo(2L);
+            assertThat(result.getModelName()).isEqualTo("gpt-4o");
+            assertThat(result.getDisplayName()).isEqualTo("GPT-4");
+            assertThat(result.getDescription()).isEqualTo("desc");
+            assertThat(result.getMaxInputTokens()).isEqualTo(128000);
+            assertThat(result.getMaxOutputTokens()).isEqualTo(4096);
+            assertThat(result.getKnowledgeCutoff()).isEqualTo("2023-10");
+            assertThat(result.getLicense()).isEqualTo("MIT");
+            assertThat(result.getOpenWeights()).isFalse();
+            assertThat(result.getBenchmarks()).hasSize(1);
+            assertThat(result.getWeights()).hasSize(1);
+            assertThat(result.getSource()).isEqualTo("MANUAL");
+            assertThat(result.getExternalId()).isNull();
+            assertThat(result.getLockedFields()).isEmpty();
+            assertThat(result.getDeprecatedAt()).isNull();
+            assertThat(result.getScheduledRetiredAt()).isNull();
+            assertThat(result.getDeprecationMessage()).isNull();
+            assertThat(result.isAvailable()).isTrue();
+        }
+
+        @Test
+        @DisplayName("复制覆盖 displayName 与 modelFamily")
+        void copy_overridesDisplayNameAndFamily() {
+            // given
+            Model source = createTestModel(1L, "gpt-4", testProvider, "GPT-4", true);
+            when(modelRepository.findById(1L)).thenReturn(Optional.of(source));
+            when(modelRepository.save(any(Model.class))).thenAnswer(inv -> inv.getArgument(0));
+
+            Model override = new Model();
+            override.setModelName("gpt-4o");
+            override.setDisplayName("GPT-4o");
+            override.setModelFamily("gpt-4o-family");
+
+            // when
+            Model result = modelService.copy(1L, override);
+
+            // then
+            assertThat(result.getDisplayName()).isEqualTo("GPT-4o");
+            assertThat(result.getModelFamily()).isEqualTo("gpt-4o-family");
+        }
+
+        @Test
+        @DisplayName("源模型不存在抛 ResourceNotFoundException")
+        void copy_sourceNotFound_throws() {
+            when(modelRepository.findById(99L)).thenReturn(Optional.empty());
+            Model override = new Model();
+            override.setModelName("x");
+
+            assertThatThrownBy(() -> modelService.copy(99L, override))
+                    .isInstanceOf(ResourceNotFoundException.class);
+        }
+
+        @Test
+        @DisplayName("modelName 已存在抛 DuplicateResourceException")
+        void copy_duplicateModelName_throws() {
+            Model source = createTestModel(1L, "gpt-4", testProvider, "GPT-4", true);
+            when(modelRepository.findById(1L)).thenReturn(Optional.of(source));
+            when(modelRepository.findByModelName("gpt-5")).thenReturn(Optional.of(new Model()));
+
+            Model override = new Model();
+            override.setModelName("gpt-5");
+
+            assertThatThrownBy(() -> modelService.copy(1L, override))
+                    .isInstanceOf(DuplicateResourceException.class);
+            verify(modelRepository, never()).save(any(Model.class));
         }
     }
 

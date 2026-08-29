@@ -33,6 +33,19 @@ public interface ModelService {
     Model create(Model model);
 
     /**
+     * 复制模型规格生成新模型
+     *
+     * <p>基于源模型全量规格复制，按 {@code override} 覆盖 modelName（必填）与
+     * displayName/modelFamily；新模型重置为人工来源（MANUAL）、externalId 清空、
+     * 锁定字段清空、生命周期字段清空（可用状态）。不复制挂载。</p>
+     *
+     * @param sourceId 源模型 ID
+     * @param override 覆盖字段（modelName 必填非 null）
+     * @return 新模型
+     */
+    Model copy(Long sourceId, Model override);
+
+    /**
      * 根据 ID 获取模型
      *
      * @param id 模型 ID

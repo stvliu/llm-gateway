@@ -16,6 +16,7 @@
 package com.codingas.gateway.provider.model;
 
 import com.codingas.gateway.common.dto.PageResponse;
+import com.codingas.gateway.common.exception.DuplicateResourceException;
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
 import com.codingas.gateway.common.util.SortSupport;
 import lombok.RequiredArgsConstructor;
@@ -55,6 +56,57 @@ public class ModelServiceImpl implements ModelService {
         Model savedModel = modelRepository.save(model);
         log.info("模型创建成功, id={}, modelName={}", savedModel.getId(), savedModel.getModelName());
         return savedModel;
+    }
+
+    /**
+     * 复制模型规格生成新模型（继承全量 + 覆盖 + 重置，见接口 Javadoc）
+     */
+    @Override
+    @Transactional
+    public Model copy(Long sourceId, Model override) {
+        Model source = modelRepository.findById(sourceId)
+            .orElseThrow(() -> new ResourceNotFoundException("Model", sourceId));
+
+        // modelName 唯一校验：复制必须产生不同的 modelName，
+        // 与源同名同样拒绝（models 表无 model_name 唯一约束，重复会导致 findByModelName 歧义）
+        String newName = override.getModelName();
+        if (modelRepository.findByModelName(newName).isPresent()) {
+            throw new DuplicateResourceException("Model", "modelName");
+        }
+
+        // 复制源模型全量规格
+        Model target = new Model();
+        target.setModelName(newName);
+        target.setDisplayName(override.getDisplayName() != null
+            ? override.getDisplayName() : source.getDisplayName());
+        target.setModelFamily(override.getModelFamily() != null
+            ? override.getModelFamily() : source.getModelFamily());
+        target.setDescription(source.getDescription());
+        target.setContextWindow(source.getContextWindow());
+        target.setMaxInputTokens(source.getMaxInputTokens());
+        target.setMaxOutputTokens(source.getMaxOutputTokens());
+        target.setKnowledgeCutoff(source.getKnowledgeCutoff());
+        target.setReleaseDate(source.getReleaseDate());
+        target.setLastUpdated(source.getLastUpdated());
+        target.setLicense(source.getLicense());
+        target.setOpenWeights(source.getOpenWeights());
+        target.setBenchmarks(source.getBenchmarks());
+        target.setWeights(source.getWeights());
+        target.setCapabilities(source.getCapabilities());
+        target.setModalities(source.getModalities());
+
+        // 重置：人工来源、清 externalId/锁定/生命周期字段（新模型为可用状态）
+        target.setSource("MANUAL");
+        target.setExternalId(null);
+        target.setLockedFields(List.of());
+        target.setDeprecatedAt(null);
+        target.setScheduledRetiredAt(null);
+        target.setDeprecationMessage(null);
+
+        Model saved = modelRepository.save(target);
+        log.info("模型复制成功, sourceId={}, newId={}, modelName={}",
+            sourceId, saved.getId(), saved.getModelName());
+        return saved;
     }
 
     /**
