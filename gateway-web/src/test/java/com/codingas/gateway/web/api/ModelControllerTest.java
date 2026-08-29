@@ -19,7 +19,9 @@ import com.codingas.gateway.provider.model.Model;
 import com.codingas.gateway.provider.model.ModelService;
 import com.codingas.gateway.provider.model.ModelQuery;
 import com.codingas.gateway.web.api.dto.*;
+import com.codingas.gateway.web.advice.GlobalExceptionHandler;
 import com.codingas.gateway.common.dto.PageResponse;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -27,6 +29,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.time.Instant;
 import java.util.List;
@@ -37,6 +42,9 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
  * ModelController 单元测试
@@ -52,6 +60,17 @@ class ModelControllerTest {
 
     @InjectMocks
     private ModelController controller;
+
+    private MockMvc mockMvc;
+
+    @BeforeEach
+    void setUp() {
+        // standalone 装配：copy 端点走 HTTP 层验证 @Valid 校验（@NotBlank 缺失返回 400）；
+        // 只装配 GlobalExceptionHandler（校验失败转 400），不装配 ApiResponseWrapperAdvice（避免响应被包装成 $.data.*）
+        mockMvc = MockMvcBuilders.standaloneSetup(new ModelController(modelService))
+                .setControllerAdvice(new GlobalExceptionHandler())
+                .build();
+    }
 
     @Nested
     @DisplayName("create 方法测试")
@@ -204,6 +223,37 @@ class ModelControllerTest {
 
             // then
             assertThat(result.getModelName()).isEqualTo("gpt-4");
+        }
+    }
+
+    @Nested
+    @DisplayName("copy 复制模型")
+    class CopyTests {
+
+        @Test
+        @DisplayName("POST /api/v1/models/{id}/copy 返回新模型")
+        void copy_returnsNewModel() throws Exception {
+            // given：copy 返回新模型实体，Controller 再转换为 ModelResponse
+            Model newModel = new Model();
+            newModel.setId(2L);
+            newModel.setModelName("gpt-4o");
+            when(modelService.copy(eq(1L), any(Model.class))).thenReturn(newModel);
+
+            mockMvc.perform(post("/api/v1/models/{id}/copy", 1L)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{\"modelName\":\"gpt-4o\"}"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.id").value(2L))
+                    .andExpect(jsonPath("$.modelName").value("gpt-4o"));
+        }
+
+        @Test
+        @DisplayName("modelName 缺失返回 400")
+        void copy_missingModelName_badRequest() throws Exception {
+            mockMvc.perform(post("/api/v1/models/{id}/copy", 1L)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{}"))
+                    .andExpect(status().isBadRequest());
         }
     }
 

@@ -43,6 +43,15 @@ public class ModelController {
     }
 
     /**
+     * 复制模型规格生成新模型
+     */
+    @PostMapping("/{id}/copy")
+    public ModelResponse copy(@PathVariable Long id,
+                              @Valid @RequestBody ModelCopyRequest request) {
+        return ModelResponse.from(modelService.copy(id, request.toEntity()));
+    }
+
+    /**
      * 获取模型详情
      */
     @GetMapping("/{id}")
