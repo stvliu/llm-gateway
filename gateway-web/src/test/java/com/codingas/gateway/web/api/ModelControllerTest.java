@@ -19,6 +19,7 @@ import com.codingas.gateway.provider.model.Model;
 import com.codingas.gateway.provider.model.ModelService;
 import com.codingas.gateway.provider.model.ModelQuery;
 import com.codingas.gateway.web.api.dto.*;
+import com.codingas.gateway.web.advice.ApiResponseWrapperAdvice;
 import com.codingas.gateway.web.advice.GlobalExceptionHandler;
 import com.codingas.gateway.common.dto.PageResponse;
 import org.junit.jupiter.api.BeforeEach;
@@ -49,7 +50,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /**
  * ModelController 单元测试
  *
- * <p>Controller 现在直接返回业务对象，由 ApiResponseWrapperAdvice 自动包装。</p>
+ * <p>Controller 直接返回业务对象，由 ApiResponseWrapperAdvice 自动包装；测试装配该 Advice，HTTP 契约断言走 {@code $.data.*}。</p>
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("ModelController 测试")
@@ -66,9 +67,9 @@ class ModelControllerTest {
     @BeforeEach
     void setUp() {
         // standalone 装配：copy 端点走 HTTP 层验证 @Valid 校验（@NotBlank 缺失返回 400）；
-        // 只装配 GlobalExceptionHandler（校验失败转 400），不装配 ApiResponseWrapperAdvice（避免响应被包装成 $.data.*）
-        mockMvc = MockMvcBuilders.standaloneSetup(new ModelController(modelService))
-                .setControllerAdvice(new GlobalExceptionHandler())
+        // 装配 ApiResponseWrapperAdvice（与生产一致，单对象响应包装为 $.data.*）与 GlobalExceptionHandler（校验失败转 400）
+        mockMvc = MockMvcBuilders.standaloneSetup(controller)
+                .setControllerAdvice(new ApiResponseWrapperAdvice(), new GlobalExceptionHandler())
                 .build();
     }
 
@@ -237,14 +238,18 @@ class ModelControllerTest {
             Model newModel = new Model();
             newModel.setId(2L);
             newModel.setModelName("gpt-4o");
+            newModel.setDisplayName("GPT-4o");
+            newModel.setModelFamily("openai");
             when(modelService.copy(eq(1L), any(Model.class))).thenReturn(newModel);
 
             mockMvc.perform(post("/api/v1/models/{id}/copy", 1L)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content("{\"modelName\":\"gpt-4o\"}"))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.id").value(2L))
-                    .andExpect(jsonPath("$.modelName").value("gpt-4o"));
+                    .andExpect(jsonPath("$.data.id").value(2L))
+                    .andExpect(jsonPath("$.data.modelName").value("gpt-4o"))
+                    .andExpect(jsonPath("$.data.displayName").value("GPT-4o"))
+                    .andExpect(jsonPath("$.data.modelFamily").value("openai"));
         }
 
         @Test
