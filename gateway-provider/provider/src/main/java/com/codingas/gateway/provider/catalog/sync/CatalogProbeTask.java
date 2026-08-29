@@ -39,8 +39,7 @@ import java.util.Optional;
  */
 /**
  * 定时装配开关：{@code gateway.catalog.probe.auto-enabled} 为 true（默认，matchIfMissing）
- * 时才注册本任务。测试环境显式关闭，避免 @SpringBootTest 启动后（initialDelay=0）
- * 立即触发真实探测。
+ * 时才注册本任务。测试环境显式关闭装配，避免 @SpringBootTest 长时间运行触发真实探测。
  */
 @Slf4j
 @Component

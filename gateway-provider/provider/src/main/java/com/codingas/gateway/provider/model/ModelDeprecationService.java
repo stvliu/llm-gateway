@@ -31,6 +31,10 @@ import java.util.List;
  * <p>承载两条自动信号通道的状态落地：运行期确认（{@link #markDeprecated}）与
  * 列表探测（{@link #markInstanceDeprecated}/{@link #restoreInstance}）。
  * 所有状态变更写管理操作审计（AuditLog）。幂等：已废弃/已处于目标状态的跳过。</p>
+ *
+ * <p>自动废弃信号（运行期连续 N 次 404 确认 / 探测连续 N 次消失）可覆盖人工状态
+ * （含人工 DEPRECATED/SUSPENDED），因上游确认不可用后继续人工状态无意义；确认有
+ * 连续 N 次真实信号前提，误伤概率低。</p>
  */
 @Slf4j
 @Service

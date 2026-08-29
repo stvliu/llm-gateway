@@ -30,10 +30,10 @@ import java.util.List;
 /**
  * 系统设置默认配置项种子加载器
  *
- * <p>应用启动时，若 {@code system_settings} 表为空则写入 8 个默认配置项
- * （审计保留天数、目录自动同步开关/周期、模型废弃自动化开关/运行检查/
- * 废弃确认次数/上游探测开关/探测周期），供审计清理（Task 4）、同步自动执行
- * （Task 5）与模型生命周期管理（模型废弃自动化）等后续功能消费。</p>
+ * <p>应用启动时按 key 补缺写入 8 个默认配置项（审计保留天数、目录自动同步开关/周期、
+ * 模型废弃自动化开关/运行检查/废弃确认次数/上游探测开关/探测周期），供审计清理
+ * （Task 4）、同步自动执行（Task 5）与模型生命周期管理（模型废弃自动化）等后续功能消费。
+ * 已有 key 跳过不覆盖（保留用户修改），仅补齐缺失 key。</p>
  *
  * <p>优先级取最低（{@link Ordered#LOWEST_PRECEDENCE}），确保在业务数据加载
  * （如 BuiltinDataLoader）之后执行，避免与其它种子逻辑竞争。</p>
@@ -59,20 +59,16 @@ public class SettingsDefaultDataInitializer implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) {
-        List<SystemSetting> existing = repository.findAll();
-        if (!existing.isEmpty()) {
-            log.info("系统设置已存在 {} 条，跳过默认配置项种子加载", existing.size());
-            return;
-        }
         seedDefaults();
     }
 
     /**
-     * 写入默认配置项
+     * 按 key 补缺写入默认配置项
      *
-     * <p>逐条插入并对唯一约束冲突容错：多实例并发首启时，多个实例都可能通过
-     * {@link #run(ApplicationArguments)} 的表空检查，后插入者会撞
-     * {@code setting_key} 唯一约束。捕获数据完整性异常（JPA 场景下 Hibernate
+     * <p>遍历默认配置，仅对 {@link SystemSettingRepository#findByKey} 查无的 key 执行插入；
+     * 已存在的 key 跳过（保留用户已修改的值，不覆盖）。逐条插入仍对唯一约束冲突容错：
+     * 多实例并发首启时 check-then-insert 存在竞态窗口，后插入者会撞 {@code setting_key}
+     * 唯一约束。捕获数据完整性异常（JPA 场景下 Hibernate
      * {@code ConstraintViolationException} 被 Spring 翻译为
      * {@link DataIntegrityViolationException}，其子类
      * {@link org.springframework.dao.DuplicateKeyException} 为 JDBC 直译路径）
@@ -89,8 +85,17 @@ public class SettingsDefaultDataInitializer implements ApplicationRunner {
                 setting("catalog.deprecation.probe.enabled", "true", "BOOLEAN", "CATALOG", "上游列表探测（提前预警）", true),
                 setting("catalog.deprecation.probe.interval", "WEEKLY", "ENUM", "CATALOG", "上游列表探测周期", true)
         );
-        defaults.forEach(this::saveWithRaceTolerance);
-        log.info("已写入 {} 条默认配置项", defaults.size());
+        int inserted = 0;
+        for (SystemSetting setting : defaults) {
+            if (repository.findByKey(setting.getSettingKey()).isPresent()) {
+                // 已存在则跳过，保留用户修改后的值，不覆盖
+                log.debug("默认配置项 {} 已存在，跳过写入", setting.getSettingKey());
+                continue;
+            }
+            saveWithRaceTolerance(setting);
+            inserted++;
+        }
+        log.info("已补齐 {} 条缺失默认配置项", inserted);
     }
 
     /**

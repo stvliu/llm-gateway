@@ -57,15 +57,26 @@ class SettingsDefaultDataInitializerTest {
     }
 
     @Test
-    @DisplayName("表已有数据时跳过种子加载")
-    void run_skipsSeedWhenSettingsExist() {
+    @DisplayName("存量已有部分 key 时只补缺失 key、不覆盖已有值")
+    void run_seedsOnlyMissingKeys_keepsExistingValues() {
         InMemorySystemSettingRepository repository = new InMemorySystemSettingRepository();
+        // 用户已把 confirm-count 修改为 5，另有一个无关业务配置 app.title
+        repository.save(setting("catalog.deprecation.confirm-count", "5", "NUMBER"));
         repository.save(setting("app.title", "LLM-Gateway", "STRING"));
 
         new SettingsDefaultDataInitializer(repository).run(null);
+        SystemSettingService settingService = new SystemSettingServiceImpl(repository);
 
-        // 已存在数据时不再写入默认种子
-        assertThat(repository.findAll()).hasSize(1);
+        // 已有 key 不被覆盖：confirm-count 保持用户修改值 5（而非默认 3）
+        assertThat(settingService.getInt("catalog.deprecation.confirm-count", 0)).isEqualTo(5);
+        // 缺失 key 被补齐
+        assertThat(settingService.getBoolean("catalog.deprecation.enabled", false)).isTrue();
+        assertThat(settingService.getBoolean("catalog.deprecation.runtime.enabled", false)).isTrue();
+        assertThat(settingService.getBoolean("catalog.deprecation.probe.enabled", false)).isTrue();
+        assertThat(settingService.getEnum("catalog.deprecation.probe.interval", SyncInterval.class, null))
+                .isEqualTo(SyncInterval.WEEKLY);
+        // 总数 = 2 个已有 + 7 个补齐默认（8 个默认中仅 confirm-count 已存在）
+        assertThat(repository.findAll()).hasSize(9);
     }
 
     private static SystemSetting setting(String key, String value, String type) {

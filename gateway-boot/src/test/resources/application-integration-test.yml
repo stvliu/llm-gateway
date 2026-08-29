@@ -31,6 +31,9 @@ gateway:
     sync:
       # 测试环境关闭定时自动同步，避免启动即触发真实 models.dev 拉取与数据初始化竞态
       auto-enabled: false
+    probe:
+      # 测试环境关闭上游列表探测定时装配，避免 @SpringBootTest 长时间运行触发真实探测
+      auto-enabled: false
   audit:
     cleanup:
       # 测试环境关闭定时清理，避免集成测试期间清理审计日志干扰测试数据
