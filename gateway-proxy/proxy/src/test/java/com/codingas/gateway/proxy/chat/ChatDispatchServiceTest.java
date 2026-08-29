@@ -319,9 +319,10 @@ class ChatDispatchServiceTest {
         }
 
         @Test
-        @DisplayName("MODEL_NOT_FOUND 异常触发废弃检测（modelName 取 ue.getModel()）")
+        @DisplayName("MODEL_NOT_FOUND 异常触发废弃检测（modelName 取 request.getModel() 用户面标识，而非 ue.getModel() 上游名）")
         void dispatch_modelNotFound_triggersDetector() {
-            // given — invoke 抛 UpstreamException(MODEL_NOT_FOUND, model="gpt-4")
+            // given — invoke 抛 UpstreamException(MODEL_NOT_FOUND)，ue 携带调谐后的上游模型名 "gpt-4"，
+            // 与用户面模型名 "gpt-4o"（request.getModel()）不同（显式映射渠道场景）
             OpenAIChatRequest request = OpenAIChatRequest.builder()
                     .model("gpt-4o")
                     .messages(List.of(OpenAIChatRequest.Message.builder().role("user").content("hello").build()))
@@ -334,31 +335,14 @@ class ChatDispatchServiceTest {
             lenient().when(channelFailoverInvoker.invoke(eq(openAIContext), anyList(), any(ProtocolRequest.class),
                     eq(Protocol.OPENAI), eq(7L), anyString())).thenThrow(modelNotFound);
 
-            // when & then — 错误原样抛出，同时触发废弃检测（不阻断错误返回）
-            assertThatThrownBy(() -> dispatchService.dispatch(request, testIdentity, RoutingStrategy.WEIGHTED))
-                    .isSameAs(modelNotFound);
-            verify(deprecationDetector).onModelNotFound("gpt-4");
-        }
-
-        @Test
-        @DisplayName("MODEL_NOT_FOUND 且 ue 未携带 model 时回退 request.getModel() 触发检测")
-        void dispatch_modelNotFound_modelNull_usesRequestModel() {
-            // given — UpstreamException 简构（model 为 null），回退 request.getModel()
-            OpenAIChatRequest request = OpenAIChatRequest.builder()
-                    .model("gpt-4o")
-                    .messages(List.of(OpenAIChatRequest.Message.builder().role("user").content("hello").build()))
-                    .build();
-
-            UpstreamException modelNotFound = new UpstreamException(ProviderErrorType.MODEL_NOT_FOUND, "404 模型不存在");
-            lenient().when(routingResolver.resolveCandidates("gpt-4o", Protocol.OPENAI, 7L, 1L, "USER", RoutingStrategy.WEIGHTED))
-                    .thenReturn(List.of(openAIContext));
-            lenient().when(channelFailoverInvoker.invoke(eq(openAIContext), anyList(), any(ProtocolRequest.class),
-                    eq(Protocol.OPENAI), eq(7L), anyString())).thenThrow(modelNotFound);
-
-            // when & then
+            // when & then — 错误原样抛出，同时触发废弃检测（不阻断错误返回）。
+            // 检测键取用户面 request.getModel() 而非 ue.getModel()：KeyFailoverInvoker 候选耗尽重抛时
+            // ue.getModel() 是调谐后的上游模型名（instance.upstreamModelName），显式映射渠道下
+            // markDeprecated findByModelName 查无此 Model 会静默 no-op，导致同步确认通道失效。
             assertThatThrownBy(() -> dispatchService.dispatch(request, testIdentity, RoutingStrategy.WEIGHTED))
                     .isSameAs(modelNotFound);
             verify(deprecationDetector).onModelNotFound("gpt-4o");
+            verify(deprecationDetector, never()).onModelNotFound("gpt-4");
         }
 
         @Test

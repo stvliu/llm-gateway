@@ -62,6 +62,10 @@ public class UpstreamModelProbeClient {
         try {
             response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
         } catch (Exception e) {
+            // 若被中断则恢复中断标志，避免异常传播吞掉中断状态（调用方依赖该标志判断退出）
+            if (e instanceof InterruptedException) {
+                Thread.currentThread().interrupt();
+            }
             throw new CatalogSyncException("上游模型列表请求失败: " + url + " - " + e.getMessage());
         }
         if (response.statusCode() < 200 || response.statusCode() >= 300) {

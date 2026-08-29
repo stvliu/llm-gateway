@@ -103,4 +103,15 @@ class RuntimeDeprecationDetectorTest {
         detector.onModelNotFound("claude-3");
         verify(deprecationService, never()).markDeprecated(any(), any());
     }
+
+    @Test
+    @DisplayName("confirm-count 配置非法（≤0）时下限为 1，首次信号即确认")
+    void invalidConfirmCount_usesLowerBoundOne() {
+        when(settingService.getBoolean("catalog.deprecation.enabled", true)).thenReturn(true);
+        when(settingService.getBoolean("catalog.deprecation.runtime.enabled", true)).thenReturn(true);
+        when(settingService.getInt("catalog.deprecation.confirm-count", 3)).thenReturn(0);
+
+        detector.onModelNotFound("gpt-4");
+        verify(deprecationService).markDeprecated(eq("gpt-4"), contains("model_not_found"));
+    }
 }

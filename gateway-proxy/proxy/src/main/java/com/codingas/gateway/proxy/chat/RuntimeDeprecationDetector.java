@@ -53,7 +53,8 @@ public class RuntimeDeprecationDetector {
             log.debug("模型废弃自动化已关闭，忽略 model_not_found: {}", modelName);
             return;
         }
-        int confirmCount = settingService.getInt("catalog.deprecation.confirm-count", 3);
+        // 确认次数下限为 1：配置非法（≤0）时避免永远无法达到阈值导致确认通道失效
+        int confirmCount = Math.max(1, settingService.getInt("catalog.deprecation.confirm-count", 3));
         int count = confirmations.merge(modelName, 1, Integer::sum);
         if (count >= confirmCount) {
             confirmations.remove(modelName);

@@ -109,9 +109,13 @@ public class ChatDispatchServiceImpl implements ChatDispatchService {
             return response;
         } catch (Exception e) {
             // 模型不存在信号：触发废弃检测（仅确认计数，不阻断错误返回）
+            // 检测键统一取用户面标识 request.getModel()（设计 §4.2）：KeyFailoverInvoker 候选耗尽
+            // 重抛时 ue.getModel() 是调谐后的上游模型名（instance.upstreamModelName），对显式映射
+            // 渠道（上游名 ≠ Model.modelName）markDeprecated findByModelName 查无此 Model 会静默
+            // no-op，导致同步确认通道失效。流式路径同样以 request.getModel() 作为回退键，保持一致。
             if (e instanceof UpstreamException ue
                     && ue.getErrorType() == ProviderErrorType.MODEL_NOT_FOUND) {
-                deprecationDetector.onModelNotFound(ue.getModel() != null ? ue.getModel() : request.getModel());
+                deprecationDetector.onModelNotFound(request.getModel());
             }
             callLog.setDurationMs(System.currentTimeMillis() - startTime);
             callLog.setSuccess(false);

@@ -119,6 +119,22 @@ class UpstreamModelProbeClientTest {
                 .isInstanceOf(CatalogSyncException.class);
     }
 
+    @Test
+    @DisplayName("send 抛 InterruptedException 时恢复中断标志并抛 CatalogSyncException")
+    void fetchModelIds_interrupted_restoresFlagAndThrows() throws Exception {
+        // given：HttpClient send 被中断
+        when(httpClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
+                .thenThrow(new InterruptedException("interrupted"));
+        ChannelEndpoint endpoint = newEndpoint("https://api.example.com", Protocol.OPENAI);
+
+        // when/then — 抛 CatalogSyncException 且当前线程中断标志被恢复（供调用方感知中断）
+        assertThatThrownBy(() -> client.fetchModelIds(endpoint, "sk-test"))
+                .isInstanceOf(CatalogSyncException.class);
+        assertThat(Thread.currentThread().isInterrupted()).isTrue();
+        // 清除中断标志，避免污染后续测试执行
+        Thread.interrupted();
+    }
+
     /** 构造渠道端点测试对象 */
     private ChannelEndpoint newEndpoint(String endpointUrl, Protocol protocol) {
         ChannelEndpoint endpoint = new ChannelEndpoint();
