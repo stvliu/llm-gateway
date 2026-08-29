@@ -15,7 +15,7 @@
  */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { modelApi } from '@/services/api/model';
-import type { CreateModelRequest, UpdateModelRequest } from '@/types/model';
+import type { CreateModelRequest, UpdateModelRequest, CopyModelRequest } from '@/types/model';
 import type { PageParams } from '@/types/api';
 
 export const modelKeys = {
@@ -76,6 +76,18 @@ export function useUnlockModel() {
     mutationFn: (id: number) => modelApi.unlock(id),
     onSuccess: (_, id) => {
       queryClient.invalidateQueries({ queryKey: modelKeys.detail(id) });
+      queryClient.invalidateQueries({ queryKey: modelKeys.lists() });
+    },
+  });
+}
+
+/** 复制模型（继承源规格生成新模型，成功后刷新模型列表） */
+export function useCopyModel() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: CopyModelRequest }) =>
+      modelApi.copy(id, data),
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: modelKeys.lists() });
     },
   });

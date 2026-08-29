@@ -93,6 +93,16 @@ export interface CreateModelRequest {
   modalities?: string[];
 }
 
+/** 模型复制请求（仅覆盖字段，其余规格从源继承） */
+export interface CopyModelRequest {
+  /** 供应商侧模型标识（必填，用于新模型） */
+  modelName: string;
+  /** 显示名称 */
+  displayName?: string;
+  /** 模型族 */
+  modelFamily?: string;
+}
+
 /** 更新模型请求 */
 export interface UpdateModelRequest {
   /** 供应商侧模型标识 */

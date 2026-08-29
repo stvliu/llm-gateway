@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import { api } from './client';
-import type { Model, CreateModelRequest, UpdateModelRequest } from '@/types/model';
+import type { Model, CreateModelRequest, UpdateModelRequest, CopyModelRequest } from '@/types/model';
 import type { PageResponse, PageParams } from '@/types/api';
 
 /** 模型 API */
@@ -46,4 +46,8 @@ export const modelApi = {
   /** 清除字段人工锁定（恢复 models.dev 同步覆盖权限） */
   unlock: (id: number) =>
     api.post<Model>(`/models/${id}/unlock`),
+
+  /** 复制模型（继承源规格生成新模型） */
+  copy: (id: number, data: CopyModelRequest) =>
+    api.post<Model>(`/models/${id}/copy`, data),
 };
