@@ -19,6 +19,7 @@ import com.codingas.gateway.provider.channel.Channel;
 import com.codingas.gateway.provider.channel.ChannelService;
 import com.codingas.gateway.provider.model.BillingMode;
 import com.codingas.gateway.provider.vendor.Provider;
+import com.codingas.gateway.web.api.dto.ChannelCopyRequest;
 import com.codingas.gateway.web.api.dto.ChannelEndpointResponse;
 import com.codingas.gateway.web.api.dto.ChannelRequest;
 import com.codingas.gateway.web.api.dto.ChannelResponse;
@@ -47,6 +48,17 @@ public class ChannelFacade {
      */
     public ChannelResponse create(ChannelRequest request) {
         return toResponse(channelService.create(request.toEntity()));
+    }
+
+    /**
+     * 复制渠道（组装响应：本体 + 端点列表 + 提供商名称）
+     *
+     * @param id      源渠道 ID
+     * @param request 复制请求 DTO（name 必填，copyCredentials 控制凭证复制）
+     * @return 新渠道响应 DTO
+     */
+    public ChannelResponse copy(Long id, ChannelCopyRequest request) {
+        return toResponse(channelService.copy(id, request.toEntity(), request.isCopyCredentials()));
     }
 
     /**

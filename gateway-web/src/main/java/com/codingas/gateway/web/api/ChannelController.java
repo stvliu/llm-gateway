@@ -53,6 +53,19 @@ public class ChannelController {
         return channelFacade.create(request);
     }
 
+    /**
+     * 复制渠道
+     *
+     * <p>复制源渠道本体配置 + 端点 + 模型实例；凭证（API Key）复制由
+     * 请求中的 copyCredentials 控制，默认不复制。</p>
+     */
+    @PostMapping("/{id}/copy")
+    public ChannelResponse copy(
+            @PathVariable Long id,
+            @Valid @RequestBody ChannelCopyRequest request) {
+        return channelFacade.copy(id, request);
+    }
+
     @PutMapping("/{id}")
     public ChannelResponse update(
             @PathVariable Long id,
