@@ -27,12 +27,13 @@ import {
   Tooltip,
   Alert,
 } from 'antd';
-import { PlusOutlined, DeleteOutlined, EditOutlined } from '@ant-design/icons';
+import { PlusOutlined, DeleteOutlined, EditOutlined, CopyOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { Card } from 'antd';
 import { useModels, useDeleteModel, useSetEnabledModel } from '@/services/query/useModels';
 import ModelCreateModal from './ModelCreateModal';
 import ModelEditDrawer from './ModelEditDrawer';
+import CopyModelModal from './CopyModelModal';
 import type { Model } from '@/types/model';
 
 /** 模型来源标签颜色配置 */
@@ -55,6 +56,8 @@ export default function Models() {
   const [createOpen, setCreateOpen] = useState(false);
   const [editingModel, setEditingModel] = useState<Model | null>(null);
   const [editOpen, setEditOpen] = useState(false);
+  // 复制对话框的源模型（非空时打开）
+  const [copySource, setCopySource] = useState<Model | null>(null);
 
   const params = {
     page,
@@ -207,7 +210,7 @@ export default function Models() {
     {
       title: t('actions', { defaultValue: '操作' }),
       key: 'actions',
-      width: 110,
+      width: 150,
       render: (_: unknown, record: Model) => (
         <Space>
           <Tooltip title={t('edit', { defaultValue: '编辑' })}>
@@ -219,6 +222,15 @@ export default function Models() {
                 setEditingModel(record);
                 setEditOpen(true);
               }}
+            />
+          </Tooltip>
+          {/* 同家族模型复制：以当前行模型为源打开复制对话框 */}
+          <Tooltip title={t('copy', { defaultValue: '复制' })}>
+            <Button
+              type="text"
+              size="small"
+              icon={<CopyOutlined />}
+              onClick={() => setCopySource(record)}
             />
           </Tooltip>
           <Popconfirm
@@ -313,6 +325,13 @@ export default function Models() {
       <ModelCreateModal
         open={createOpen}
         onClose={() => setCreateOpen(false)}
+      />
+      {/* 行内复制对话框：复制成功后刷新模型列表 */}
+      <CopyModelModal
+        open={!!copySource}
+        source={copySource}
+        onClose={() => setCopySource(null)}
+        onCopied={() => refetch()}
       />
       <ModelEditDrawer
         open={editOpen}
