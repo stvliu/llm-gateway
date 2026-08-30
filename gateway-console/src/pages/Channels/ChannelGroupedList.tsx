@@ -26,6 +26,8 @@ export interface ChannelGroupedListProps {
   onChannelToggleState: (id: number, enabled: boolean) => void;
   /** 任务 9.1：测试回调可携带"打开抽屉到 credentials Tab + 高亮测试全部"意图 */
   onTestChannel: (channel: ChannelCardType, intent?: ChannelTestIntent) => void;
+  /** 复制回调：打开复制弹窗（预填源渠道配置） */
+  onCopyChannel?: (channel: ChannelCardType) => void;
   onStateTransition?: (id: number, targetState: string, reason?: string) => void;
   onEditProvider?: (providerId: number) => void;
   onToggleProviderEnabled?: (providerId: number) => void;
@@ -43,6 +45,7 @@ export const ChannelGroupedList: FC<ChannelGroupedListProps> = ({
   onChannelDelete,
   onChannelToggleState,
   onTestChannel,
+  onCopyChannel,
   onStateTransition,
   onEditProvider,
   onToggleProviderEnabled,
@@ -110,6 +113,7 @@ export const ChannelGroupedList: FC<ChannelGroupedListProps> = ({
                     onDelete={onChannelDelete}
                     onToggleState={onChannelToggleState}
                     onTest={onTestChannel}
+                    onCopy={onCopyChannel}
                     onStateTransition={onStateTransition}
                   />
                 ))}

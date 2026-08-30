@@ -42,6 +42,7 @@ import { ChannelDetailDrawer } from './ChannelDetailDrawer';
 import { ChannelCreateWizard } from './ChannelCreateWizard';
 import { ProviderEditModal } from './ProviderEditModal';
 import { ChannelTableView } from './ChannelTableView';
+import CopyChannelModal from './CopyChannelModal';
 import { ConnectivityTestPanel } from './ConnectivityTestPanel';
 import BatchImportModal from './BatchImportModal';
 import { BatchExportButton } from './BatchExportButton';
@@ -97,6 +98,8 @@ export default function Channels() {
   const [drawerInitialTab, setDrawerInitialTab] = useState<string | undefined>(undefined);
   // 任务 9.1：闪电图标点击携带 highlightTestAll=true，由 ChannelDetailDrawer 接收并 800ms 自清除
   const [drawerHighlightTestAll, setDrawerHighlightTestAll] = useState(false);
+  // 复制渠道：源渠道（非 null 时打开复制弹窗）
+  const [copySource, setCopySource] = useState<ChannelCard | null>(null);
 
   // 视图切换（持久化到 localStorage）
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
@@ -380,6 +383,7 @@ export default function Channels() {
               }
             }}
             onTestChannel={handleTestChannel}
+            onCopyChannel={setCopySource}
             onEditProvider={(id) => {
               const p = providersData?.items?.find((p) => p.id === id);
               if (p) {
@@ -419,6 +423,7 @@ export default function Channels() {
           }}
           onDelete={(id) => handleDelete(id)}
           onTest={(channel) => handleTestChannel(channel)}
+          onCopy={setCopySource}
         />
       )}
 
@@ -441,6 +446,13 @@ export default function Channels() {
       <ChannelCreateWizard
         open={wizardVisible}
         onClose={() => setWizardVisible(false)}
+      />
+
+      {/* 复制渠道弹窗：成功后列表由 useCopyChannel 内部 invalidate 自动刷新 */}
+      <CopyChannelModal
+        open={!!copySource}
+        source={copySource}
+        onClose={() => setCopySource(null)}
       />
 
       {/* 供应商编辑弹窗 */}

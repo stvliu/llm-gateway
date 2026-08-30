@@ -21,6 +21,7 @@ import {
   MoreOutlined,
   PlayCircleOutlined,
   PauseCircleOutlined,
+  CopyOutlined,
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import ChannelStateTag from '@/components/common/ChannelStateTag';
@@ -38,6 +39,8 @@ interface ChannelTableViewProps {
   onDelete: (id: number) => void;
   /** 任务 9.1：测试回调可携带"打开抽屉到 credentials Tab + 高亮测试全部"意图 */
   onTest: (channel: ChannelCard, intent?: { tab: 'credentials'; highlightTestAll: boolean }) => void;
+  /** 复制回调：打开复制弹窗（预填源渠道配置） */
+  onCopy?: (channel: ChannelCard) => void;
   onStateTransition?: (id: number, targetState: string, reason?: string) => void;
 }
 
@@ -51,6 +54,7 @@ export const ChannelTableView: FC<ChannelTableViewProps> = ({
   onChannelClick,
   onDelete,
   onTest,
+  onCopy,
   onStateTransition,
 }) => {
   const { t } = useTranslation('channels');
@@ -239,6 +243,16 @@ export const ChannelTableView: FC<ChannelTableViewProps> = ({
                 onClick={() => onChannelClick(r.id)}
               />
             </Tooltip>
+            {onCopy && (
+              <Tooltip title={t('channel.copy.action', { defaultValue: '复制' })}>
+                <Button
+                  type="text"
+                  size="small"
+                  icon={<CopyOutlined />}
+                  onClick={() => onCopy(r)}
+                />
+              </Tooltip>
+            )}
             {primaryAction && (
               <Tooltip title={t(getTransitionActionLabel(currentState, primaryAction))}>
                 <Button

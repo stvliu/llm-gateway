@@ -20,6 +20,7 @@ import {
   MoreOutlined,
   PlayCircleOutlined,
   PauseCircleOutlined,
+  CopyOutlined,
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { theme } from 'antd';
@@ -50,6 +51,8 @@ interface ChannelCardProps {
   onToggleState: (id: number, enabled: boolean) => void;
   /** 卡片闪电图标点击回调；intent 描述父级该如何打开抽屉（任务 9.1） */
   onTest: (channel: ChannelCardType, intent?: ChannelTestIntent) => void;
+  /** 复制回调：打开复制弹窗（预填源渠道配置） */
+  onCopy?: (channel: ChannelCardType) => void;
   onStateTransition?: (id: number, targetState: string, reason?: string) => void;
 }
 
@@ -65,7 +68,7 @@ interface ChannelCardProps {
  *   <li>SUSPENDED：visualStyle='muted'，沿用轻度透明（0.85）作为低饱和提示</li>
  * </ul>
  */
-export function ChannelCard({ channel, onClick, onDelete, onTest, onStateTransition }: ChannelCardProps) {
+export function ChannelCard({ channel, onClick, onDelete, onTest, onCopy, onStateTransition }: ChannelCardProps) {
   const { t } = useTranslation('channels');
   const { token } = theme.useToken();
   const { modal } = App.useApp();
@@ -240,6 +243,21 @@ export function ChannelCard({ channel, onClick, onDelete, onTest, onStateTransit
               onClick={handleDetailClick}
             />
           </Tooltip>
+
+          {/* 复制按钮：打开复制弹窗（预填源渠道配置） */}
+          {onCopy && (
+            <Tooltip title={t('channel.copy.action', { defaultValue: '复制' })}>
+              <Button
+                type="text"
+                size="small"
+                icon={<CopyOutlined />}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onCopy(channel);
+                }}
+              />
+            </Tooltip>
+          )}
 
           {/* Primary 按钮 — 图标 + Tooltip，使用 text 类型与其他操作按钮风格统一 */}
           {primaryAction && (

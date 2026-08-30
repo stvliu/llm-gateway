@@ -54,6 +54,7 @@ vi.mock('@/services/query/useChannels', () => {
     useDeleteChannelCredential: () => noopMutation,
     useTestChannelCredential: () => noopMutation,
     useAddChannel: () => noopMutation,
+    useCopyChannel: () => noopMutation,
     useChannelModels: fakeHook,
     useCreateChannelModel: () => noopMutation,
     useDeleteChannelModel: () => noopMutation,
