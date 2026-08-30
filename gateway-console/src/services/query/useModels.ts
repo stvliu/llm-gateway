@@ -26,11 +26,12 @@ export const modelKeys = {
   detail: (id: number) => [...modelKeys.details(), id] as const,
 };
 
-/** 获取模型列表（服务端分页，返回完整 PageResponse） */
-export function useModels(params?: PageParams) {
+/** 获取模型列表（服务端分页，返回完整 PageResponse）；options.enabled 支持延迟加载（默认 true） */
+export function useModels(params?: PageParams, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: modelKeys.list({ ...params }),
     queryFn: () => modelApi.list(params),
+    enabled: options?.enabled,
   });
 }
 

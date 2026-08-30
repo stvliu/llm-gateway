@@ -69,8 +69,9 @@ export default function ModelCreateModal({ open, onClose }: Props) {
   const { data: providersPage } = useProviders();
   const providers = providersPage?.items ?? [];
 
-  // 全量模型列表供「从已有模型复制」选择器使用（按模型族分组 + 名称搜索）
-  const { data: allModelsPage } = useModels({ limit: 1000 });
+  // 全量模型列表供「从已有模型复制」选择器使用（按模型族分组 + 名称搜索）；
+  // enabled: open 延迟加载，弹窗关闭时不拉取全量模型
+  const { data: allModelsPage } = useModels({ limit: 1000 }, { enabled: open });
   const allModels = allModelsPage?.items ?? [];
 
   const selectedProviderId = Form.useWatch('providerId', form);

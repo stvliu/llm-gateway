@@ -16,6 +16,7 @@
 import { Modal, Form, Input, App } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { useCopyModel } from '@/services/query/useModels';
+import { extractErrorMessage } from '@/utils/errorMessage';
 import type { Model } from '@/types/model';
 
 interface Props {
@@ -51,9 +52,11 @@ export default function CopyModelModal({ open, source, onClose, onCopied }: Prop
       onClose();
       onCopied(created);
     } catch (e: unknown) {
-      // 表单校验失败（errorFields）静默返回，其余视为接口错误
-      if (e && typeof e === 'object' && 'errorFields' in e) return;
-      message.error(t('copyFailed', { defaultValue: '复制失败' }));
+      // extractErrorMessage 优先提取后端 ApiResponse.error.message（400 业务原因）；
+      // 表单校验失败（errorFields）返回空串，跳过 toast（由表单就地展示行内错误）
+      const errMsg = extractErrorMessage(e);
+      if (!errMsg) return;
+      message.error(errMsg);
     }
   };
 

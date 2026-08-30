@@ -326,12 +326,12 @@ export default function Models() {
         open={createOpen}
         onClose={() => setCreateOpen(false)}
       />
-      {/* 行内复制对话框：复制成功后刷新模型列表 */}
+      {/* 行内复制对话框：复制成功后由 useCopyModel 内部 invalidate 自动刷新列表，这里仅关闭对话框 */}
       <CopyModelModal
         open={!!copySource}
         source={copySource}
         onClose={() => setCopySource(null)}
-        onCopied={() => refetch()}
+        onCopied={() => setCopySource(null)}
       />
       <ModelEditDrawer
         open={editOpen}
