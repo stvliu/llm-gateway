@@ -22,6 +22,8 @@ import com.codingas.gateway.web.api.dto.*;
 import com.codingas.gateway.web.advice.ApiResponseWrapperAdvice;
 import com.codingas.gateway.web.advice.GlobalExceptionHandler;
 import com.codingas.gateway.common.dto.PageResponse;
+import com.codingas.gateway.common.exception.DuplicateResourceException;
+import com.codingas.gateway.common.exception.ResourceNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -259,6 +261,40 @@ class ModelControllerTest {
                             .contentType(MediaType.APPLICATION_JSON)
                             .content("{}"))
                     .andExpect(status().isBadRequest());
+        }
+
+        @Test
+        @DisplayName("复制时 modelName 已存在返回 409")
+        void copy_duplicateModelName_conflict() throws Exception {
+            // given：服务层抛出资源重复异常（异常路径由 GlobalExceptionHandler 映射为 409）
+            when(modelService.copy(eq(1L), any(Model.class)))
+                    .thenThrow(new DuplicateResourceException("Model", "modelName"));
+
+            // when/then：409 + ApiResponse.error 错误码/业务消息透出
+            mockMvc.perform(post("/api/v1/models/{id}/copy", 1L)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{\"modelName\":\"gpt-4o\"}"))
+                    .andExpect(status().isConflict())
+                    .andExpect(jsonPath("$.success").value(false))
+                    .andExpect(jsonPath("$.error.code").value("CONFLICT"))
+                    .andExpect(jsonPath("$.error.message").value("Model already exists with modelName"));
+        }
+
+        @Test
+        @DisplayName("复制时源模型不存在返回 404")
+        void copy_sourceNotFound_notFound() throws Exception {
+            // given：服务层抛出资源未找到异常（异常路径由 GlobalExceptionHandler 映射为 404）
+            when(modelService.copy(eq(1L), any(Model.class)))
+                    .thenThrow(new ResourceNotFoundException("Model", 1L));
+
+            // when/then：404 + ApiResponse.error 错误码/业务消息透出
+            mockMvc.perform(post("/api/v1/models/{id}/copy", 1L)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{\"modelName\":\"gpt-4o\"}"))
+                    .andExpect(status().isNotFound())
+                    .andExpect(jsonPath("$.success").value(false))
+                    .andExpect(jsonPath("$.error.code").value("NOT_FOUND"))
+                    .andExpect(jsonPath("$.error.message").value("Model not found with id: 1"));
         }
     }
 

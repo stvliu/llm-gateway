@@ -16,8 +16,10 @@
 package com.codingas.gateway.web.advice;
 
 import com.codingas.gateway.common.dto.ApiResponse;
+import com.codingas.gateway.common.exception.DuplicateResourceException;
 import com.codingas.gateway.common.exception.GatewayException;
 import com.codingas.gateway.common.exception.GatewayRequestException;
+import com.codingas.gateway.common.exception.ResourceNotFoundException;
 import com.codingas.gateway.protocol.transport.UpstreamException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -154,6 +156,50 @@ class GlobalExceptionHandlerTest {
             assertThat(response.getBody().getError().getMessage())
                     .contains("Amount must be positive")
                     .contains("Customer name is required");
+        }
+    }
+
+    @Nested
+    @DisplayName("ResourceNotFoundException 处理")
+    class HandleResourceNotFoundExceptionTests {
+
+        @Test
+        @DisplayName("应返回 NOT_FOUND 状态码并透出业务消息")
+        void handleResourceNotFoundException_returnsNotFound() {
+            // given
+            ResourceNotFoundException ex = new ResourceNotFoundException("Model", 1L);
+
+            // when
+            ResponseEntity<ApiResponse<Void>> response = handler.handleResourceNotFoundException(ex);
+
+            // then
+            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+            assertThat(response.getBody()).isNotNull();
+            assertThat(response.getBody().isSuccess()).isFalse();
+            assertThat(response.getBody().getError().getCode()).isEqualTo("NOT_FOUND");
+            assertThat(response.getBody().getError().getMessage()).isEqualTo("Model not found with id: 1");
+        }
+    }
+
+    @Nested
+    @DisplayName("DuplicateResourceException 处理")
+    class HandleDuplicateResourceExceptionTests {
+
+        @Test
+        @DisplayName("应返回 CONFLICT 状态码并透出业务消息")
+        void handleDuplicateResourceException_returnsConflict() {
+            // given
+            DuplicateResourceException ex = new DuplicateResourceException("Model", "modelName");
+
+            // when
+            ResponseEntity<ApiResponse<Void>> response = handler.handleDuplicateResourceException(ex);
+
+            // then
+            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+            assertThat(response.getBody()).isNotNull();
+            assertThat(response.getBody().isSuccess()).isFalse();
+            assertThat(response.getBody().getError().getCode()).isEqualTo("CONFLICT");
+            assertThat(response.getBody().getError().getMessage()).isEqualTo("Model already exists with modelName");
         }
     }
 

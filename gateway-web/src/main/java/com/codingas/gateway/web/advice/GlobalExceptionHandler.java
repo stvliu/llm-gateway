@@ -16,8 +16,10 @@
 package com.codingas.gateway.web.advice;
 
 import com.codingas.gateway.common.dto.ApiResponse;
+import com.codingas.gateway.common.exception.DuplicateResourceException;
 import com.codingas.gateway.common.exception.GatewayException;
 import com.codingas.gateway.common.exception.GatewayRequestException;
+import com.codingas.gateway.common.exception.ResourceNotFoundException;
 import com.codingas.gateway.protocol.transport.UpstreamException;
 import com.codingas.gateway.resilience.circuitbreaker.CircuitOpenException;
 import lombok.extern.slf4j.Slf4j;
@@ -106,6 +108,32 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.NOT_FOUND)
                 .body(ApiResponse.error("NOT_FOUND", ex.getMessage()));
+    }
+
+    /**
+     * 处理业务资源未找到异常（如 getById/update/delete/copy 源模型不存在）
+     *
+     * <p>透出异常携带的业务消息，避免落入通用 500 英文兜底。</p>
+     */
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handleResourceNotFoundException(ResourceNotFoundException ex) {
+        log.warn("Business resource not found: {}", ex.getMessage());
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(ApiResponse.error("NOT_FOUND", ex.getMessage()));
+    }
+
+    /**
+     * 处理资源重复异常（如复制时 modelName 已存在）
+     *
+     * <p>透出异常携带的业务消息，避免落入通用 500 英文兜底。</p>
+     */
+    @ExceptionHandler(DuplicateResourceException.class)
+    public ResponseEntity<ApiResponse<Void>> handleDuplicateResourceException(DuplicateResourceException ex) {
+        log.warn("Duplicate resource: {}", ex.getMessage());
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(ApiResponse.error("CONFLICT", ex.getMessage()));
     }
 
     /**
