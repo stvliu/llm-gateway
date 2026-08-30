@@ -15,8 +15,11 @@
  */
 package com.codingas.gateway.provider.channel;
 
+import com.codingas.gateway.common.exception.DuplicateResourceException;
 import com.codingas.gateway.common.exception.GatewayRequestException;
+import com.codingas.gateway.common.exception.ResourceNotFoundException;
 import com.codingas.gateway.provider.model.BillingMode;
+import com.codingas.gateway.provider.model.ModelInstance;
 import com.codingas.gateway.provider.model.ModelInstanceRepository;
 import com.codingas.gateway.protocol.Protocol;
 import com.codingas.gateway.provider.vendor.Provider;
@@ -31,6 +34,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -65,6 +69,9 @@ class ChannelServiceImplTest {
 
     @Mock
     private ProviderRepository providerRepository;
+
+    @Mock
+    private ChannelCredentialService channelCredentialService;
 
     @InjectMocks
     private ChannelServiceImpl channelService;
@@ -138,6 +145,173 @@ class ChannelServiceImplTest {
             assertThat(captor.getValue().getBillingMode()).isEqualTo(BillingMode.PAY_AS_YOU_GO);
             assertThat(captor.getValue().getState()).isEqualTo(ChannelState.ACTIVE);
             assertThat(captor.getValue().getProviderId()).isEqualTo(10L);
+        }
+    }
+
+    // ==================== copy 测试 ====================
+
+    @Nested
+    @DisplayName("copy 复制渠道")
+    class CopyTests {
+
+        @Test
+        @DisplayName("复制继承源配置并重置状态与健康字段")
+        void copy_inheritsConfigAndResetsState() {
+            // given：源渠道（含计费/配额/超时/重试/健康字段）+ 端点 + 模型实例
+            Channel source = buildChannel(1L, "ch-1");
+            source.setQuotaLimit(1000L);
+            source.setTimeout(60);
+            source.setMaxRetries(3);
+            source.setLastHealthCheckAt(Instant.parse("2026-01-01T00:00:00Z"));
+            source.setLastHealthStatus(ChannelHealthStatus.HEALTHY);
+            source.setLastHealthSource(ChannelHealthSource.CARD);
+            when(channelRepository.findById(1L)).thenReturn(Optional.of(source));
+
+            ChannelEndpoint ep = new ChannelEndpoint();
+            ep.setId(100L);
+            ep.setChannelId(1L);
+            ep.setProtocol(Protocol.OPENAI);
+            ep.setEndpointUrl("https://a.com");
+            when(channelEndpointRepository.findByChannelId(1L)).thenReturn(List.of(ep));
+
+            ModelInstance mi = new ModelInstance();
+            mi.setId(200L);
+            mi.setChannelId(1L);
+            mi.setModelId(5L);
+            mi.setUpstreamModelName("gpt-4");
+            mi.setState(ModelInstance.State.ACTIVE);
+            when(modelInstanceRepository.findByChannelId(1L)).thenReturn(List.of(mi));
+
+            when(channelRepository.save(any(Channel.class))).thenAnswer(inv -> {
+                Channel c = inv.getArgument(0);
+                c.setId(9L);
+                return c;
+            });
+
+            Channel override = new Channel();
+            override.setName("ch-copy");
+
+            // when
+            Channel result = channelService.copy(1L, override, false);
+
+            // then：继承本体 + 覆盖 name + 重置
+            assertThat(result.getId()).isEqualTo(9L);
+            assertThat(result.getName()).isEqualTo("ch-copy");
+            assertThat(result.getProviderId()).isEqualTo(10L);
+            assertThat(result.getBillingMode()).isEqualTo(BillingMode.PAY_AS_YOU_GO);
+            assertThat(result.getQuotaLimit()).isEqualTo(1000L);
+            assertThat(result.getTimeout()).isEqualTo(60);
+            assertThat(result.getMaxRetries()).isEqualTo(3);
+            assertThat(result.getState()).isEqualTo(ChannelState.ACTIVE);
+            assertThat(result.getLastHealthCheckAt()).isNull();
+            assertThat(result.getLastHealthStatus()).isNull();
+            assertThat(result.getLastHealthSource()).isNull();
+
+            // 端点复制（指向新渠道）
+            ArgumentCaptor<ChannelEndpoint> epCaptor = ArgumentCaptor.forClass(ChannelEndpoint.class);
+            verify(channelEndpointRepository).save(epCaptor.capture());
+            assertThat(epCaptor.getValue().getChannelId()).isEqualTo(9L);
+            assertThat(epCaptor.getValue().getProtocol()).isEqualTo(Protocol.OPENAI);
+            assertThat(epCaptor.getValue().getEndpointUrl()).isEqualTo("https://a.com");
+
+            // 模型实例复制（重置为 ACTIVE 可用状态）
+            ArgumentCaptor<ModelInstance> miCaptor = ArgumentCaptor.forClass(ModelInstance.class);
+            verify(modelInstanceRepository).save(miCaptor.capture());
+            assertThat(miCaptor.getValue().getChannelId()).isEqualTo(9L);
+            assertThat(miCaptor.getValue().getModelId()).isEqualTo(5L);
+            assertThat(miCaptor.getValue().getState()).isEqualTo(ModelInstance.State.ACTIVE);
+
+            // 默认不复制凭证
+            verify(channelCredentialService, never()).create(any(ChannelCredential.class));
+        }
+
+        @Test
+        @DisplayName("copyCredentials=true 时复制凭证（复用明文重新加密）")
+        void copy_withCredentials_copiesCredentials() {
+            Channel source = buildChannel(1L, "ch-1");
+            when(channelRepository.findById(1L)).thenReturn(Optional.of(source));
+            when(channelEndpointRepository.findByChannelId(1L)).thenReturn(List.of());
+            when(modelInstanceRepository.findByChannelId(1L)).thenReturn(List.of());
+            when(channelRepository.save(any(Channel.class))).thenAnswer(inv -> {
+                Channel c = inv.getArgument(0);
+                c.setId(9L);
+                return c;
+            });
+
+            ChannelCredential cred = new ChannelCredential();
+            cred.setId(300L);
+            cred.setChannelId(1L);
+            cred.setName("key-1");
+            cred.setApiKeyPlain("sk-1234567890");
+            cred.setWeight(1);
+            cred.setPriority(1);
+            when(channelCredentialService.listByChannelId(1L)).thenReturn(List.of(cred));
+            when(channelCredentialService.create(any(ChannelCredential.class)))
+                    .thenAnswer(inv -> inv.getArgument(0));
+
+            Channel override = new Channel();
+            override.setName("ch-copy");
+
+            channelService.copy(1L, override, true);
+
+            ArgumentCaptor<ChannelCredential> captor = ArgumentCaptor.forClass(ChannelCredential.class);
+            verify(channelCredentialService).create(captor.capture());
+            assertThat(captor.getValue().getChannelId()).isEqualTo(9L);
+            assertThat(captor.getValue().getName()).isEqualTo("key-1");
+            assertThat(captor.getValue().getApiKeyPlain()).isEqualTo("sk-1234567890");
+            assertThat(captor.getValue().getWeight()).isEqualTo(1);
+            assertThat(captor.getValue().getPriority()).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("源渠道不存在抛 ResourceNotFoundException")
+        void copy_sourceNotFound_throws() {
+            when(channelRepository.findById(99L)).thenReturn(Optional.empty());
+
+            Channel override = new Channel();
+            override.setName("x");
+
+            assertThatThrownBy(() -> channelService.copy(99L, override, false))
+                    .isInstanceOf(ResourceNotFoundException.class);
+        }
+
+        @Test
+        @DisplayName("同供应商渠道重名抛 DuplicateResourceException")
+        void copy_duplicateName_throws() {
+            Channel source = buildChannel(1L, "ch-1");
+            when(channelRepository.findById(1L)).thenReturn(Optional.of(source));
+            when(channelRepository.existsByProviderIdAndName(10L, "ch-1")).thenReturn(true);
+
+            Channel override = new Channel();
+            override.setName("ch-1");
+
+            assertThatThrownBy(() -> channelService.copy(1L, override, false))
+                    .isInstanceOf(DuplicateResourceException.class);
+            verify(channelRepository, never()).save(any(Channel.class));
+        }
+
+        @Test
+        @DisplayName("凭证复制失败时异常向上传播（事务回滚由 @Transactional 保证）")
+        void copy_credentialFailure_propagates() {
+            Channel source = buildChannel(1L, "ch-1");
+            when(channelRepository.findById(1L)).thenReturn(Optional.of(source));
+            when(channelEndpointRepository.findByChannelId(1L)).thenReturn(List.of());
+            when(modelInstanceRepository.findByChannelId(1L)).thenReturn(List.of());
+            when(channelRepository.save(any(Channel.class))).thenAnswer(inv -> inv.getArgument(0));
+
+            ChannelCredential cred = new ChannelCredential();
+            cred.setChannelId(1L);
+            cred.setApiKeyPlain("sk-1234567890");
+            when(channelCredentialService.listByChannelId(1L)).thenReturn(List.of(cred));
+            when(channelCredentialService.create(any(ChannelCredential.class)))
+                    .thenThrow(new IllegalArgumentException("加密失败"));
+
+            Channel override = new Channel();
+            override.setName("ch-copy");
+
+            assertThatThrownBy(() -> channelService.copy(1L, override, true))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("加密失败");
         }
     }
 

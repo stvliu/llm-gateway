@@ -53,6 +53,8 @@ class ChannelServiceImplStateTransitionTest {
     private ModelInstanceRepository modelInstanceRepository;
     @Mock
     private ProviderRepository providerRepository;
+    @Mock
+    private ChannelCredentialService channelCredentialService;
 
     @Captor
     private ArgumentCaptor<Channel> channelCaptor;
@@ -64,7 +66,7 @@ class ChannelServiceImplStateTransitionTest {
         channelService = new ChannelServiceImpl(
             channelRepository, channelEndpointRepository,
             channelCredentialRepository, modelInstanceRepository,
-            providerRepository
+            providerRepository, channelCredentialService
         );
     }
 

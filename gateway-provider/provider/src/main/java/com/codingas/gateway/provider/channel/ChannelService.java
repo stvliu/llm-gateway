@@ -169,4 +169,19 @@ public interface ChannelService {
      * @param endpointId 端点 ID
      */
     void removeEndpoint(Long channelId, Long endpointId);
+
+    /**
+     * 复制渠道配置生成新渠道
+     *
+     * <p>基于源渠道复制本体配置（供应商/计费/配额/超时/重试），并复制其全部
+     * 端点与模型实例（模型实例重置为 ACTIVE 可用状态）；新渠道状态重置为
+     * ACTIVE、健康字段清空。凭证（API Key）仅在 {@code copyCredentials} 为
+     * true 时复制（复用明文 Key 按既有加密策略重新加密），默认不复制。</p>
+     *
+     * @param sourceId        源渠道 ID
+     * @param override        覆盖字段（name 必填非 null，其余继承源）
+     * @param copyCredentials 是否同时复制凭证（API Key）
+     * @return 新建渠道实体
+     */
+    Channel copy(Long sourceId, Channel override, boolean copyCredentials);
 }

@@ -15,7 +15,9 @@
  */
 package com.codingas.gateway.provider.channel;
 
+import com.codingas.gateway.common.exception.DuplicateResourceException;
 import com.codingas.gateway.common.exception.GatewayRequestException;
+import com.codingas.gateway.common.exception.ResourceNotFoundException;
 import com.codingas.gateway.common.util.SortSupport;
 import com.codingas.gateway.provider.model.ModelInstance;
 import com.codingas.gateway.provider.model.BillingMode;
@@ -52,6 +54,7 @@ public class ChannelServiceImpl implements ChannelService {
     private final ChannelCredentialRepository channelCredentialRepository;
     private final ModelInstanceRepository modelInstanceRepository;
     private final ProviderRepository providerRepository;
+    private final ChannelCredentialService channelCredentialService;
 
     @Override
     @Transactional
@@ -66,6 +69,82 @@ public class ChannelServiceImpl implements ChannelService {
         Channel saved = channelRepository.save(channel);
         log.info("Created channel: id={}, name={}", saved.getId(), saved.getName());
 
+        return saved;
+    }
+
+    /**
+     * 复制渠道配置生成新渠道（继承本体 + 复制端点/模型实例 + 可选复制凭证，见接口 Javadoc）
+     */
+    @Override
+    @Transactional
+    public Channel copy(Long sourceId, Channel override, boolean copyCredentials) {
+        Channel source = channelRepository.findById(sourceId)
+            .orElseThrow(() -> new ResourceNotFoundException("Channel", sourceId));
+
+        // name 唯一校验：复制必须产生不同的 name，与源同名同样拒绝
+        // （渠道唯一键为 providerId + name，重复会导致路由歧义）
+        String newName = override.getName();
+        if (channelRepository.existsByProviderIdAndName(source.getProviderId(), newName)) {
+            throw new DuplicateResourceException("Channel", "name");
+        }
+
+        // 复制源渠道本体配置 + 覆盖 name
+        Channel target = new Channel();
+        target.setProviderId(source.getProviderId());
+        target.setName(newName);
+        target.setBillingMode(source.getBillingMode());
+        target.setQuotaLimit(source.getQuotaLimit());
+        target.setTimeout(source.getTimeout());
+        target.setMaxRetries(source.getMaxRetries());
+
+        // 重置：新渠道为 ACTIVE 可用状态、健康字段清空（last-write-wins 不继承历史）
+        target.setState(ChannelState.ACTIVE);
+        target.setLastHealthCheckAt(null);
+        target.setLastHealthStatus(null);
+        target.setLastHealthSource(null);
+
+        Channel saved = channelRepository.save(target);
+
+        // 复制端点（同渠道同协议唯一约束对新渠道天然满足）
+        for (ChannelEndpoint endpoint : channelEndpointRepository.findByChannelId(sourceId)) {
+            ChannelEndpoint copy = new ChannelEndpoint();
+            copy.setChannelId(saved.getId());
+            copy.setProtocol(endpoint.getProtocol());
+            copy.setEndpointUrl(endpoint.getEndpointUrl());
+            channelEndpointRepository.save(copy);
+        }
+
+        // 复制模型实例（重置为 ACTIVE 可用状态；保留 PENDING 则不可路由且无级联激活）
+        for (ModelInstance instance : modelInstanceRepository.findByChannelId(sourceId)) {
+            ModelInstance copy = new ModelInstance();
+            copy.setChannelId(saved.getId());
+            copy.setModelId(instance.getModelId());
+            copy.setUpstreamModelName(instance.getUpstreamModelName());
+            copy.setCapabilitiesOverride(instance.getCapabilitiesOverride());
+            copy.setContextWindowOverride(instance.getContextWindowOverride());
+            copy.setPriority(instance.getPriority());
+            copy.setWeight(instance.getWeight());
+            copy.setQuotaLimit(instance.getQuotaLimit());
+            copy.setState(ModelInstance.State.ACTIVE);
+            modelInstanceRepository.save(copy);
+        }
+
+        // 复制凭证（仅显式请求时）：复用明文 Key 走 create 重新加密
+        if (copyCredentials) {
+            for (ChannelCredential credential : channelCredentialService.listByChannelId(sourceId)) {
+                ChannelCredential copy = new ChannelCredential();
+                copy.setChannelId(saved.getId());
+                copy.setName(credential.getName());
+                copy.setApiKeyPlain(credential.getApiKeyPlain());
+                copy.setKeyAlias(credential.getKeyAlias());
+                copy.setWeight(credential.getWeight());
+                copy.setPriority(credential.getPriority());
+                channelCredentialService.create(copy);
+            }
+        }
+
+        log.info("渠道复制成功, sourceId={}, newId={}, name={}",
+            sourceId, saved.getId(), saved.getName());
         return saved;
     }
 
