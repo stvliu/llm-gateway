@@ -123,6 +123,13 @@ export interface ChannelResponse {
   updatedAt: string;
 }
 
+/** 渠道复制请求（仅覆盖字段，其余配置从源渠道继承） */
+export interface CopyChannelRequest {
+  name: string;
+  /** 是否同时复制凭证（API Key），默认 false */
+  copyCredentials?: boolean;
+}
+
 /** 更新渠道请求（与后端 ChannelRequest 一致，PUT 使用同一请求体） */
 export interface UpdateChannelRequest {
   providerId?: number;

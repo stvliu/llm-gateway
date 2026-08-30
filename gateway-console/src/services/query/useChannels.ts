@@ -17,6 +17,7 @@ import { useQuery, useQueries, useMutation, useQueryClient } from '@tanstack/rea
 import { channelApi } from '@/services/api/channel';
 import type {
   CreateChannelRequest,
+  CopyChannelRequest,
   UpdateChannelRequest,
   CreateChannelEndpointRequest,
   CreateChannelCredentialRequest,
@@ -224,6 +225,19 @@ export function useAddChannel() {
       channelApi.create(data),
     onSuccess: (_, { providerId }) => {
       queryClient.invalidateQueries({ queryKey: channelKeys.list(providerId) });
+      queryClient.invalidateQueries({ queryKey: channelKeys.allChannels() });
+    },
+  });
+}
+
+/** 复制渠道（继承源配置生成新渠道，列表自动刷新） */
+export function useCopyChannel() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: CopyChannelRequest }) =>
+      channelApi.copy(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: channelKeys.lists() });
       queryClient.invalidateQueries({ queryKey: channelKeys.allChannels() });
     },
   });

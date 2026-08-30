@@ -23,6 +23,7 @@ import type {
   ChannelHealthCheckResponse,
   ChannelHealthSource,
   CreateChannelRequest,
+  CopyChannelRequest,
   UpdateChannelRequest,
   CreateChannelEndpointRequest,
   CreateChannelCredentialRequest,
@@ -51,6 +52,10 @@ export const channelApi = {
   /** 创建渠道（仅基础属性，返回含 id） */
   create: (data: CreateChannelRequest) =>
     api.post<ChannelResponse>('/channels', data),
+
+  /** 复制渠道（继承源配置生成新渠道，凭证复制由 copyCredentials 控制） */
+  copy: (id: number, data: CopyChannelRequest) =>
+    api.post<ChannelResponse>(`/channels/${id}/copy`, data),
 
   /** 更新渠道 */
   update: (id: number, data: UpdateChannelRequest) =>
