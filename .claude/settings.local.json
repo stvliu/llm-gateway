@@ -60,5 +60,18 @@
   "askUserQuestionTimeout": "60s",
   "skipDangerousModePermissionPrompt": true,
   "skipWorkflowUsageWarning": true,
-  "skipAutoPermissionPrompt": true
+  "skipAutoPermissionPrompt": true,
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"E:/workspace/llm-gateway/.claude/skills/comet/scripts/comet-hook-router.mjs\" --platform \"claude\" --project-root \"E:/workspace/llm-gateway\""
+          }
+        ]
+      }
+    ]
+  }
 }
