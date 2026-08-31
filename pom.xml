@@ -461,6 +461,11 @@
                         <exclude>**/resources/catalog/**</exclude>
                         <exclude>**/resources/data/**</exclude>
                         <exclude>**/static/**</exclude>
+                        <!-- 工作流/工具配置目录（非项目源码，无 license 头约定） -->
+                        <exclude>**/.claude/**</exclude>
+                        <exclude>**/.comet/**</exclude>
+                        <exclude>**/.github/**</exclude>
+                        <exclude>**/openspec/**</exclude>
                     </excludes>
                     <mapping>
                         <java>SLASHSTAR_STYLE</java>
