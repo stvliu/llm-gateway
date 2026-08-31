@@ -181,13 +181,12 @@ Expected: 编译失败（`copy` 不存在）
         Model source = modelRepository.findById(sourceId)
                 .orElseThrow(() -> new ResourceNotFoundException("Model", sourceId));
 
-        // modelName 唯一校验（覆盖字段必填）
+        // modelName 唯一校验：复制必须产生不同的 modelName，
+        // 与源同名同样拒绝（models 表无 model_name 唯一约束，重复会导致 findByModelName 歧义）
         String newName = override.getModelName();
-        modelRepository.findByModelName(newName)
-                .filter(existing -> !existing.getId().equals(sourceId))
-                .ifPresent(existing -> {
-                    throw new DuplicateResourceException("Model", "modelName");
-                });
+        if (modelRepository.findByModelName(newName).isPresent()) {
+            throw new DuplicateResourceException("Model", "modelName");
+        }
 
         // 复制源模型全量规格
         Model target = new Model();

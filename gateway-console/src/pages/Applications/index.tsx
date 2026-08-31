@@ -152,7 +152,7 @@ export default function ApplicationsPage() {
     {
       title: t('application.actions'),
       key: 'actions',
-      width: 120,
+      width: 135,
       render: (_: unknown, record: Application) => (
         <Space size="small">
           <Tooltip title={t('channelAuthorization.title')}>

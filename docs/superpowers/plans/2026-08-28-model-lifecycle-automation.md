@@ -284,11 +284,13 @@ git commit -m "feat(model-lifecycle): 系统设置新增 catalog.deprecation.* �
 
 **Files:**
 - Create: `gateway-provider/provider/src/main/java/com/codingas/gateway/provider/model/ModelDeprecationService.java`
-- Modify: `gateway-provider/provider/src/main/java/com/codingas/gateway/provider/model/ModelRepository.java`（如需 `findByModelId` 批量查实例则不加；实例查询已有 `findByModelId`）
+- Modify: `gateway-provider/provider/src/main/java/com/codingas/gateway/provider/model/ModelInstanceRepository.java`（新增 `findByModelId`）
+- Modify: `gateway-provider/provider-data/src/main/java/com/codingas/gateway/providerdata/model/ModelInstanceJpaRepository.java`（新增 `findByModelId` 派生查询）
+- Modify: `gateway-provider/provider-data/src/main/java/com/codingas/gateway/providerdata/model/JpaModelInstanceRepository.java`（实现 `findByModelId` 映射）
 - Test: `gateway-provider/provider/src/test/java/com/codingas/gateway/provider/model/ModelDeprecationServiceTest.java`
 
 **Interfaces:**
-- Consumes: `ModelRepository`（findByModelName/save）、`ModelInstanceRepository`（findByModelId/findById/save）、`AuditLogRepository`（saveAuditLog）
+- Consumes: `ModelRepository`（findByModelName/save）、`ModelInstanceRepository`（新增 `findByModelId`/findById/save）、`AuditLogRepository`（saveAuditLog）
 - Produces:
   - `void markDeprecated(String modelName, String reason)` — 运行期确认：幂等设置 `Model.deprecatedAt` + `deprecationMessage`，该模型所有实例转 RETIRED，写审计（action=`MODEL_DEPRECATED`）
   - `void markInstanceDeprecated(Long instanceId)` — 探测确认：ACTIVE→DEPRECATED（走状态机合法路径），写审计
@@ -383,6 +385,39 @@ Run: `cd E:/workspace/llm-gateway && ./mvnw -pl gateway-provider/provider -am te
 Expected: 编译失败（类不存在）
 
 - [ ] **Step 3: 实现**
+
+先为 `ModelInstanceRepository` 新增 `findByModelId`：
+
+`ModelInstanceRepository.java`（接口）追加：
+
+```java
+    /**
+     * 按模型 ID 查找全部模型实例（含各状态，供自动标记废弃时批量下线）
+     *
+     * @param modelId 模型 ID
+     * @return 模型实例实体列表
+     */
+    List<ModelInstance> findByModelId(Long modelId);
+```
+
+`ModelInstanceJpaRepository.java` 追加派生查询：
+
+```java
+    List<ModelInstanceDo> findByModelId(Long modelId);
+```
+
+`JpaModelInstanceRepository.java` 追加映射实现：
+
+```java
+    @Override
+    public List<ModelInstance> findByModelId(Long modelId) {
+        return modelInstanceRepository.findByModelId(modelId).stream().map(this::toEntity).toList();
+    }
+```
+
+（同步在 `JpaModelInstanceRepositoryTest` 补 `findByModelId` 用例：同 modelId 多实例/含不同状态。）
+
+再创建 `ModelDeprecationService`：
 
 ```java
 package com.codingas.gateway.provider.model;
@@ -829,6 +864,7 @@ git commit -m "fix(model-lifecycle): findActive* 查询对齐 isRoutable 语义�
 
 **Files:**
 - Create: `gateway-provider/provider/src/main/java/com/codingas/gateway/provider/catalog/sync/UpstreamModelProbeClient.java`
+- Modify: `gateway-provider/provider/src/main/java/com/codingas/gateway/provider/catalog/sync/CatalogSyncException.java`（新增单消息构造器 `CatalogSyncException(String message)`）
 - Test: `gateway-provider/provider/src/test/java/com/codingas/gateway/provider/catalog/sync/UpstreamModelProbeClientTest.java`
 
 **Interfaces:**
@@ -875,6 +911,17 @@ Run: `cd E:/workspace/llm-gateway && ./mvnw -pl gateway-provider/provider -am te
 Expected: 编译失败（类不存在）
 
 - [ ] **Step 3: 实现**
+
+先给 `CatalogSyncException` 加单消息构造器：
+
+```java
+    /** 构造同步/探测异常（无原因链） */
+    public CatalogSyncException(String message) {
+        super(message);
+    }
+```
+
+再创建客户端：
 
 ```java
 package com.codingas.gateway.provider.catalog.sync;
