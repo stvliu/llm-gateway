@@ -1,0 +1,7 @@
+{
+  "openspec_proposal": "openspec/changes/channel-copy/proposal.md",
+  "openspec_design": "openspec/changes/channel-copy/design.md",
+  "openspec_tasks": "openspec/changes/channel-copy/tasks.md",
+  "openspec_delta_spec": "openspec/changes/channel-copy/specs/channel-copy/spec.md",
+  "archive_directory": "openspec/changes/archive/2026-08-31-channel-copy"
+}
