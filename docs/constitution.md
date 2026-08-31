@@ -145,7 +145,7 @@ Token 必须是所有成本追踪的核心单位。
 实现依赖倒置；跨域协作通过服务编排，旁路操作通过业务事件解耦。
 ```
 
-**项目结构（17 模块多模块 Maven，父 POM artifactId = gateway-project）**:
+**项目结构（多模块 Maven，父 POM artifactId = gateway-project；38 个 Maven 模块，17 个顶层 gateway-* 分组）**:
 ```
 gateway-project/                       # 父 POM（打包类型: pom）
 ├── gateway-common/                    # 横切基础模块（根包 com.codingas.gateway.common，groupId 统一 com.codingas.gateway）
@@ -153,7 +153,8 @@ gateway-project/                       # 父 POM（打包类型: pom）
 ├── gateway-protocol/                  # 协议域（抽象层 + 插件化实现）
 │   ├── protocol/                      #   协议核心（根包 com.codingas.gateway.protocol，groupId 统一 com.codingas.gateway）
 │   │   ├── canonical/                 #     Canonical IR
-│   │   ├── contract/                  #     协议数据契约（DTO）
+│   │   ├── contract/                  #     协议数据契约（DTO）（当前为空，原始协议 DTO 见 raw/）
+│   │   ├── raw/                       #     原始协议 DTO（OpenAIChatRequest/AnthropicMessagesRequest 等）
 │   │   ├── transport/                 #     上游传输（UpstreamClient 接口 / 错误分类 / SSE 格式化）
 │   │   ├── tuning/                    #     出站调谐接口
 │   │   └── validation/                #     入站校验接口
@@ -162,29 +163,42 @@ gateway-project/                       # 父 POM（打包类型: pom）
 │   └── protocol-gemini/               #   Gemini 协议插件（示例，验证插件化可扩展性）
 ├── gateway-provider/                  # 供给域（根包 com.codingas.gateway.provider，groupId 统一 com.codingas.gateway）
 │   ├── provider/                      #   核心：Provider/Channel/Model/Catalog/Upstream/RoutingContext
-│   └── provider-data/                 #   JPA 绑定（providerdata）
+│   ├── provider-data/                 #   JPA 绑定（providerdata）
+│   └── provider-starter/              #   自动装配（autoconfigure.provider）
 ├── gateway-iam/                       # 身份与访问域（根包 com.codingas.gateway.iam，groupId 统一 com.codingas.gateway）
 │   ├── iam/                           #   核心：User/Application/UserApiKey/Auth/加密
-│   └── iam-data/                      #   JPA 绑定（iamdata）
+│   ├── iam-data/                      #   JPA 绑定（iamdata）
+│   └── iam-starter/                   #   自动装配（autoconfigure.iam）
 ├── gateway-usage/                     # 用量管控域（根包 com.codingas.gateway.usage，groupId 统一 com.codingas.gateway）
 │   ├── usage/                         #   核心：TokenLimit/配额/用量事件/限流执行
-│   └── usage-data/                    #   JPA 绑定（usagedata）
+│   ├── usage-data/                    #   JPA 绑定（usagedata）
+│   └── usage-starter/                 #   自动装配（autoconfigure.usage）
 ├── gateway-security/                  # 安全与威胁域（根包 com.codingas.gateway.security，groupId 统一 com.codingas.gateway）
 │   ├── security/                      #   核心：IP 威胁检测 + 数据脱敏（SensitiveDataRule/IpBlock）
-│   └── security-data/                 #   JPA 绑定（securitydata）
+│   ├── security-data/                 #   JPA 绑定（securitydata）
+│   └── security-starter/              #   自动装配（autoconfigure.security）
 ├── gateway-audit/                     # 审计追溯域（根包 com.codingas.gateway.audit，groupId 统一 com.codingas.gateway）
 │   ├── audit/                         #   核心：调用日志（CallLogs）/ 审计事件
-│   └── audit-data/                    #   JPA 绑定（auditdata）
+│   ├── audit-data/                    #   JPA 绑定（auditdata）
+│   └── audit-starter/                 #   自动装配（autoconfigure.audit）
 ├── gateway-alert/                     # 告警通知域（根包 com.codingas.gateway.alert，groupId 统一 com.codingas.gateway）
 │   ├── alert/                         #   核心：告警通知
-│   └── alert-data/                    #   JPA 绑定（alertdata）
+│   ├── alert-data/                    #   JPA 绑定（alertdata，仅 dataobject 包，暂无 Repository 端口实现）
+│   └── alert-starter/                 #   自动装配（autoconfigure.alert）
+├── gateway-settings/                  # 系统设置域（根包 com.codingas.gateway.settings，groupId 统一 com.codingas.gateway）
+│   ├── settings/                      #   核心：SystemSetting/SystemSettingService（SettingsController 位于 gateway-web）
+│   ├── settings-data/                 #   JPA 绑定（settingsdata，平铺根包；system_settings 表，V70）
+│   └── settings-starter/              #   自动装配（autoconfigure.settings）
 ├── gateway-resilience/                # 韧性域（根包 com.codingas.gateway.resilience，groupId 统一 com.codingas.gateway）
 │   ├── resilience/                    #   核心：failover/retry/circuit-breaker
-│   └── resilience-data/               #   JPA 绑定（resiliencedata）
+│   ├── resilience-data/               #   JPA 绑定（resiliencedata）
+│   └── resilience-starter/            #   自动装配（autoconfigure.resilience）
 ├── gateway-proxy/                     # 模型代理域（根包 com.codingas.gateway.proxy，groupId 统一 com.codingas.gateway）
-│   └── proxy/                         #   ChatDispatch 调度 / routing / invoker / 协议转换门面
+│   ├── proxy/                         #   ChatDispatch 调度 / routing / invoker / 协议转换门面
+│   └── proxy-starter/                 #   自动装配（autoconfigure.proxy）
 ├── gateway-stats/                     # 聚合统计域（根包 com.codingas.gateway.stats，groupId 统一 com.codingas.gateway）
-│   └── stats/                         #   仪表盘聚合统计（读路径）
+│   ├── stats/                         #   仪表盘聚合统计（读路径）
+│   └── stats-starter/                 #   自动装配（autoconfigure.stats）
 ├── gateway-web/                       # HTTP 承载层（根包 com.codingas.gateway.web，groupId 统一 com.codingas.gateway）
 │   └── web/                           #   api 全部 Controller + interceptor + advice（协议校验适配、安全拦截链、全局异常）
 ├── gateway-boot/                      # 启动装配（根包 com.codingas.gateway.boot，groupId 统一 com.codingas.gateway）
@@ -280,9 +294,9 @@ gateway-web · com.codingas.gateway.web.api.facade.ChannelFacade    # 渠道 DTO
 
 | 类型 | 放置位置 | 示例 |
 |------|---------|------|
-| 基础异常 | gateway-common · `com.codingas.gateway.common.exception` | GatewayException |
-| 领域异常 | 功能域核心模块 exception 包（如 `com.codingas.gateway.iam.exception`） | IamException |
-| 基础设施异常 | 功能域核心模块（如 `com.codingas.gateway.provider.vendor`） | ProviderException |
+| 基础异常 | gateway-common · `com.codingas.gateway.common.exception` | GatewayException、GatewayRequestException（请求级） |
+| 领域异常 | 功能域核心模块（服务跟随聚合所在包） | `iam.exception`: IamException/UnauthorizedException/ForbiddenException；`iam.auth`: AuthenticationFailedException；`security.threat`: ThreatException/RateLimitExceededException/IpBlockedException；`protocol.validation`: ProtocolValidationException |
+| 上游异常 | gateway-protocol · `com.codingas.gateway.protocol.transport` | UpstreamException（extends GatewayException，含 errorType/httpStatus/traceId/retryAfterSeconds） |
 
 ### 2.5 跨域访问规则
 
@@ -302,6 +316,8 @@ gateway-web · com.codingas.gateway.web.api.facade.ChannelFacade    # 渠道 DTO
 - ✅ `Service` → `XxxRepository` → `<域>data` 中的 `JpaXxxRepository`
 - ❌ iam 域 Domain 直接调用 proxy 域 Domain 的服务
 - ✅ 各功能域核心模块跟随聚合的 Service 编排两者的调用
+
+> **强制机制现状（2026-08-31）**：上表「Web 层不得访问 Repository」为架构约定，ArchUnit 7 条铁律（`LayerDependencyTest`）暂无对应的 web→Repository 规则；ArchUnit 的 CORE/BINDING 根包清单尚未覆盖 settings/settingsdata 域。
 
 ### 2.6 大模型调用链路
 
@@ -330,8 +346,11 @@ ChatDispatchService (gateway-proxy · com.codingas.gateway.proxy.chat)  ← 统�
   │  │     位置：gateway-proxy · routing                 │
   │  │     ModelMatcher → CredentialResolver             │
   │  │       → EndpointResolver                          │
-  │  │  3. 记录审计起点：AuditRepository.logRequest(...)    │
-  │  │     位置：gateway-audit（实现：audit-data）        │
+  │  │  3. 记录调用起点：ChatDispatchServiceImpl 调       │
+  │  │     AuditLogRepository.saveCallLog(...) 写调用日志 │
+  │  │     调用日志：AuditLogRepository/CallLogRepository │
+  │  │     （实现：audit-data；审计事件经 AuditEventListener │
+  │  │      监听事件写入，gateway-audit · audit.event）   │
   │  └──────────────────────────────────────────────────┘
   │
   │  ┌─ 转换阶段（仅跨协议时执行）───────────────────────┐
@@ -365,7 +384,8 @@ ChatDispatchService (gateway-proxy · com.codingas.gateway.proxy.chat)  ← 统�
   │  ┌─ 后置阶段 ────────────────────────────────────────┐
   │  │  8. Token 计量：发布 TokenUsedEvent               │
   │  │     位置：gateway-usage · usage.event             │
-  │  │  9. 记录审计终点：AuditRepository.logResponse(...)   │
+  │  │  9. 记录调用终点：ChatDispatchServiceImpl 再调     │
+  │  │     AuditLogRepository.saveCallLog(...) 补全结果   │
   │  │     包含：duration、success/failure、Token 用量    │
   │  └──────────────────────────────────────────────────┘
   │
@@ -388,14 +408,14 @@ ChatDispatchService (gateway-proxy · com.codingas.gateway.proxy.chat)  ← 统�
 
 | 阶段 | 归属模块 | 关键类 |
 |------|--------|--------|
-| 校验 | gateway-protocol（SPI）+ gateway-boot（校验适配） | `ProtocolValidator`；`OpenAIProtocolValidator`, `AnthropicProtocolValidator` |
+| 校验 | 协议插件（protocol-openai/protocol-anthropic 的 OpenAIProtocolValidator/AnthropicProtocolValidator） | `ProtocolValidator`；`OpenAIProtocolValidator`, `AnthropicProtocolValidator` |
 | 路由 | gateway-proxy | `RoutingResolver`, `ModelMatcher`, `CredentialResolver`, `EndpointResolver` |
 | 转换 | gateway-proxy（编排）+ gateway-protocol（契约/SPI） | `ProtocolConversionFacade`, `ProtocolAdapter`, `ProtocolRequest/ProtocolResponse` |
 | 调谐 | gateway-proxy（编排）+ gateway-protocol（SPI） | `OutboundTuner`, `ProtocolTuner` |
 | 调用 | gateway-protocol（transport 接口 / 插件实现） | `UpstreamClient`, `UpstreamClientRegistry`, `OpenAIUpstreamClient`, `AnthropicUpstreamClient` |
 | 韧性 | gateway-resilience | `RetryStrategy`/`RetryExecutor`, `CircuitBreaker`, `ChannelEndpointCircuitBreakerService`, `ResilientUpstreamClient` |
 | 计量 | gateway-usage | `ChatDispatchService` → 发布 `TokenUsedEvent` |
-| 审计 | gateway-audit + audit-data | `AuditRepository.logRequest()`, `AuditRepository.logResponse()` |
+| 审计 | gateway-audit + audit-data | `AuditLogRepository.saveCallLog()`（ChatDispatchServiceImpl 写调用日志）；`AuditEventListener`（audit.event 监听事件写审计） |
 
 ### 2.7 模型纯洁性
 
@@ -542,6 +562,8 @@ gateway:
 - ❌ 禁止：任何业务表缺少审计字段
 - ❌ 禁止：审计字段被业务代码手动修改
 
+> **现状例外记录（2026-08-31）**：`user_api_keys`（仅 `created_at`/`updated_at`）与 `call_logs`（仅 `called_at`）暂未满足全字段审计要求，属已知豁免，待补齐。
+
 ---
 
 ## 3. 技术规范
@@ -566,10 +588,10 @@ gateway:
 | 方法 | camelCase + 动词开头 | `routeRequest()`, `countTokens()` |
 | 变量 | camelCase + 名词 | `tokenThreshold`, `providerId` |
 | 常量 | UPPER_SNAKE_CASE | `DEFAULT_TOKEN_THRESHOLD` |
-| 数据库表 | snake_case + 复数 | `model_providers`, `routing_strategies` |
+| 数据库表 | snake_case + 复数（例外：`ip_blocklist` 单数） | `providers`, `channels` |
 | 模块（根包） | 模块 = 根包，去除 `domain/application/infrastructure` DDD 前缀；**groupId 统一 `com.codingas.gateway`**，包名 = groupId + 子域（如 `com.codingas.gateway.provider`） | `com.codingas.gateway.iam` |
-| JPA 绑定模块 | `<域>data` 根包，**按实体子域聚合**（DO + `XxxJpaRepository` + `JpaXxxRepository` 同包） | `iamdata.user`（`com.codingas.gateway.iamdata.user`） |
-| HTTP 承载包 | gateway-web（根包 `com.codingas.gateway.web`） | `web.api.*`, `web.interceptor.*`, `web.advice.*` |
+| JPA 绑定模块 | `<域>data` 根包，**按实体子域聚合**（DO + `XxxJpaRepository` + `JpaXxxRepository` 同包）；例外：`alertdata` 仅 `dataobject` 包（alert 域暂无 Repository 端口实现）、`settingsdata` 平铺根包（无子域包） | `iamdata.user`（`com.codingas.gateway.iamdata.user`） |
+| HTTP 承载包 | gateway-web（根包 `com.codingas.gateway.web`） | `web.api.*`, `web.interceptor.*`, `web.advice.*`, `web.config.*`（CorsConfig/WebConfig/CorsProperties/ActuatorHealthProperties） |
 | 装配包 | gateway-boot（根包 `com.codingas.gateway.boot`） | `boot.config.*`, `boot.init.*`, `boot.event.*` |
 
 **角色判读表（Repository vs Service）**:
@@ -619,26 +641,20 @@ gateway:
 
 **异常分层**:
 ```
-GatewayException (根异常)
-├── GatewayRequestException (请求级异常)
-│   ├── InvalidModelException
-│   ├── BudgetExceededException
-│   └── RateLimitExceededException
-├── ProviderException (提供商级异常)
-│   ├── ProviderUnavailableException
-│   ├── TokenQuotaExceededException
-│   └── ProviderResponseException
-└── IamException (身份与访问控制异常)
-    ├── UnauthorizedException
-    ├── ForbiddenException
-    └── AuthenticationFailedException
-└── ThreatException (威胁防护异常)
-    ├── RateLimitExceededException
-    └── IpBlockedException
-└── DataProtectionException (数据保护异常)
+GatewayException (根异常，gateway-common)
+├── GatewayRequestException (请求级异常，gateway-common)
+├── IamException (身份与访问控制异常，iam.exception)
+│   ├── UnauthorizedException
+│   ├── ForbiddenException
+│   └── AuthenticationFailedException (iam.auth)
+├── ThreatException (威胁防护异常，security.threat)
+│   ├── RateLimitExceededException
+│   └── IpBlockedException
+├── ProtocolValidationException (协议校验异常，protocol.validation)
+└── UpstreamException (上游调用异常，protocol.transport，含 errorType/httpStatus/traceId/retryAfterSeconds)
 ```
 
-> 异常放置：根异常 `GatewayException` 位于 gateway-common；领域异常（`IamException` 位于 gateway-iam、`ThreatException`/`DataProtectionException` 位于 gateway-security 等）位于对应功能域核心模块的 exception 包；提供商异常 `ProviderException` 位于 gateway-provider。
+> 异常放置：根异常 `GatewayException`/请求级 `GatewayRequestException` 位于 gateway-common；领域异常位于对应功能域核心模块（`IamException`/`UnauthorizedException`/`ForbiddenException` 位于 gateway-iam `exception` 包、`AuthenticationFailedException` 位于 gateway-iam `auth` 包、`ThreatException`/`RateLimitExceededException`/`IpBlockedException` 位于 gateway-security `threat` 包、`ProtocolValidationException` 位于 gateway-protocol `validation` 包）；上游异常 `UpstreamException` 位于 gateway-protocol `transport` 包。
 
 **处理原则**:
 - ✅ 所有受检异常必须转换为运行时异常

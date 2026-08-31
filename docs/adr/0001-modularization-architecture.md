@@ -6,7 +6,7 @@
 
 ## 背景
 
-项目已完成 17 模块化（域模块 + `-data` 绑定模块 + `-starter` 三明治结构）。历史演进：早期为单模块 + 分层包（`adapter/application/domain/infrastructure` 四层），P1-P4.5 分批拆分为多模块并做模块化命名对齐，但部分包名层名残留（如 gateway-boot 的 `infrastructure.*`、`application.*`）。
+项目已完成模块化（域模块 + `-data` 绑定模块 + `-starter` 三明治结构）。模块计数口径：17 = 顶层 Maven 分组数（含 2026-08-31 新增的 gateway-settings），Maven artifact 总数为 38。历史演进：早期为单模块 + 分层包（`adapter/application/domain/infrastructure` 四层），P1-P4.5 分批拆分为多模块并做模块化命名对齐，但部分包名层名残留（如 gateway-boot 的 `infrastructure.*`、`application.*`）。
 
 需要明确：**模块化后，单模块分层架构的哪些部分保留、哪些废弃**，以及命名规范的最终形态。
 
@@ -25,8 +25,8 @@
 
 | 模块 | 根包 | 子包示例 |
 |------|------|---------|
-| gateway-provider | `com.codingas.gateway.provider` | channel / service / catalog / model / vendor / health |
-| gateway-iam | `com.codingas.gateway.iam` | dto / service / auth / apikey / encryption |
+| gateway-provider | `com.codingas.gateway.provider` | cache / catalog / channel / encryption / health / model / vendor |
+| gateway-iam | `com.codingas.gateway.iam` | apikey / application / auth / encryption / exception / user（服务跟随聚合） |
 | gateway-protocol | `com.codingas.gateway.protocol` | contract / transport / tuning / validation |
 | gateway-web | `com.codingas.gateway.web.*` | api / interceptor / advice（Controller/Interceptor/Advice 承载层） |
 | gateway-boot | `com.codingas.gateway.boot.*` | config / init / event（收拢后） |
@@ -57,7 +57,7 @@
 
 - `BaseDo`：`infrastructure.common` → `common.data`（gateway-common 模块内）
 - `ProviderHealth` 全系列：`infrastructure.actuator` → provider `health`（Probe/Tracker/State/Properties/RegistryHealthIndicator，含 Indicator 端点适配）
-- `CredentialEncryptorAdapter`：boot `infrastructure.encryption` → provider `service`
+- `CredentialEncryptorAdapter`：boot → `provider.encryption`
 - gateway-boot 收拢：`infrastructure.config/event`、`application.init` → `boot.config/init/event`
 - `GatewayApplication` 扫描配置：移除 `infrastructure`/`application` 扫描项
 - gateway-web 根包改名：`adapter.*` → `web.*`（api/interceptor/advice 子包保留），同步更新 `WebAutoConfiguration` 自动配置注册文件（`AutoConfiguration.imports`）、`WebConfiguration` 的 `@ComponentScan`、ArchUnit `LayerDependencyTest` 5 处引用
@@ -66,4 +66,6 @@
 ## 未决
 
 - boot 测试中少量"包名跟随被测域模块"的测试（如 `iam/application`、`iamdata/gateway`、`proxy/invoker` 等约 10 个）为历史遗留，因不影响主代码与构建，暂不处理
-- `docs/` 下部分文档（CLAUDE.md 项目结构、constitution.md）仍为单模块分层描述，待同步更新
+- `docs/` 文档同步**已完成（2026-08-31）**：constitution.md / CLAUDE.md 已是模块化描述，本批次同步修正残留的 Gateway 模式 / service 包表述
+- alertdata 仅 `dataobject` 包（alert 域暂无 Repository 端口实现）
+- settings 域尚未纳入 ArchUnit `LayerDependencyTest` 的 CORE/BINDING 根包清单

@@ -1,7 +1,7 @@
 # API 接口规范 / API Specification
 
-> **文档版本**: v1.0
-> **生成日期**: 2026-05-02
+> **文档版本**: v1.3
+> **生成日期**: 2026-05-02（2026-08-31 对齐修订）
 > **状态**: 草案
 
 ---
@@ -14,6 +14,7 @@
 - [四、协议转换](#四协议转换)
 - [五、错误响应](#五错误响应)
 - [六、版本兼容性](#六版本兼容性)
+- [七、管理面 API 总览](#七管理面-api-总览)
 
 ---
 
@@ -38,7 +39,8 @@
 
 | 约定 | 说明 |
 |------|------|
-| **Base URL** | `https://{gateway-host}/v1` |
+| **Base URL（OpenAI 兼容）** | `https://{gateway-host}/v1` |
+| **Base URL（Anthropic 兼容）** | `https://{gateway-host}/anthropic/v1` |
 | **认证方式** | Bearer Token (GatewayApiKey) |
 | **内容类型** | `application/json` |
 | **字符编码** | UTF-8 |
@@ -53,17 +55,17 @@
 | 端点 | 方法 | 说明 | 优先级 |
 |------|------|------|--------|
 | `/v1/chat/completions` | POST | 聊天补全（核心） | P0 |
-| `/v1/completions` | POST | 文本补全（Legacy） | P1 |
-| `/v1/embeddings` | POST | 向量嵌入 | P0 |
+| `/v1/completions` | POST | 文本补全（Legacy，规划中） | P1 |
+| `/v1/embeddings` | POST | 向量嵌入（规划中） | P0 |
 | `/v1/models` | GET | 模型列表 | P1 |
-| `/v1/models/{model}` | GET | 模型详情 | P1 |
-| `/v1/images/generations` | POST | 图像生成 | P1 |
-| `/v1/images/edits` | POST | 图像编辑 | P2 |
-| `/v1/images/variations` | POST | 图像变体 | P2 |
-| `/v1/audio/speech` | POST | 文字转语音 (TTS) | P1 |
-| `/v1/audio/transcriptions` | POST | 语音转文字 (STT) | P1 |
-| `/v1/audio/translations` | POST | 语音翻译 | P2 |
-| `/v1/moderations` | POST | 内容审核 | P1 |
+| `/v1/models/{model}` | GET | 模型详情（规划中） | P1 |
+| `/v1/images/generations` | POST | 图像生成（规划中） | P1 |
+| `/v1/images/edits` | POST | 图像编辑（规划中） | P2 |
+| `/v1/images/variations` | POST | 图像变体（规划中） | P2 |
+| `/v1/audio/speech` | POST | 文字转语音 (TTS)（规划中） | P1 |
+| `/v1/audio/transcriptions` | POST | 语音转文字 (STT)（规划中） | P1 |
+| `/v1/audio/translations` | POST | 语音翻译（规划中） | P2 |
+| `/v1/moderations` | POST | 内容审核（规划中） | P1 |
 
 ---
 
@@ -83,15 +85,11 @@
     {"role": "user", "content": "How are you?"}
   ],
   "temperature": 0.7,
-  "top_p": 1.0,
-  "n": 1,
   "stream": false,
   "stop": ["STOP"],
   "max_tokens": 1024,
   "presence_penalty": 0.0,
   "frequency_penalty": 0.0,
-  "logit_bias": {"1234": -100},
-  "user": "user-123",
   "tools": [
     {
       "type": "function",
@@ -121,17 +119,13 @@
 | `model` | string | ✅ | - | 模型 ID，如 `gpt-4o`、`gpt-4-turbo` |
 | `messages` | array | ✅ | - | 对话消息列表 |
 | `temperature` | number | ❌ | 1.0 | 采样温度 (0-2)，值越低越确定 |
-| `top_p` | number | ❌ | 1.0 | 核采样概率 (0-1) |
-| `n` | integer | ❌ | 1 | 生成候选数量 |
 | `stream` | boolean | ❌ | false | 是否流式返回 |
-| `stop` | string/array | ❌ | null | 停止生成的序列 |
+| `stop` | List<String> | ❌ | null | 停止生成的序列 |
 | `max_tokens` | integer | ❌ | 模型上限 | 最大生成 Token 数 |
 | `presence_penalty` | number | ❌ | 0 | 存在惩罚 (-2.0 到 2.0) |
 | `frequency_penalty` | number | ❌ | 0 | 频率惩罚 (-2.0 到 2.0) |
-| `logit_bias` | object | ❌ | null | Token 偏置 |
-| `user` | string | ❌ | null | 终端用户标识 |
 | `tools` | array | ❌ | null | 工具定义列表 |
-| `tool_choice` | string/object | ❌ | "auto" | 工具选择策略 |
+| `tool_choice` | String | ❌ | "auto" | 工具选择策略 |
 | `response_format` | object | ❌ | null | 响应格式约束 |
 | `seed` | integer | ❌ | null | 随机种子（确定性输出） |
 
@@ -143,7 +137,9 @@
 {"role": "system|user|assistant", "content": "消息内容"}
 ```
 
-**多模态消息 (Vision)**:
+**多模态消息 (Vision)（规划中）**:
+
+> **现状**: 当前请求 DTO（`OpenAIChatRequest.Message`）的 `content` 为纯字符串，`content` 数组与 `image_url` 图片输入尚未实现。
 
 ```json
 {
@@ -505,7 +501,7 @@ data: [DONE]
       "id": "gpt-4o",
       "object": "model",
       "created": 1715367049,
-      "owned_by": "openai"
+      "ownedBy": "system"
     }
   ]
 }
@@ -522,7 +518,7 @@ data: [DONE]
   "id": "gpt-4o",
   "object": "model",
   "created": 1715367049,
-  "owned_by": "openai"
+  "ownedBy": "system"
 }
 ```
 
@@ -580,10 +576,10 @@ data: [DONE]
 
 | 端点 | 方法 | 说明 | 优先级 |
 |------|------|------|--------|
-| `/v1/messages` | POST | 消息创建（核心） | P0 |
-| `/v1/messages/batches` | POST | 批量消息请求 | P2 |
-| `/v1/messages/batches/{batch_id}` | GET | 查询批量状态 | P2 |
-| `/v1/messages/batches/{batch_id}/results` | GET | 获取批量结果 | P2 |
+| `/anthropic/v1/messages` | POST | 消息创建（核心） | P0 |
+| `/anthropic/v1/messages/batches` | POST | 批量消息请求（规划中） | P2 |
+| `/anthropic/v1/messages/batches/{batch_id}` | GET | 查询批量状态（规划中） | P2 |
+| `/anthropic/v1/messages/batches/{batch_id}/results` | GET | 获取批量结果（规划中） | P2 |
 
 ---
 
@@ -591,7 +587,7 @@ data: [DONE]
 
 #### 3.2.1 请求格式
 
-**端点**: `POST /v1/messages`
+**端点**: `POST /anthropic/v1/messages`
 
 **请求头**:
 
@@ -612,8 +608,6 @@ anthropic-version: 2023-06-01
     {"role": "user", "content": "How are you?"}
   ],
   "temperature": 0.7,
-  "top_p": 0.9,
-  "top_k": 40,
   "stream": false,
   "stop_sequences": ["STOP"],
   "tools": [
@@ -629,10 +623,7 @@ anthropic-version: 2023-06-01
       }
     }
   ],
-  "tool_choice": {"type": "auto"},
-  "metadata": {
-    "user_id": "user-123"
-  }
+  "tool_choice": {"type": "auto"}
 }
 ```
 
@@ -645,13 +636,10 @@ anthropic-version: 2023-06-01
 | `messages` | array | ✅ | - | 对话消息列表 |
 | `system` | string | ❌ | null | 系统提示词 |
 | `temperature` | number | ❌ | 1.0 | 采样温度 (0-1) |
-| `top_p` | number | ❌ | - | 核采样概率 |
-| `top_k` | integer | ❌ | - | Top-k 采样 |
 | `stream` | boolean | ❌ | false | 是否流式返回 |
 | `stop_sequences` | array | ❌ | null | 停止序列 |
 | `tools` | array | ❌ | null | 工具定义列表 |
 | `tool_choice` | object | ❌ | `{"type": "auto"}` | 工具选择策略 |
-| `metadata` | object | ❌ | null | 元数据 |
 
 #### 3.2.3 消息格式
 
@@ -838,9 +826,11 @@ data: {"type":"message_stop"}
 
 ### 3.3 Messages Batches API
 
+> **状态**: 规划中（未实现）
+
 #### 3.3.1 创建批量请求
 
-**端点**: `POST /v1/messages/batches`
+**端点**: `POST /anthropic/v1/messages/batches`
 
 ```json
 {
@@ -884,11 +874,11 @@ data: {"type":"message_stop"}
 
 #### 3.3.2 查询批量状态
 
-**端点**: `GET /v1/messages/batches/{batch_id}`
+**端点**: `GET /anthropic/v1/messages/batches/{batch_id}`
 
 #### 3.3.3 获取批量结果
 
-**端点**: `GET /v1/messages/batches/{batch_id}/results`
+**端点**: `GET /anthropic/v1/messages/batches/{batch_id}/results`
 
 ---
 
@@ -912,7 +902,6 @@ data: {"type":"message_stop"}
 | `model` | `model` | 直接映射（模型别名） |
 | `messages` | `messages` | 格式转换（见 4.3） |
 | `temperature` | `temperature` | 直接映射 |
-| `top_p` | `top_p` | 直接映射 |
 | `max_tokens` | `max_tokens` | 直接映射 |
 | `stop` | `stop_sequences` | 数组格式一致 |
 | `stream` | `stream` | 直接映射 |
@@ -920,11 +909,8 @@ data: {"type":"message_stop"}
 | `tool_choice` | `tool_choice` | 格式转换 |
 | `presence_penalty` | - | Anthropic 不支持 |
 | `frequency_penalty` | - | Anthropic 不支持 |
-| `logit_bias` | - | Anthropic 不支持 |
-| `n` | - | Anthropic 不支持多候选 |
 | `seed` | - | Anthropic 不支持 |
 | - | `system` | OpenAI 用 messages 中 role=system |
-| - | `top_k` | OpenAI 不支持 |
 
 #### 4.2.2 system 消息处理
 
@@ -1149,17 +1135,54 @@ data: {"type":"message_stop"}
 
 ### 5.3 网关统一错误格式
 
-网关在透传上游错误时，保持原始格式；对于网关自身错误，使用 OpenAI 兼容格式：
+网关错误响应按端口区分；透传上游错误时保持原始格式，网关自身错误结构如下。
+
+**管理面 API（`/api/v1/**`）**：统一 `ApiResponse` 信封（gateway-common `ApiResponse`），业务响应经 `ApiResponseWrapperAdvice` 自动包装为 `$.data.*`（单对象）：
+
+```json
+{
+  "success": false,
+  "data": null,
+  "error": {
+    "code": "QUOTA_EXCEEDED",
+    "message": "用户可读的错误信息",
+    "details": null
+  },
+  "traceId": "trace_1713833628",
+  "timestamp": "2026-08-31T10:30:00Z"
+}
+```
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `success` | boolean | 请求是否成功 |
+| `data` | T | 业务数据（失败时为 `null`） |
+| `error.code` | string | 业务错误码 |
+| `error.message` | string | 用户可读的错误信息 |
+| `error.details` | object | 附加详情（可选） |
+| `traceId` | string | 链路追踪 ID |
+| `timestamp` | string | ISO 8601 时间戳 |
+
+**OpenAI 兼容端点**：网关自身校验异常返回 OpenAI 兼容结构（仅 `message/type/code` 三个字段）：
 
 ```json
 {
   "error": {
-    "message": "用户可读的错误信息",
+    "message": "max_tokens is required",
     "type": "invalid_request_error",
-    "code": "quota_exceeded",
-    "param": null,
-    "raw_code": "GW_001",
-    "raw_message": "原始错误信息"
+    "code": "max_tokens"
+  }
+}
+```
+
+**Anthropic 兼容端点**：网关自身校验异常返回 Anthropic 兼容结构：
+
+```json
+{
+  "type": "error",
+  "error": {
+    "type": "invalid_request_error",
+    "message": "max_tokens is required"
   }
 }
 ```
@@ -1237,521 +1260,213 @@ anthropic-version: 2023-06-01
 
 ---
 
-## 七、管理 API - Provider API Key 管理
-
-> **说明**: 本章节定义 Provider API Key 资源池管理相关的 API 接口。
-
-### 7.1 API Key 管理端点总览
-
-| 端点 | 方法 | 说明 | 认证 |
-|------|------|------|------|
-| `/api/v1/provider-api-keys` | POST | 创建 Key | Admin |
-| `/api/v1/provider-api-keys/{id}` | GET | 获取 Key 详情 | Admin |
-| `/api/v1/provider-api-keys` | GET | 获取 Key 列表 | Admin |
-| `/api/v1/provider-api-keys/{id}` | PUT | 更新 Key 信息 | Admin |
-| `/api/v1/provider-api-keys/{id}` | DELETE | 删除 Key | Admin |
-| `/api/v1/provider-api-keys/{id}/enabled` | PATCH | 启用/禁用 Key | Admin |
-
----
-
-### 7.2 创建 Key
-
-**端点**: `POST /api/v1/provider-api-keys`
-
-**请求体**:
-
-```json
-{
-  "providerId": 1,
-  "keyName": "主 Key",
-  "apiKey": "sk-xxxxxxxxxxxxxxxx",
-  "priority": 100,
-  "weight": 100,
-  "isDefault": false,
-  "expiresAt": "2027-12-31T23:59:59Z"
-}
-```
-
-| 字段 | 类型 | 必填 | 约束 | 说明 |
-|------|------|------|------|------|
-| providerId | Long | ✅ | > 0 | Provider ID |
-| keyName | String | ✅ | 1-128 字符 | Key 名称，用于标识 |
-| apiKey | String | ✅ | 1-512 字符 | Provider 的 API Key 明文（存储时加密） |
-| priority | Integer | ❌ | 1-1000，默认 100 | 优先级数值，数值越大优先级越高 |
-| weight | Integer | ❌ | 1-1000，默认 100 | 权重，用于加权轮询 |
-| isDefault | Boolean | ❌ | 默认 false | 是否为默认 Key |
-| expiresAt | DateTime | ❌ | ISO 8601 | 过期时间（可选，过期后自动禁用） |
-
-**响应**:
-
-```json
-{
-  "success": true,
-  "data": {
-    "id": 1,
-    "key_name": "主 Key",
-    "key_hint": "sk-****abcd",
-    "status": "ACTIVE",
-    "is_default": true,
-    "priority": 100,
-    "rpm_limit": 60,
-    "tpm_limit": 100000,
-    "expires_at": "2027-12-31T23:59:59Z",
-    "created_at": "2026-05-06T10:30:00Z"
-  },
-  "trace_id": "trace_abc123",
-  "timestamp": "2026-05-06T10:30:00Z"
-}
-```
-
-**业务规则**:
-- Provider 下第一个 Key 自动成为默认 Key（`is_default` 自动设为 true）
-- API Key 明文仅在创建时返回一次，后续只能看到 `key_hint`
-- 创建后 Key 状态默认为 `ACTIVE`
-
-**错误码**:
-
-| 错误码 | HTTP 状态码 | 说明 |
-|--------|-------------|------|
-| PROVIDER_NOT_FOUND | 404 | Provider 不存在 |
-| INVALID_API_KEY_FORMAT | 400 | API Key 格式无效 |
-| DUPLICATE_API_KEY | 409 | 该 API Key 已存在于该 Provider |
-
----
-
-### 7.3 获取 Key 列表
-
-**端点**: `GET /api/v1/providers/{providerId}/keys`
-
-**响应**:
-
-```json
-{
-  "success": true,
-  "data": [
-    {
-      "id": 1,
-            "key_name": "主 Key",
-      "key_hint": "sk-****abcd",
-      "status": "ACTIVE",
-      "is_default": true,
-      "priority": 100,
-      "health_status": "HEALTHY",
-      "success_count": 1523,
-      "error_count": 3,
-      "rpm_limit": 60,
-      "tpm_limit": 100000,
-      "last_used_at": "2026-05-06T10:00:00Z",
-      "created_at": "2026-05-01T08:00:00Z"
-    }
-  ],
-  "trace_id": "trace_abc123",
-  "timestamp": "2026-05-06T10:30:00Z"
-}
-```
-
----
-
-### 7.4 获取 Key 详情
-
-**端点**: `GET /api/v1/providers/{providerId}/keys/{keyId}`
-
-**响应**:
-
-```json
-{
-  "success": true,
-  "data": {
-    "id": 1,
-        "key_name": "主 Key",
-    "key_hint": "sk-****abcd",
-    "status": "ACTIVE",
-    "is_default": true,
-    "priority": 100,
-    "health_status": "HEALTHY",
-    "success_count": 1523,
-    "error_count": 3,
-    "rpm_limit": 60,
-    "tpm_limit": 100000,
-    "disabled_reason": null,
-    "recover_at": null,
-    "expires_at": "2027-12-31T23:59:59Z",
-    "last_used_at": "2026-05-06T10:00:00Z",
-    "created_at": "2026-05-01T08:00:00Z",
-    "updated_at": "2026-05-06T10:30:00Z"
-  },
-  "trace_id": "trace_abc123",
-  "timestamp": "2026-05-06T10:30:00Z"
-}
-```
-
-**错误码**:
-
-| 错误码 | HTTP 状态码 | 说明 |
-|--------|-------------|------|
-| KEY_NOT_FOUND | 404 | Key 不存在 |
-| PROVIDER_NOT_FOUND | 404 | Provider 不存在 |
-
----
-
-### 7.5 更新 Key 信息
-
-**端点**: `PUT /api/v1/providers/{providerId}/keys/{keyId}`
-
-**请求体**:
-
-```json
-{
-  "key_name": "更新后的名称",
-  "rpm_limit": 100,
-  "tpm_limit": 200000,
-  "expires_at": "2028-12-31T23:59:59Z"
-}
-```
-
-| 字段 | 类型 | 必填 | 约束 | 说明 |
-|------|------|------|------|------|
-| key_name | String | ❌ | 1-64 字符 | Key 名称 |
-| rpm_limit | Integer | ❌ | ≥1 | 每分钟请求数限制 |
-| tpm_limit | Integer | ❌ | ≥1 | 每分钟 Token 数限制 |
-| expires_at | DateTime | ❌ | ISO 8601 | 过期时间 |
-
-**响应**:
-
-```json
-{
-  "success": true,
-  "data": {
-        "key_name": "更新后的名称",
-    "rpm_limit": 100,
-    "tpm_limit": 200000,
-    "expires_at": "2028-12-31T23:59:59Z",
-    "updated_at": "2026-05-06T10:30:00Z"
-  },
-  "trace_id": "trace_abc123",
-  "timestamp": "2026-05-06T10:30:00Z"
-}
-```
-
-**错误码**:
-
-| 错误码 | HTTP 状态码 | 说明 |
-|--------|-------------|------|
-| KEY_NOT_FOUND | 404 | Key 不存在 |
-| PROVIDER_NOT_FOUND | 404 | Provider 不存在 |
-
----
-
-### 7.6 删除 Key
-
-**端点**: `DELETE /api/v1/providers/{providerId}/keys/{keyId}`
-
-**请求体**: 无
-
-**响应**:
-
-```json
-{
-  "success": true,
-  "data": {
-        "deleted_at": "2026-05-06T10:30:00Z"
-  },
-  "trace_id": "trace_abc123",
-  "timestamp": "2026-05-06T10:30:00Z"
-}
-```
-
-**业务规则**（KP-008 默认 Key 保护）:
-- Provider 下只剩一个 Key 时禁止删除
-- 默认 Key 禁止删除
-- 删除操作为软删除（状态变为 `DELETED`）
-
-**错误码**:
-
-| 错误码 | HTTP 状态码 | 说明 |
-|--------|-------------|------|
-| KEY_NOT_FOUND | 404 | Key 不存在 |
-| PROVIDER_NOT_FOUND | 404 | Provider 不存在 |
-| CANNOT_DELETE_LAST_KEY | 400 | 无法删除 Provider 中最后一个 Key |
-| CANNOT_DELETE_DEFAULT_KEY | 400 | 无法删除默认 Key |
-
----
-
-### 7.7 调整 Key 优先级
-
-**端点**: `PUT /api/v1/providers/{providerId}/keys/{keyId}/priority`
-
-**请求体**:
-
-```json
-{
-  "priority": 100
-}
-```
-
-| 字段 | 类型 | 必填 | 约束 | 说明 |
-|------|------|------|------|------|
-| priority | Integer | ✅ | 1-1000 | 优先级数值，数值越大优先级越高 |
-
-**响应**:
-
-```json
-{
-  "success": true,
-  "data": {
-        "priority": 100,
-    "updated_at": "2026-05-06T10:30:00Z"
-  },
-  "trace_id": "trace_abc123",
-  "timestamp": "2026-05-06T10:30:00Z"
-}
-```
-
-**错误码**:
-
-| 错误码 | HTTP 状态码 | 说明 |
-|--------|-------------|------|
-| KEY_NOT_FOUND | 404 | Key 不存在 |
-| PROVIDER_NOT_FOUND | 404 | Provider 不存在 |
-
----
-
-### 7.8 批量调整 Key 优先级
-
-**端点**: `PUT /api/v1/providers/{providerId}/keys/priorities`
-
-**请求体**:
-
-```json
-{
-  "items": [
-    {"id": 1, "priority": 100},
-    {"id": 2, "priority": 90},
-    {"id": 3, "priority": 80}
-  ]
-}
-```
-
-| 字段 | 类型 | 必填 | 说明 |
-|------|------|------|------|
-| items | Array | ✅ | Key 优先级列表 |
-
-**响应**:
-
-```json
-{
-  "success": true,
-  "data": {
-    "updated_count": 3,
-    "items": [
-      {"id": 1, "priority": 100},
-      {"id": 2, "priority": 90},
-      {"id": 3, "priority": 80}
-    ]
-  },
-  "trace_id": "trace_abc123",
-  "timestamp": "2026-05-06T10:30:00Z"
-}
-```
-
----
-
-### 7.9 禁用 Key
-
-**端点**: `POST /api/v1/providers/{providerId}/keys/{keyId}/disable`
-
-**请求体**: 无
-
-**响应**:
-
-```json
-{
-  "success": true,
-  "data": {
-        "status": "DISABLED",
-    "disabled_reason": "MANUAL",
-    "disabled_at": "2026-05-06T10:00:00Z"
-  },
-  "trace_id": "trace_abc123",
-  "timestamp": "2026-05-06T10:30:00Z"
-}
-```
-
-**错误码**:
-
-| 错误码 | HTTP 状态码 | 说明 |
-|--------|-------------|------|
-| KEY_NOT_FOUND | 404 | Key 不存在 |
-| CANNOT_DISABLE_LAST_KEY | 400 | 无法禁用 Provider 中最后一个 Key |
-| CANNOT_DISABLE_DEFAULT_KEY | 400 | 无法禁用默认 Key |
-
----
-
-### 7.10 启用 Key
-
-**端点**: `POST /api/v1/providers/{providerId}/keys/{keyId}/enable`
-
-**请求体**: 无
-
-**响应**:
-
-```json
-{
-  "success": true,
-  "data": {
-        "status": "ACTIVE",
-    "enabled_at": "2026-05-06T10:00:00Z"
-  },
-  "trace_id": "trace_abc123",
-  "timestamp": "2026-05-06T10:30:00Z"
-}
-```
-
-**说明**: 
-- 已过期的 Key 无法通过此接口启用，需更新过期时间后自动恢复
-- 启用后该 Key 可在下一个 AI 服务调用时正常被使用
-
----
-
-### 7.11 获取 Key 健康状态
-
-**端点**: `GET /api/v1/providers/{providerId}/keys/{keyId}/health`
-
-**响应**:
-
-```json
-{
-  "success": true,
-  "data": {
-        "status": "ACTIVE",
-    "health_status": "HEALTHY",
-    "last_success_at": "2026-05-06T10:00:00Z",
-    "last_error_at": null,
-    "error_count": 0,
-    "success_count": 1523,
-    "success_rate": 0.998,
-    "rpm_current": 12,
-    "rpm_limit": 60,
-    "recovery_at": null
-  },
-  "trace_id": "trace_abc123",
-  "timestamp": "2026-05-06T10:30:00Z"
-}
-```
-
-**health_status 枚举**:
-
-| 值 | 说明 |
-|------|------|
-| HEALTHY | 健康 |
-| DEGRADED | 降级中（有错误但未超阈值） |
-| UNHEALTHY | 不健康（被禁用或错误率高） |
-| UNKNOWN | 未知（无调用记录） |
-
----
-
-### 7.12 手动触发恢复检查
-
-**端点**: `POST /api/v1/providers/{providerId}/keys/{keyId}/check-recovery`
-
-**请求体**: 无
-
-**响应**:
-
-```json
-{
-  "success": true,
-  "data": {
-        "previous_status": "RATE_LIMITED",
-    "current_status": "ACTIVE",
-    "recovered": true,
-    "checked_at": "2026-05-06T10:30:00Z",
-    "message": "Key 已成功恢复"
-  },
-  "trace_id": "trace_abc123",
-  "timestamp": "2026-05-06T10:30:00Z"
-}
-```
-
-**说明**:
-- 手动触发对被禁用 Key 的可用性检查
-- 发送测试请求验证 Key 是否可用
-- 如果可用，自动将状态恢复为 `ACTIVE`
-- 适用于需要立即恢复的场景，无需等待定时任务
-
-**错误码**:
-
-| 错误码 | HTTP 状态码 | 说明 |
-|--------|-------------|------|
-| KEY_NOT_FOUND | 404 | Key 不存在 |
-| KEY_ALREADY_ACTIVE | 400 | Key 已处于 ACTIVE 状态，无需恢复 |
-
----
-
-### 7.13 更新 Key 选择策略
-
-**端点**: `PUT /api/v1/providers/{providerId}/selection-strategy`
-
-**请求体**:
-
-```json
-{
-  "strategy": "PRIORITY_FIRST"
-}
-```
-
-| 字段 | 类型 | 必填 | 约束 | 说明 |
-|------|------|------|------|------|
-| strategy | String | ✅ | PRIORITY_FIRST / ROUND_ROBIN / WEIGHTED | Key 选择策略 |
-
-**策略说明**:
-
-| 策略 | 说明 | 适用场景 |
-|------|------|---------|
-| PRIORITY_FIRST | 按优先级选择，高优先级优先 | 成本敏感场景，优先使用高优先级 Key |
-| ROUND_ROBIN | 轮询选择，均匀分布 | 负载均衡场景，均匀使用所有 Key |
-| WEIGHTED | 按权重随机选择 | 流量分配场景，按权重比例分配 |
-
-**响应**:
-
-```json
-{
-  "success": true,
-  "data": {
-    "provider_id": 1,
-    "strategy": "PRIORITY_FIRST",
-    "updated_at": "2026-05-06T10:30:00Z"
-  },
-  "trace_id": "trace_abc123",
-  "timestamp": "2026-05-06T10:30:00Z"
-}
-```
-
----
-
-### 7.14 Key 状态枚举
-
-| 状态 | 说明 |
-|------|------|
-| ACTIVE | 活跃，可正常使用 |
-| DISABLED | 已禁用，手动禁用 |
-| EXPIRED | 已过期，超过有效期 |
-| RATE_LIMITED | 限流中，触发上游限流 |
-| OVERQUOTA | 超配额，额度已耗尽 |
-| ERROR | 异常，调用错误达到阈值 |
-| DELETED | 已删除 |
-
----
-
-### 7.15 禁用原因枚举
-
-| 原因 | 说明 |
-|------|------|
-| INVALID_KEY | 无效 Key |
-| RATE_LIMITED | 触发限流 |
-| OVERQUOTA | 超配额 |
-| ERROR | 调用异常 |
-| MANUAL | 手动禁用 |
+## 七、管理面 API 总览
+
+> **说明**:
+>
+> - 本章为管理面（Console/CLI 消费）全部 API 端点清单，按 Controller 分组，与 `gateway-web/src/main/java/com/codingas/gateway/web/api/` 下的实现一一对应。
+> - 管理面统一响应信封 `ApiResponse`（字段见 5.3），Controller 返回的业务对象经 `ApiResponseWrapperAdvice` 自动包装为 `$.data.*`（单对象；列表端点的 `$.data` 为数组，分页端点为分页对象）。
+> - 供应商凭证（ChannelCredential）管理挂在渠道维度（`/api/v1/channels/{channelId}/credentials`），替代早期 Provider API Key 设计。
+> - 「请求体/响应」列：`body:` 后为 JSON 请求体 DTO（`*` 为必填字段），`query:` 后为查询参数，`→` 后为 `$.data` 中的业务数据类型；删除/状态类操作无业务数据。
+
+### 7.1 模型管理（ModelController，`/api/v1/models`）
+
+| HTTP 动词 | 路径 | 用途 | 请求体/响应 |
+|-----------|------|------|------------|
+| POST | `/api/v1/models` | 创建模型 | body: `ModelCreateRequest` → `ModelResponse` |
+| POST | `/api/v1/models/{id}/copy` | 复制模型 | body: `{modelName*, displayName?, modelFamily?}` → `ModelResponse` |
+| GET | `/api/v1/models/{id}` | 模型详情 | → `ModelResponse` |
+| GET | `/api/v1/models` | 分页查询模型 | query: 分页/过滤参数 → `PageResponse<ModelResponse>` |
+| PUT | `/api/v1/models/{id}` | 更新模型 | body: `ModelUpdateRequest` → `ModelResponse` |
+| POST | `/api/v1/models/{id}/unlock` | 解锁模型字段 | → `ModelResponse` |
+| DELETE | `/api/v1/models/{id}` | 删除模型 | 无业务数据 |
+| PATCH | `/api/v1/models/{id}/state?enabled=` | 启用/禁用模型 | query: `enabled`（boolean）→ `ModelResponse` |
+
+### 7.2 渠道管理（ChannelController，`/api/v1/channels`）
+
+| HTTP 动词 | 路径 | 用途 | 请求体/响应 |
+|-----------|------|------|------------|
+| POST | `/api/v1/channels` | 创建渠道 | body: `ChannelRequest` → `ChannelResponse` |
+| POST | `/api/v1/channels/{id}/copy` | 复制渠道 | body: `{name*, copyCredentials=false}` → `ChannelResponse` |
+| PUT | `/api/v1/channels/{id}` | 更新渠道 | body: `ChannelRequest` → `ChannelResponse` |
+| GET | `/api/v1/channels/{id}` | 渠道详情 | → `ChannelResponse` |
+| GET | `/api/v1/channels` | 渠道列表 | query: `providerId?`、`billingMode?`、`sortBy?`、`sortOrder?` → `List<ChannelResponse>` |
+| PUT | `/api/v1/channels/{id}/state` | 渠道状态流转 | body: `ChannelStateTransitionRequest`，无业务数据 |
+| DELETE | `/api/v1/channels/{id}` | 删除渠道 | 无业务数据 |
+| POST | `/api/v1/channels/{channelId}/endpoints` | 新增渠道端点 | body: `ChannelEndpointRequest` → `ChannelEndpointResponse` |
+| DELETE | `/api/v1/channels/{channelId}/endpoints/{endpointId}` | 删除渠道端点 | 无业务数据 |
+| PUT | `/api/v1/channels/{channelId}/endpoints/{endpointId}` | 更新渠道端点 | body: `ChannelEndpointRequest` → `ChannelEndpointResponse` |
+| POST | `/api/v1/channels/{id}/health-check` | 触发健康检查 | body: `ChannelHealthCheckRequest` → `ChannelHealthResult` |
+| POST | `/api/v1/channels/{channelId}/endpoints/{endpointId}/circuit-breaker/force-open` | 强制开启熔断 | → `CircuitBreakerStateResponse` |
+| POST | `/api/v1/channels/{channelId}/endpoints/{endpointId}/circuit-breaker/force-close` | 强制关闭熔断（恢复） | → `CircuitBreakerStateResponse` |
+| GET | `/api/v1/channels/{channelId}/endpoints/{endpointId}/circuit-breaker/state` | 查询熔断状态 | → `CircuitBreakerStateResponse` |
+
+### 7.3 渠道凭证管理（ChannelCredentialController，`/api/v1/channels/{channelId}/credentials`）
+
+| HTTP 动词 | 路径 | 用途 | 请求体/响应 |
+|-----------|------|------|------------|
+| GET | `/api/v1/channels/{channelId}/credentials` | 凭证列表 | → `List<ChannelCredentialResponse>` |
+| GET | `/api/v1/channels/{channelId}/credentials/{id}` | 凭证详情 | → `ChannelCredentialResponse` |
+| POST | `/api/v1/channels/{channelId}/credentials` | 创建凭证 | body: `ChannelCredentialCreateRequest` → `ChannelCredentialCreateResponse` |
+| PUT | `/api/v1/channels/{channelId}/credentials/{id}` | 更新凭证 | body: `ChannelCredentialUpdateRequest` → `ChannelCredentialResponse` |
+| DELETE | `/api/v1/channels/{channelId}/credentials/{id}` | 删除凭证 | 无业务数据 |
+| POST | `/api/v1/channels/{channelId}/credentials/{id}/test` | 凭证连通性测试 | → `ApiKeyTestResponse` |
+
+### 7.4 渠道模型实例（ModelInstanceController，`/api/v1/channels/{channelId}/models`）
+
+| HTTP 动词 | 路径 | 用途 | 请求体/响应 |
+|-----------|------|------|------------|
+| GET | `/api/v1/channels/{channelId}/models` | 渠道模型实例列表 | query: `sortBy?`、`sortOrder?` → `List<ModelInstanceResponse>` |
+| POST | `/api/v1/channels/{channelId}/models` | 渠道绑定模型 | body: `ModelInstanceCreateRequest` → `ModelInstanceResponse` |
+| DELETE | `/api/v1/channels/{channelId}/models/{id}` | 删除模型实例 | 无业务数据 |
+| PUT | `/api/v1/channels/{channelId}/models/{id}/state` | 启用/禁用模型实例 | body: `ModelInstanceStateTransitionRequest`，无业务数据 |
+| PATCH | `/api/v1/channels/{channelId}/models/{id}/upstream-model-name` | 更新上游模型名 | body: `{"upstreamModelName": "..."}`，无业务数据 |
+| PUT | `/api/v1/channels/{channelId}/models/{id}` | 更新模型实例 | body: `ModelInstanceUpdateRequest` → `ModelInstanceResponse` |
+
+### 7.5 渠道开通（ChannelProvisionController，`/api/v1/provision`，均需 ADMIN 角色）
+
+| HTTP 动词 | 路径 | 用途 | 请求体/响应 |
+|-----------|------|------|------------|
+| POST | `/api/v1/provision/from-plan/{planCode}` | 按套餐开通渠道 | → `ProvisionResult` |
+| POST | `/api/v1/provision/batch/{providerCode}` | 按供应商批量开通渠道 | → `BatchProvisionResult` |
+| POST | `/api/v1/provision/model/{modelName}` | 按模型开通渠道 | → `ProvisionResult` |
+| POST | `/api/v1/provision/sync/builtin` | 同步内置渠道 | 无业务数据 |
+
+### 7.6 供应商管理（ProviderController，`/api/v1/providers`）
+
+| HTTP 动词 | 路径 | 用途 | 请求体/响应 |
+|-----------|------|------|------------|
+| POST | `/api/v1/providers` | 创建供应商 | body: `ProviderCreateRequest` → `ProviderResponse` |
+| GET | `/api/v1/providers/{id}` | 供应商详情 | → `ProviderResponse` |
+| GET | `/api/v1/providers` | 分页查询供应商 | query: 分页/过滤参数（`ProviderQueryRequest`）→ `PageResponse<ProviderResponse>` |
+| PUT | `/api/v1/providers/{id}` | 更新供应商 | body: `ProviderUpdateRequest` → `ProviderResponse` |
+| DELETE | `/api/v1/providers/{id}` | 删除供应商 | 无业务数据 |
+| GET | `/api/v1/providers/names` | 供应商名称列表 | → `List<String>` |
+| POST | `/api/v1/providers/test-connectivity` | 连通性测试 | body: `ConnectivityTestRequest` → `ConnectivityTestResult` |
+
+### 7.7 套餐目录（PlanCatalogController，`/api/v1/plan-catalogs`）
+
+| HTTP 动词 | 路径 | 用途 | 请求体/响应 |
+|-----------|------|------|------------|
+| GET | `/api/v1/plan-catalogs/providers` | 目录供应商列表 | query: `keyword?` → `List<ProviderCatalogResponse>` |
+| GET | `/api/v1/plan-catalogs` | 套餐列表 | query: `providerCode?` → `List<PlanCatalogResponse>` |
+| GET | `/api/v1/plan-catalogs/{planCode}` | 套餐详情 | → `PlanDetailResponse` |
+| GET | `/api/v1/plan-catalogs/{planCode}/pricing` | 套餐定价 | → `List<PlanDetailResponse.PricingInfo>` |
+| GET | `/api/v1/plan-catalogs/models` | 目录模型列表 | query: `keyword?` → `List<ModelResponse>` |
+
+### 7.8 目录同步（CatalogSyncController，`/api/v1/catalog/sync`）
+
+| HTTP 动词 | 路径 | 用途 | 请求体/响应 |
+|-----------|------|------|------------|
+| POST | `/api/v1/catalog/sync` | 触发目录同步 | → `CatalogSyncReportResponse` |
+| GET | `/api/v1/catalog/sync/status` | 最近同步状态 | → `CatalogSyncStatusResponse` |
+
+### 7.9 协议查询（ProtocolController，`/api/v1/protocols`）
+
+| HTTP 动词 | 路径 | 用途 | 请求体/响应 |
+|-----------|------|------|------------|
+| GET | `/api/v1/protocols` | 已注册协议列表 | → `List<{name, label}>` |
+
+### 7.10 应用管理（ApplicationController，`/api/v1/applications`）
+
+| HTTP 动词 | 路径 | 用途 | 请求体/响应 |
+|-----------|------|------|------------|
+| POST | `/api/v1/applications` | 创建应用 | body: `ApplicationRequest` → `ApplicationResponse` |
+| PUT | `/api/v1/applications/{id}` | 更新应用 | body: 应用更新请求 → `ApplicationResponse` |
+| GET | `/api/v1/applications/{id}` | 应用详情 | → `ApplicationResponse` |
+| GET | `/api/v1/applications` | 应用列表 | → `List<ApplicationResponse>` |
+| DELETE | `/api/v1/applications/{id}` | 删除应用 | 无业务数据 |
+| GET | `/api/v1/applications/{id}/api-keys` | 应用 API Key 列表 | → `List<UserApiKeyResponse>` |
+| GET | `/api/v1/applications/{id}/channels` | 应用授权渠道列表 | → `List<ApplicationChannelItem>` |
+| PUT | `/api/v1/applications/{id}/channels` | 更新应用授权渠道 | body: `ApplicationChannelRequest`，无业务数据 |
+
+### 7.11 API Key 管理（UserApiKeyController，`/api/v1/user-api-keys`）
+
+| HTTP 动词 | 路径 | 用途 | 请求体/响应 |
+|-----------|------|------|------------|
+| POST | `/api/v1/user-api-keys` | 创建 API Key | body: `UserApiKeyCreateRequest` → `UserApiKeyCreateResponse` |
+| GET | `/api/v1/user-api-keys?userId=` | 按 userId 查询 API Key | query: `userId` → `List<UserApiKeyResponse>` |
+| GET | `/api/v1/user-api-keys` | API Key 列表 | → `List<UserApiKeyResponse>` |
+| GET | `/api/v1/user-api-keys/{id}` | API Key 详情 | → `UserApiKeyResponse` |
+| GET | `/api/v1/user-api-keys/{id}/detail` | API Key 明细查询 | → `UserApiKeyResponse` |
+| PUT | `/api/v1/user-api-keys/{id}` | 更新 API Key | body: `UserApiKeyUpdateRequest` → `UserApiKeyResponse` |
+| DELETE | `/api/v1/user-api-keys/{id}` | 删除 API Key | 无业务数据 |
+
+### 7.12 用户管理（UserController，`/api/v1/users`）
+
+| HTTP 动词 | 路径 | 用途 | 请求体/响应 |
+|-----------|------|------|------------|
+| POST | `/api/v1/users` | 创建用户 | body: `UserCreateRequest` → `UserResponse` |
+| GET | `/api/v1/users/{id}` | 用户详情 | → `UserResponse` |
+| GET | `/api/v1/users` | 分页查询用户 | query: 分页/过滤参数（`UserQueryRequest`）→ `PageResponse<UserResponse>` |
+| PUT | `/api/v1/users/{id}` | 更新用户 | body: 用户更新请求 → `UserResponse` |
+| DELETE | `/api/v1/users/{id}` | 删除用户 | 无业务数据 |
+| PATCH | `/api/v1/users/{id}/state` | 启用/禁用用户 | body: `UserStateUpdateRequest` → `UserResponse` |
+| PUT | `/api/v1/users/{id}/roles` | 分配用户角色 | body: `UserRoleAssignRequest` → `UserResponse` |
+| POST | `/api/v1/users/{id}/reset-password` | 重置密码 | → `ResetPasswordResponse`（含一次性明文密码） |
+| GET | `/api/v1/users/{userId}/api-keys` | 用户 API Key 列表 | → `List<UserApiKeyResponse>` |
+
+### 7.13 认证（AuthController，`/api/v1/auth`）
+
+| HTTP 动词 | 路径 | 用途 | 请求体/响应 |
+|-----------|------|------|------------|
+| POST | `/api/v1/auth/login` | 登录 | body: `{username*, password*, rememberMe?}` → `LoginResponse` |
+| POST | `/api/v1/auth/logout` | 登出 | 无业务数据 |
+| GET | `/api/v1/auth/me` | 当前登录用户 | → `UserResponse` |
+| PATCH | `/api/v1/auth/me/password` | 修改密码 | body: `ChangePasswordRequest`，无业务数据 |
+
+### 7.14 个人中心（MeController，`/api/v1/me`）
+
+| HTTP 动词 | 路径 | 用途 | 请求体/响应 |
+|-----------|------|------|------------|
+| GET | `/api/v1/me/api-keys` | 当前登录用户的 API Key 列表 | → `List<UserApiKeyResponse>` |
+
+### 7.15 Token 限额（TokenLimitController，`/api/v1/token-limits`）
+
+| HTTP 动词 | 路径 | 用途 | 请求体/响应 |
+|-----------|------|------|------------|
+| POST | `/api/v1/token-limits` | 创建限额规则 | body: `TokenLimitCreateRequest` → `TokenLimitResponse` |
+| GET | `/api/v1/token-limits/{id}` | 限额详情 | → `TokenLimitResponse` |
+| GET | `/api/v1/token-limits` | 分页查询限额 | query: 分页/过滤参数（`TokenLimitQueryRequest`）→ `PageResponse<TokenLimitResponse>` |
+| PUT | `/api/v1/token-limits/{id}` | 更新限额 | body: 限额更新请求 → `TokenLimitResponse` |
+| DELETE | `/api/v1/token-limits/{id}` | 删除限额 | 无业务数据 |
+| PATCH | `/api/v1/token-limits/{id}/reset-usage` | 重置用量 | → `TokenLimitResponse` |
+
+### 7.16 统计（StatsController，`/api/v1/stats`）
+
+| HTTP 动词 | 路径 | 用途 | 请求体/响应 |
+|-----------|------|------|------------|
+| GET | `/api/v1/stats` | 总览统计 | → `StatsResponse` |
+| GET | `/api/v1/stats/trend` | 调用趋势 | query: `days`（默认 7）→ `List<StatsTrendResponse>` |
+| GET | `/api/v1/stats/model-usage` | 模型用量排行 | query: `limit`（默认 5）→ `List<StatsModelUsageResponse>` |
+
+### 7.17 韧性事件（ResilienceEventController，`/api/v1/resilience/events`）
+
+| HTTP 动词 | 路径 | 用途 | 请求体/响应 |
+|-----------|------|------|------------|
+| GET | `/api/v1/resilience/events` | 韧性事件列表 | query: `since?` 等 → `List<FailoverEventResponse>` |
+| GET | `/api/v1/resilience/events/exhausted` | 预算耗尽事件 | query: `since?` 等 → `List<FailoverEventResponse>` |
+
+### 7.18 系统设置（SettingsController，`/api/v1/settings`）
+
+| HTTP 动词 | 路径 | 用途 | 请求体/响应 |
+|-----------|------|------|------------|
+| GET | `/api/v1/settings` | 系统设置列表 | → `List<SystemSettingResponse>` |
+| PUT | `/api/v1/settings/{key}` | 更新设置项 | body: `SettingUpdateRequest` → `SystemSettingResponse` |
+
+### 7.19 审计日志（AuditController，`/api/v1/audit-logs`）
+
+| HTTP 动词 | 路径 | 用途 | 请求体/响应 |
+|-----------|------|------|------------|
+| GET | `/api/v1/audit-logs` | 分页查询审计日志 | query: 查询参数（`AuditLogQueryRequest`）→ `PageResponse<AuditLogResponse>` |
+| DELETE | `/api/v1/audit-logs` | 清理审计日志 | query: `days?`、`before?` → 删除数量统计 |
+
+### 7.20 体验对话（ExperienceController，`/api/v1/experience`）
+
+| HTTP 动词 | 路径 | 用途 | 请求体/响应 |
+|-----------|------|------|------------|
+| POST | `/api/v1/experience/chat` | 体验对话（SSE 流式） | body: `ExperienceChatRequest` → SSE（`text/event-stream`） |
+| GET | `/api/v1/experience/providers/{providerId}/models` | 供应商可用模型列表 | → `List<ExperienceModelResponse>` |
 
 ---
 
@@ -1759,6 +1474,7 @@ anthropic-version: 2023-06-01
 
 | 版本 | 日期 | 变更内容 |
 |------|------|----------|
+| v1.3 | 2026-08-31 | 与代码实现对齐修订：Anthropic 端点路径修正为 `/anthropic/v1/messages`（batches 端点保留并标注规划中）；Chat/Messages 请求参数表对齐协议 DTO（移除 top_p、n、logit_bias、user / top_p、top_k、metadata）；模型列表字段修正为 `ownedBy`（示例值 system）；5.3 网关统一错误格式重写为 ApiResponse 信封 + 双协议兼容错误；未实现端点标注「规划中」；第七章替换为「管理面 API 总览」（按 Controller 分组的全部管理面端点清单） |
 | v1.2 | 2026-05-06 | 补充完整的 CRUD 接口：创建 Key（7.2）、获取详情（7.4）、更新 Key（7.5）、删除 Key（7.6）；新增手动触发恢复检查接口（7.15） |
 | v1.1 | 2026-05-06 | 新增第七章管理 API - Provider API Key 管理 API |
 | v1.0 | 2026-05-02 | 初始版本 |

@@ -8,8 +8,8 @@
 LLM-Gateway 是新一代企业级 AI 模型 API 聚合分发与智能路由网关（APIPark 竞品），支持 OpenAI 和 Anthropic 双 API 标准。
 
 - **技术栈**: Java 21 + Spring Boot 3.5.x + PostgreSQL + Redis
-- **架构**: 域模块化（17 模块三明治：HTTP 承载 → 域核心服务 → 持久化绑定 → 自动装配），分层依赖由 ArchUnit 铁律强制执行
-- **设计规模**: ~100团队 / ~10000用户 / 单实例 10,000 QPS
+- **架构**: 域模块化（38 个 Maven 模块 / 17 个顶层 gateway-* 分组的三明治结构：HTTP 承载 → 域核心服务 → 持久化绑定 → 自动装配），分层依赖由 ArchUnit 铁律强制执行
+- **设计规模**: ~100应用（teams 表已由 applications 取代，V52/V53 迁移）/ ~10000用户 / 单实例 10,000 QPS
 
 ## 核心原则（不可妥协）
 
@@ -24,8 +24,8 @@ LLM-Gateway 是新一代企业级 AI 模型 API 聚合分发与智能路由网�
 **分层依赖规则**：上层依赖下层接口、禁止反向依赖——由 **Maven 模块边界 + ArchUnit 铁律**（`LayerDependencyTest`）强制执行，包名不再保留分层约定。详见 `docs/adr/0001-modularization-architecture.md`。
 
 - **分层依赖**: 上层依赖下层接口，禁止跨层调用或反向依赖
-- **Gateway 模式**: 接口定义在域核心模块（如 `provider.service.CredentialEncryptor`），实现 in 绑定模块（如 `<域>data.gateway`）或域内实现包
-- **依赖倒置**: 业务域只依赖 Gateway 接口，不直接依赖外部资源
+- **Repository/Client 端口模式**: 端口接口定义在域核心模块——本地持久化端口 `XxxRepository`（由 `<域>data` 提供 `JpaXxxRepository` 实现）、第三方防腐端口 `XxxClient`、域内技术能力接口（如 `provider.encryption.CredentialEncryptor`，域内实现）
+- **依赖倒置**: 业务域只依赖端口接口（Repository/Client），不直接依赖外部资源
 - **职责拆分架构**: 按业务域内聚 Entity + Service
 - **模型纯洁性**: JPA 实体只含 Getter/Setter，禁止含业务逻辑
 - **配置外部化**: 所有可变参数通过 `@ConfigurationProperties`，禁止魔法数字
@@ -37,14 +37,14 @@ LLM-Gateway 是新一代企业级 AI 模型 API 聚合分发与智能路由网�
 llm-gateway/                          # 项目根目录（父 POM，统一依赖管理）
 ├── pom.xml                           # 父 POM，打包类型: pom
 ├── gateway-common/                   # 横切底座（common.data/entity/dto/enums/event/exception/util）
-├── gateway-protocol/                 # 协议核心（contract/transport/tuning/validation）
+├── gateway-protocol/                 # 协议核心（canonical/raw/transport/tuning/validation）
 │   ├── protocol-openai/              # OpenAI 协议实现（插件）
 │   ├── protocol-anthropic/           # Anthropic 协议实现（插件）
 │   └── protocol-gemini/              # Gemini 协议实现（插件）
-├── gateway-provider/                 # 供给域（channel/service/catalog/model/vendor/health）
-│   ├── provider-data/                # 供给持久化（dataobject/gateway/repository）
+├── gateway-provider/                 # 供给域（channel/catalog/model/vendor/health/cache/encryption）
+│   ├── provider-data/                # 供给持久化（DO/Repository 按实体子域聚合：catalog/channel/model/vendor）
 │   └── provider-starter/             # 供给自动装配（autoconfigure.provider）
-├── gateway-iam/                      # 身份访问域（auth/apikey/encryption/service/dto）
+├── gateway-iam/                      # 身份访问域（auth/apikey/encryption/user/application/exception）
 │   ├── iam-data/
 │   └── iam-starter/
 ├── gateway-usage/                    # 用量管控域（tokenlimit 等）
@@ -59,6 +59,10 @@ llm-gateway/                          # 项目根目录（父 POM，统一依赖
 ├── gateway-alert/                    # 告警通知域
 │   ├── alert-data/
 │   └── alert-starter/
+├── gateway-settings/                 # 系统设置域（SystemSetting/SystemSettingService/SettingsController，system_settings 表）
+│   ├── settings/
+│   ├── settings-data/
+│   └── settings-starter/
 ├── gateway-resilience/               # 韧性域（retry/circuitbreaker/failover/upstream）
 │   ├── resilience-data/
 │   └── resilience-starter/
@@ -66,7 +70,7 @@ llm-gateway/                          # 项目根目录（父 POM，统一依赖
 │   └── proxy-starter/
 ├── gateway-stats/                    # 聚合统计域
 │   └── stats-starter/
-├── gateway-web/                      # HTTP 承载层（web.api 全部 Controller + web.interceptor + web.advice）
+├── gateway-web/                      # HTTP 承载层（web.api 全部 Controller + web.interceptor + web.advice + web.config）
 ├── gateway-boot/                     # 启动装配（boot.config/init/event + GatewayApplication）
 ├── gateway-cli/                      # CLI 管理工具
 ├── gateway-simulator/                # 提供商模拟器
@@ -79,11 +83,12 @@ llm-gateway/                          # 项目根目录（父 POM，统一依赖
 | gateway-boot | 启动装配（config/init/event + GatewayApplication），依赖各域 starter |
 | gateway-web | HTTP 承载层（web.api 全部 Controller + interceptor + advice） |
 | gateway-common | 横切底座（被所有模块依赖） |
-| gateway-<域>（provider/iam/usage/security/audit/alert/resilience/proxy/stats/protocol） | 业务域核心（根包 = 模块名） |
-| gateway-<域>-data | 绑定持久化模块（dataobject/gateway/repository） |
+| gateway-<域>（provider/iam/usage/security/audit/alert/settings/resilience/proxy/stats/protocol） | 业务域核心（根包 = 模块名） |
+| gateway-<域>-data | 绑定持久化模块（DO/Repository 按实体子域聚合） |
 | gateway-<域>-starter | 自动装配（autoconfigure.<域>） |
-| gateway-console | Web 管理界面（React） | API 消费者（HTTP 调用） |
-| gateway-cli | 命令行管理工具 | API 消费者（HTTP 调用） |
+| gateway-settings（settings/settings-data/settings-starter） | 系统设置域（系统设置，system_settings 表） |
+| gateway-console | Web 管理界面（React，Vite），API 消费者（HTTP 调用） |
+| gateway-cli | 命令行管理工具，API 消费者（HTTP 调用） |
 
 ## 各层职责（模块化落位）
 
@@ -92,24 +97,24 @@ llm-gateway/                          # 项目根目录（父 POM，统一依赖
 | 层（概念） | 职责 | 模块化落位 |
 |---|------|---------|
 | **web（原 adapter）** | 接收请求、返回响应 | gateway-web（web.api / web.interceptor / web.advice） |
-| **application（用例编排）** | 用例编排，跨域协调 | 域核心模块 `<域>.service` 等 |
+| **application（用例编排）** | 用例编排，跨域协调 | 域核心模块（服务跟随聚合分包） |
 | **domain（域核心）** | 业务逻辑、模型 | 域核心模块（provider/iam/proxy/protocol...） |
-| **infrastructure（持久化实现）** | Gateway 实现、数据持久化 | 绑定模块 `<域>data`（gateway/repository） |
+| **infrastructure（持久化实现）** | Repository/Client 端口实现、数据持久化 | 绑定模块 `<域>data`（JpaXxxRepository 实现 + XxxJpaRepository 同包） |
 | **common（横切）** | 跨域共享 | gateway-common（data/entity/dto/enums/event/exception/util） |
 
 ## 服务分类
 
 | 类型 | 放置位置 | 示例 |
 |------|---------|------|
-| 管理服务（Service） | 域核心模块 `<域>.service/`（按用例分包） | ChannelService, TokenLimitService, AuthenticationService |
+| 管理服务（Service） | 域核心模块（服务跟随聚合分包） | provider.channel.ChannelService, iam.user.UserService |
 
 ## Exception 分类
 
 | 类型 | 放置位置 | 示例 |
 |------|---------|------|
 | 基础异常 | gateway-common `common/exception/` | GatewayException |
-| 域异常 | 域模块 `<域>.exception/` | AuthenticationException |
-| 基础设施异常 | 域模块 `<域>.exception/`（或绑定模块） | ProviderException |
+| 域异常 | 域模块（如 `iam.exception` / `iam.auth` / `security.threat`） | IamException / AuthenticationFailedException, ThreatException |
+| 上游异常 | gateway-protocol `protocol.transport` | UpstreamException |
 
 ## 关键文件
 
@@ -139,7 +144,7 @@ llm-gateway/                          # 项目根目录（父 POM，统一依赖
 
 ## 数据库规范
 
-- 表名: snake_case + 复数（如 `model_providers`, `routing_strategies`）
+- 表名: snake_case + 复数（如 `providers`, `channels`；例外：`ip_blocklist` 为单数）
 - 主键: `id BIGINT AUTO_INCREMENT`
 - 外键关联: 使用物理 ID（`*_id BIGINT`）
 - 审计字段: `created_by/updated_by` 使用 BIGINT FK → users.id
@@ -147,10 +152,12 @@ llm-gateway/                          # 项目根目录（父 POM，统一依赖
 ## 异常分层
 
 ```
-GatewayException (根异常)
-├── GatewayRequestException (请求级)
-├── ProviderException (提供商级)
-└── SecurityException (安全级)
+GatewayException (根异常，gateway-common)
+├── GatewayRequestException (请求级，gateway-common)
+├── IamException / AuthenticationFailedException (身份访问级，iam.exception / iam.auth)
+├── ThreatException (安全威胁级，security.threat：RateLimitExceededException / IpBlockedException)
+├── ProtocolValidationException (协议校验级，protocol.validation)
+└── UpstreamException (上游级，protocol.transport)
 ```
 
 ## 代码规范
