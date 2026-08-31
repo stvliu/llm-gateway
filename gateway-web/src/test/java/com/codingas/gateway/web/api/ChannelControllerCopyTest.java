@@ -15,12 +15,16 @@
  */
 package com.codingas.gateway.web.api;
 
+import com.codingas.gateway.common.exception.DuplicateResourceException;
+import com.codingas.gateway.common.exception.ResourceNotFoundException;
 import com.codingas.gateway.provider.channel.ChannelEmergencyService;
 import com.codingas.gateway.provider.channel.ChannelHealthService;
 import com.codingas.gateway.provider.channel.ChannelService;
 import com.codingas.gateway.web.api.dto.ChannelCopyRequest;
 import com.codingas.gateway.web.api.dto.ChannelResponse;
 import com.codingas.gateway.web.api.facade.ChannelFacade;
+import com.codingas.gateway.web.advice.ApiResponseWrapperAdvice;
+import com.codingas.gateway.web.advice.GlobalExceptionHandler;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -71,7 +75,11 @@ class ChannelControllerCopyTest {
     void setUp() {
         ChannelController controller = new ChannelController(channelFacade, channelService,
                 channelHealthService, channelEmergencyService);
-        mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
+        // standalone 装配：copy 端点走 HTTP 层验证 @Valid 校验（@NotBlank 缺失返回 400）；
+        // 装配 ApiResponseWrapperAdvice（与生产一致，单对象响应包装为 $.data.*）与 GlobalExceptionHandler（404/409/400 映射）
+        mockMvc = MockMvcBuilders.standaloneSetup(controller)
+                .setControllerAdvice(new ApiResponseWrapperAdvice(), new GlobalExceptionHandler())
+                .build();
     }
 
     @Test
@@ -90,8 +98,8 @@ class ChannelControllerCopyTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"name\":\"new-ch\"}"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(2))
-                .andExpect(jsonPath("$.name").value("new-ch"));
+                .andExpect(jsonPath("$.data.id").value(2))
+                .andExpect(jsonPath("$.data.name").value("new-ch"));
 
         ArgumentCaptor<ChannelCopyRequest> captor = ArgumentCaptor.forClass(ChannelCopyRequest.class);
         verify(channelFacade).copy(eq(1L), captor.capture());
@@ -125,5 +133,39 @@ class ChannelControllerCopyTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}"))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("复制时同供应商渠道重名返回 409")
+    void copy_duplicateName_conflict() throws Exception {
+        // given：门面抛出资源重复异常（异常路径由 GlobalExceptionHandler 映射为 409）
+        when(channelFacade.copy(eq(1L), any(ChannelCopyRequest.class)))
+                .thenThrow(new DuplicateResourceException("Channel", "name"));
+
+        // when/then：409 + ApiResponse.error 错误码/业务消息透出
+        mockMvc.perform(post("/api/v1/channels/{id}/copy", 1L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"ch-1\"}"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.error.code").value("CONFLICT"))
+                .andExpect(jsonPath("$.error.message").value("Channel already exists with name"));
+    }
+
+    @Test
+    @DisplayName("复制时源渠道不存在返回 404")
+    void copy_sourceNotFound_notFound() throws Exception {
+        // given：门面抛出资源未找到异常（异常路径由 GlobalExceptionHandler 映射为 404）
+        when(channelFacade.copy(eq(1L), any(ChannelCopyRequest.class)))
+                .thenThrow(new ResourceNotFoundException("Channel", 1L));
+
+        // when/then：404 + ApiResponse.error 错误码/业务消息透出
+        mockMvc.perform(post("/api/v1/channels/{id}/copy", 1L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"ch-copy\"}"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.error.code").value("NOT_FOUND"))
+                .andExpect(jsonPath("$.error.message").value("Channel not found with id: 1"));
     }
 }
