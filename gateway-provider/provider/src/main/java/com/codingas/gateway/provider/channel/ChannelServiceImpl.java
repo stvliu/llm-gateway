@@ -129,9 +129,15 @@ public class ChannelServiceImpl implements ChannelService {
             modelInstanceRepository.save(copy);
         }
 
-        // 复制凭证（仅显式请求时）：复用明文 Key 走 create 重新加密
+        // 复制凭证（仅显式请求时）：复用明文 Key 走 create 重新加密。
+        // 解密失败的凭证（仓储降级返回 apiKeyPlain=null）明文不可得，跳过并告警，不阻断整体复制
         if (copyCredentials) {
             for (ChannelCredential credential : channelCredentialService.listByChannelId(sourceId)) {
+                if (credential.getApiKeyPlain() == null || credential.getApiKeyPlain().isBlank()) {
+                    log.warn("源凭证明文不可用（解密失败或未录入），跳过复制: credentialId={}, sourceChannelId={}",
+                        credential.getId(), sourceId);
+                    continue;
+                }
                 ChannelCredential copy = new ChannelCredential();
                 copy.setChannelId(saved.getId());
                 copy.setName(credential.getName());

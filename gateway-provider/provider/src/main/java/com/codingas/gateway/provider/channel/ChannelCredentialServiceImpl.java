@@ -40,6 +40,10 @@ public class ChannelCredentialServiceImpl implements ChannelCredentialService {
     @Transactional
     public ChannelCredential create(ChannelCredential credential) {
         String plainKey = credential.getApiKeyPlain();
+        // 防御：解密失败的凭证明文为 null（仓储降级行为），避免 NPE 直接抛明确业务错误
+        if (plainKey == null || plainKey.isBlank()) {
+            throw new IllegalArgumentException("API Key 明文不能为空");
+        }
         String keyPrefix = plainKey.substring(0, Math.min(8, plainKey.length()));
         credential.setApiKeyPrefix(keyPrefix);
 

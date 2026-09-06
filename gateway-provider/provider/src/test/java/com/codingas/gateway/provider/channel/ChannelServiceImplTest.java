@@ -42,6 +42,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -288,6 +289,68 @@ class ChannelServiceImplTest {
             assertThatThrownBy(() -> channelService.copy(1L, override, false))
                     .isInstanceOf(DuplicateResourceException.class);
             verify(channelRepository, never()).save(any(Channel.class));
+        }
+
+        @Test
+        @DisplayName("跳过解密失败的凭证（apiKeyPlain 为 null），其余凭证正常复制")
+        void copy_skipsUndecryptableCredentials() {
+            Channel source = buildChannel(1L, "ch-1");
+            when(channelRepository.findById(1L)).thenReturn(Optional.of(source));
+            when(channelEndpointRepository.findByChannelId(1L)).thenReturn(List.of());
+            when(modelInstanceRepository.findByChannelId(1L)).thenReturn(List.of());
+            when(channelRepository.save(any(Channel.class))).thenAnswer(inv -> {
+                Channel c = inv.getArgument(0);
+                c.setId(9L);
+                return c;
+            });
+
+            // 凭证 1：解密失败（明文为 null，listByChannelId 的降级行为）；凭证 2：正常
+            ChannelCredential broken = new ChannelCredential();
+            broken.setId(300L);
+            broken.setChannelId(1L);
+            broken.setApiKeyPlain(null);
+            ChannelCredential ok = new ChannelCredential();
+            ok.setId(301L);
+            ok.setChannelId(1L);
+            ok.setApiKeyPlain("sk-valid-key-123");
+            when(channelCredentialService.listByChannelId(1L)).thenReturn(List.of(broken, ok));
+            when(channelCredentialService.create(any(ChannelCredential.class)))
+                    .thenAnswer(inv -> inv.getArgument(0));
+
+            Channel override = new Channel();
+            override.setName("ch-copy");
+
+            channelService.copy(1L, override, true);
+
+            // 仅正常凭证被复制，解密失败的被跳过
+            ArgumentCaptor<ChannelCredential> captor = ArgumentCaptor.forClass(ChannelCredential.class);
+            verify(channelCredentialService, times(1)).create(captor.capture());
+            assertThat(captor.getValue().getApiKeyPlain()).isEqualTo("sk-valid-key-123");
+        }
+
+        @Test
+        @DisplayName("源渠道无凭证时勾选复制凭证仍成功（零凭证复制）")
+        void copy_emptyCredentials_stillSucceeds() {
+            Channel source = buildChannel(1L, "ch-1");
+            when(channelRepository.findById(1L)).thenReturn(Optional.of(source));
+            when(channelEndpointRepository.findByChannelId(1L)).thenReturn(List.of());
+            when(modelInstanceRepository.findByChannelId(1L)).thenReturn(List.of());
+            when(channelRepository.save(any(Channel.class))).thenAnswer(inv -> {
+                Channel c = inv.getArgument(0);
+                c.setId(9L);
+                return c;
+            });
+            // 数据库中无任何凭证
+            when(channelCredentialService.listByChannelId(1L)).thenReturn(List.of());
+
+            Channel override = new Channel();
+            override.setName("ch-copy");
+
+            Channel result = channelService.copy(1L, override, true);
+
+            assertThat(result.getId()).isEqualTo(9L);
+            assertThat(result.getState()).isEqualTo(ChannelState.ACTIVE);
+            verify(channelCredentialService, never()).create(any(ChannelCredential.class));
         }
 
         @Test

@@ -205,6 +205,18 @@ class ChannelCredentialServiceImplTest {
     }
 
     @Test
+    void create_空明文Key抛出异常() {
+        ChannelCredential request = credential(
+                CHANNEL_ID, null, null, 1, 1, "broken-key"
+        );
+
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> service.create(request));
+        assertEquals("API Key 明文不能为空", ex.getMessage());
+        verify(channelCredentialRepository, never()).save(any(ChannelCredential.class));
+    }
+
+    @Test
     void delete_success() {
         ChannelCredential apiKey = createSampleApiKey();
         when(channelCredentialRepository.findById(API_KEY_ID)).thenReturn(Optional.of(apiKey));
