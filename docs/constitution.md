@@ -90,7 +90,7 @@ API 密钥等敏感信息必须加密存储，禁止明文或硬编码。
 
 **验证规则**:
 - CI 流水线必须通过所有测试
-- 覆盖率低于阈值时构建失败
+- 覆盖率低于阈值时构建失败（阈值当前为质量约定目标，jacoco check 构建门禁暂未启用）
 
 ### 第四原则：可观测性内建
 
@@ -174,7 +174,7 @@ gateway-project/                       # 父 POM（打包类型: pom）
 │   ├── usage-data/                    #   JPA 绑定（usagedata）
 │   └── usage-starter/                 #   自动装配（autoconfigure.usage）
 ├── gateway-security/                  # 安全与威胁域（根包 com.codingas.gateway.security，groupId 统一 com.codingas.gateway）
-│   ├── security/                      #   核心：IP 威胁检测 + 数据脱敏（SensitiveDataRule/IpBlock）
+│   ├── security/                      #   核心：IP 威胁检测 + 数据脱敏（SensitiveDataRule/IpBlocklist）
 │   ├── security-data/                 #   JPA 绑定（securitydata）
 │   └── security-starter/              #   自动装配（autoconfigure.security）
 ├── gateway-audit/                     # 审计追溯域（根包 com.codingas.gateway.audit，groupId 统一 com.codingas.gateway）
@@ -190,7 +190,7 @@ gateway-project/                       # 父 POM（打包类型: pom）
 │   ├── settings-data/                 #   JPA 绑定（settingsdata，平铺根包；system_settings 表，V70）
 │   └── settings-starter/              #   自动装配（autoconfigure.settings）
 ├── gateway-resilience/                # 韧性域（根包 com.codingas.gateway.resilience，groupId 统一 com.codingas.gateway）
-│   ├── resilience/                    #   核心：failover/retry/circuit-breaker
+│   ├── resilience/                    #   核心：retry/circuitbreaker/failover/upstream/metrics
 │   ├── resilience-data/               #   JPA 绑定（resiliencedata）
 │   └── resilience-starter/            #   自动装配（autoconfigure.resilience）
 ├── gateway-proxy/                     # 模型代理域（根包 com.codingas.gateway.proxy，groupId 统一 com.codingas.gateway）
@@ -205,17 +205,17 @@ gateway-project/                       # 父 POM（打包类型: pom）
 │   └── boot/                          #   config / init / event + GatewayApplication（装配各域模块）
 ├── gateway-cli/                       # CLI 管理工具（API 消费者）
 ├── gateway-simulator/                 # LLM 提供商模拟服务（本地开发 / 集成测试）
-└── gateway-coverage/                  # 覆盖率聚合（全模块 jacoco 汇总 / 质量门槛校验）
+└── gateway-coverage/                  # 覆盖率聚合（jacoco 汇总，暂未含 settings 域模块）
 ```
 
-> gateway-console 为 Web 管理界面前端（React/Vue，vite），非 Maven 模块，属 API 消费者。
+> gateway-console 为 Web 管理界面前端（React，Vite），非 Maven 模块，属 API 消费者。
 
 **各层职责**:
 
 | 层 | 职责 | 包含内容 |
 |---|------|---------|
 | **web** | 接收请求、返回响应 | Controller、拦截器、全局异常（gateway-web，按用例分包） |
-| **application** | 用例编排，跨域协调 | 编排服务（各功能域核心模块的 service 包，按用例分包） |
+| **application** | 用例编排，跨域协调 | 编排服务（各功能域核心模块，服务跟随聚合分包） |
 | **domain** | 业务逻辑、模型 | Entity、Service、端口接口（Repository/Client）、异常、枚举（位于各功能域核心模块） |
 | **infrastructure** | 技术实现 | 端口实现（JpaXxxRepository）、配置、工具（位于 `<域>data` 绑定模块） |
 | **common** | 跨领域共享 | 基础异常、技术常量、工具类（gateway-common） |
@@ -256,7 +256,7 @@ gateway-project/                       # 父 POM（打包类型: pom）
 | 本地持久化端口（领域端口） | `XxxRepository`（与实体同包，如 `iam.user.UserRepository`） | 功能域核心模块，与聚合同包 |
 | 持久化端口实现 | `JpaXxxRepository`（如 `iamdata.user.JpaUserRepository`） | `<域>data` 绑定模块，按实体子域聚合 |
 | Spring Data 技术接口 | `XxxJpaRepository`（如 `iamdata.user.UserJpaRepository`） | `<域>data` 绑定模块，与 DO 同包 |
-| 第三方外部系统防腐端口 | `XxxClient`（如 `ChannelEndpointClient`） | 功能域核心模块 |
+| 第三方外部系统防腐端口 | `XxxClient`（如 `ModelCatalogClient`） | 功能域核心模块 |
 | 外部系统端口实现 | `HttpXxxClient` / `RestXxxClient` / `OkHttpXxxClient` | `<域>data` 或适配模块 |
 
 > **命名区分**：本地持久化用 `Repository`，访问外部第三方系统用 `Client`——前者管"存"，后者管"调"，职责边界零歧义。JPA 技术接口加 `Jpa` 前缀（`XxxJpaRepository`）以区分领域端口 `XxxRepository`。
@@ -295,8 +295,8 @@ gateway-web · com.codingas.gateway.web.api.facade.ChannelFacade    # 渠道 DTO
 | 类型 | 放置位置 | 示例 |
 |------|---------|------|
 | 基础异常 | gateway-common · `com.codingas.gateway.common.exception` | GatewayException、GatewayRequestException（请求级） |
-| 领域异常 | 功能域核心模块（服务跟随聚合所在包） | `iam.exception`: IamException/UnauthorizedException/ForbiddenException；`iam.auth`: AuthenticationFailedException；`security.threat`: ThreatException/RateLimitExceededException/IpBlockedException；`protocol.validation`: ProtocolValidationException |
-| 上游异常 | gateway-protocol · `com.codingas.gateway.protocol.transport` | UpstreamException（extends GatewayException，含 errorType/httpStatus/traceId/retryAfterSeconds） |
+| 领域异常 | 功能域核心模块（服务跟随聚合所在包） | `iam.exception`: IamException/UnauthorizedException/ForbiddenException；`iam.auth`: AuthenticationFailedException；`security.threat`: ThreatException/RateLimitExceededException/IpBlockedException；`protocol.validation`: ProtocolValidationException；`provider.catalog`: CatalogException |
+| 上游异常 | gateway-protocol · `com.codingas.gateway.protocol.transport` | UpstreamException（extends GatewayException，含 errorType/httpStatus/traceId/retryAfterSeconds）；`resilience.circuitbreaker`: CircuitOpenException（extends UpstreamException） |
 
 ### 2.5 跨域访问规则
 
@@ -539,11 +539,17 @@ public class Model extends BaseEntity {
 **关键配置必须提供默认值**:
 ```yaml
 gateway:
-  llm:
-    routing-strategy: COST_OPTIMIZED  # 默认策略
-    token-threshold: 0.8              # 80% 触发切换
-    max-retries: 3                    # 最大重试次数
-    timeout-seconds: 30               # API 超时时间
+  retry:
+    max-attempts: 3                   # 最大重试次数（GatewayRetryProperties）
+    backoff-initial: 1000             # 初始退避时间（毫秒）
+    backoff-multiplier: 2.0           # 退避倍数
+  security:
+    rate-limit:
+      bucket-size: 100                # 令牌桶容量（SecurityRateLimitProperties）
+      refill-rate: 10                 # 令牌补充速率
+  cors:
+    allowed-origins: "*"              # 允许跨域来源（CorsProperties）
+    max-age: 3600                     # 预检缓存时间（秒）
 ```
 ### 2.9 全实体可审计（不可妥协）
 
@@ -574,13 +580,13 @@ gateway:
 |------|------|------|
 | 实体 | PascalCase + 明确业务含义 | `User`, `ModelProvider`, `GatewayConfig` |
 | 领域端口（本地持久化） | `XxxRepository`，与实体同包 | `iam.user.UserRepository` |
-| 领域端口（第三方防腐） | `XxxClient` | `ChannelEndpointClient` |
+| 领域端口（第三方防腐） | `XxxClient` | `UpstreamClient` |
 | 端口实现 | `JpaXxxRepository` / `HttpXxxClient` | `iamdata.user.JpaUserRepository` |
 | Spring Data 接口 | `XxxJpaRepository`（与 DO 同包） | `iamdata.user.UserJpaRepository` |
 | JPA 实体（DO） | `XxxDo` | `UserDo` |
 | 管理服务 | `XxxService`（接口）/ `XxxServiceImpl`（实现），跟随聚合子域包 | `iam.user.UserService` |
 | 技术能力 | 能力动词后缀，**禁止 Service** | `ApiKeyEncryptor`, `UserApiKeyGenerator`, `PasswordEncoder` |
-| 能力接口 | PascalCase + 能力描述 | `ModelRouter`, `TokenCounter`, `Encryptor` |
+| 能力接口 | PascalCase + 能力描述 | `ProtocolValidator`, `Encryptor` |
 | DTO（HTTP 契约） | `XxxRequest`（入）/ `XxxResponse`（出），位于 gateway-web API 层 | `UserCreateRequest`, `UserResponse` |
 | 不可变对象 | 业务名词 | `Identity` |
 | 状态枚举 | `XxxState` | `UserState`, `ApplicationState` |
@@ -650,11 +656,13 @@ GatewayException (根异常，gateway-common)
 ├── ThreatException (威胁防护异常，security.threat)
 │   ├── RateLimitExceededException
 │   └── IpBlockedException
+├── CatalogException (目录异常，provider.catalog)
 ├── ProtocolValidationException (协议校验异常，protocol.validation)
 └── UpstreamException (上游调用异常，protocol.transport，含 errorType/httpStatus/traceId/retryAfterSeconds)
+    └── CircuitOpenException (熔断开启异常，resilience.circuitbreaker)
 ```
 
-> 异常放置：根异常 `GatewayException`/请求级 `GatewayRequestException` 位于 gateway-common；领域异常位于对应功能域核心模块（`IamException`/`UnauthorizedException`/`ForbiddenException` 位于 gateway-iam `exception` 包、`AuthenticationFailedException` 位于 gateway-iam `auth` 包、`ThreatException`/`RateLimitExceededException`/`IpBlockedException` 位于 gateway-security `threat` 包、`ProtocolValidationException` 位于 gateway-protocol `validation` 包）；上游异常 `UpstreamException` 位于 gateway-protocol `transport` 包。
+> 异常放置：根异常 `GatewayException`/请求级 `GatewayRequestException` 位于 gateway-common；领域异常位于对应功能域核心模块（`IamException`/`UnauthorizedException`/`ForbiddenException` 位于 gateway-iam `exception` 包、`AuthenticationFailedException` 位于 gateway-iam `auth` 包、`ThreatException`/`RateLimitExceededException`/`IpBlockedException` 位于 gateway-security `threat` 包、`ProtocolValidationException` 位于 gateway-protocol `validation` 包、`CatalogException` 位于 gateway-provider `catalog` 包）；上游异常 `UpstreamException` 位于 gateway-protocol `transport` 包；`CircuitOpenException`（extends UpstreamException）位于 gateway-resilience `circuitbreaker` 包。
 
 **处理原则**:
 - ✅ 所有受检异常必须转换为运行时异常
@@ -671,7 +679,7 @@ GatewayException (根异常，gateway-common)
 
 **并发安全保证**:
 - ✅ JDK 21 虚拟线程提供轻量级并发,无需手动管理线程池
-- ✅ `TokenQuotaTracker` 使用 `AtomicInteger` 保证线程安全
+- ✅ `CircuitBreaker`/`EndpointMetrics` 计数使用 `AtomicInteger`/`AtomicLong`，注册表（`EndpointMetricsRegistry`/`ChannelEndpointCircuitBreakerService`）使用 `ConcurrentHashMap` 保证线程安全
 - ✅ `ProtocolAdapter` 必须是无状态的，支持多线程并发调用
 - ✅ 请求记录按任务 ID 分区写入，避免行锁竞争
 - ✅ LLM HTTP 客户端使用 OkHttp，虚拟线程中阻塞调用自动挂起

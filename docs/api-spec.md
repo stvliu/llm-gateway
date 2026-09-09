@@ -41,7 +41,7 @@
 |------|------|
 | **Base URL（OpenAI 兼容）** | `https://{gateway-host}/v1` |
 | **Base URL（Anthropic 兼容）** | `https://{gateway-host}/anthropic/v1` |
-| **认证方式** | Bearer Token (GatewayApiKey) |
+| **认证方式** | Bearer Token 或 x-api-key 请求头 (GatewayApiKey) |
 | **内容类型** | `application/json` |
 | **字符编码** | UTF-8 |
 | **日期时间格式** | ISO 8601 (`2026-04-28T10:30:00Z`) |
@@ -491,25 +491,30 @@ data: [DONE]
 
 **端点**: `GET /v1/models`
 
-**响应**:
+**响应**: 该端点响应经 `ApiResponseWrapperAdvice` 自动包装为 `ApiResponse` 信封（见 5.3），`$.data` 内才是 OpenAI 兼容结构：
 
 ```json
 {
-  "object": "list",
-  "data": [
-    {
-      "id": "gpt-4o",
-      "object": "model",
-      "created": 1715367049,
-      "ownedBy": "system"
-    }
-  ]
+  "success": true,
+  "data": {
+    "object": "list",
+    "data": [
+      {
+        "id": "gpt-4o",
+        "object": "model",
+        "created": 1715367049,
+        "ownedBy": "system"
+      }
+    ]
+  },
+  "traceId": "trace_1713833628",
+  "timestamp": "2026-08-31T10:30:00Z"
 }
 ```
 
 #### 2.6.2 模型详情
 
-**端点**: `GET /v1/models/{model}`
+**端点**: `GET /v1/models/{model}`（规划中，未实现；以下为目标响应格式）
 
 **响应**:
 
@@ -596,6 +601,8 @@ Content-Type: application/json
 x-api-key: {api_key}
 anthropic-version: 2023-06-01
 ```
+
+> 说明：`anthropic-version` 头网关入口不强制校验（客户端未携带也可通过）；网关出站调用上游时自动携带该头。
 
 ```json
 {
@@ -1087,6 +1094,8 @@ data: {"type":"message_stop"}
 
 ### 5.1 OpenAI 错误格式
 
+> 本节为 OpenAI 协议标准错误格式（上游错误经 SSE 流内透传时保持此格式）；网关自身短路错误与统一信封格式见 5.3/5.4。
+
 ```json
 {
   "error": {
@@ -1110,6 +1119,8 @@ data: {"type":"message_stop"}
 | `api_error` | 服务器错误 |
 
 ### 5.2 Anthropic 错误格式
+
+> 本节为 Anthropic 协议标准错误格式（上游错误经 SSE 流内透传时保持此格式）；网关自身短路错误与统一信封格式见 5.3/5.4。
 
 ```json
 {
@@ -1142,24 +1153,24 @@ data: {"type":"message_stop"}
 ```json
 {
   "success": false,
-  "data": null,
   "error": {
-    "code": "QUOTA_EXCEEDED",
-    "message": "用户可读的错误信息",
-    "details": null
+    "code": "NOT_FOUND",
+    "message": "用户可读的错误信息"
   },
   "traceId": "trace_1713833628",
   "timestamp": "2026-08-31T10:30:00Z"
 }
 ```
 
+> 说明：`ApiResponse` 类级 `@JsonInclude(NON_NULL)`，`data` / `error.details` 为 `null` 时整个字段省略，不出现在响应中。
+
 | 字段 | 类型 | 说明 |
 |------|------|------|
 | `success` | boolean | 请求是否成功 |
-| `data` | T | 业务数据（失败时为 `null`） |
+| `data` | T | 业务数据（失败时整个字段省略） |
 | `error.code` | string | 业务错误码 |
 | `error.message` | string | 用户可读的错误信息 |
-| `error.details` | object | 附加详情（可选） |
+| `error.details` | object | 附加详情（可选，为 `null` 时省略） |
 | `traceId` | string | 链路追踪 ID |
 | `timestamp` | string | ISO 8601 时间戳 |
 
@@ -1189,15 +1200,26 @@ data: {"type":"message_stop"}
 
 ### 5.4 HTTP 状态码映射
 
-| HTTP 状态码 | 说明 | OpenAI code | Anthropic type |
-|-------------|------|-------------|----------------|
-| 400 | 请求格式错误 | `invalid_request_error` | `invalid_request_error` |
-| 401 | 认证失败 | `invalid_api_key` | `authentication_error` |
-| 403 | 权限不足 | `permission_denied` | `permission_error` |
-| 404 | 资源不存在 | `model_not_found` | `not_found_error` |
-| 429 | 限流 | `rate_limit_exceeded` | `rate_limit_error` |
-| 500 | 服务器错误 | `api_error` | `api_error` |
-| 503 | 服务不可用 | `server_error` | `overloaded_error` |
+网关自身错误不使用 OpenAI/Anthropic 官方 SDK 风格错误码（`invalid_api_key` / `permission_denied` / `overloaded_error` 等当前未定义；`authentication_error` / `model_not_found` 仅用于上游错误分类与 SSE 流内透传，非网关自身错误 code）。实际映射如下：
+
+**网关拦截链短路响应**（认证/鉴权/限流入口拦截，直接 JSON，不走 `ApiResponse` 信封）：
+
+| HTTP 状态码 | 触发场景 | 响应体 |
+|-------------|---------|--------|
+| 401 | 代理端点 API Key 认证失败 / 管理面 Sa-Token 会话缺失（未登录） | `{"code":"UNAUTHORIZED","message":"无效的 API Key"}`（管理面为 `"请先登录"` 等提示） |
+| 403 | 管理面 PermissionInterceptor 角色授权拒绝 | `{"code":"ACCESS_DENIED","message":"无访问权限"}` |
+| 429 | 代理端点限流 | `{"error":{"code":"RATE_LIMIT_EXCEEDED","message":"请求过于频繁，请稍后重试"}}` |
+
+> 代理端点限流仅由入口拦截链短路；业务链内抛出的 `RateLimitExceededException` / IAM 异常经对应异常处理器返回 `ApiResponse` 信封（429/401/403，code 取自异常定义，见 5.3）。
+
+**管理面业务异常**（`/api/v1/**`，统一 `ApiResponse` 信封，见 5.3）：
+
+| HTTP 状态码 | error.code | 说明 |
+|-------------|-----------|------|
+| 400 | `BAD_REQUEST` / `VALIDATION_ERROR` | 参数非法 / 参数校验失败 |
+| 404 | `NOT_FOUND` | 资源不存在 |
+| 409 | `CONFLICT` | 资源重复（如复制时名称已存在） |
+| 500 | `INTERNAL_ERROR` | 服务器内部错误 |
 
 ---
 
@@ -1264,7 +1286,7 @@ anthropic-version: 2023-06-01
 
 > **说明**:
 >
-> - 本章为管理面（Console/CLI 消费）全部 API 端点清单，按 Controller 分组，与 `gateway-web/src/main/java/com/codingas/gateway/web/api/` 下的实现一一对应。
+> - 本章为管理面（Console/CLI 消费）全部 API 端点清单，按 Controller 分组，与 `gateway-web/src/main/java/com/codingas/gateway/web/api/` 下的实现一一对应；模拟器（gateway-simulator）为独立工具模块，其端点不在本文档范围。
 > - 管理面统一响应信封 `ApiResponse`（字段见 5.3），Controller 返回的业务对象经 `ApiResponseWrapperAdvice` 自动包装为 `$.data.*`（单对象；列表端点的 `$.data` 为数组，分页端点为分页对象）。
 > - 供应商凭证（ChannelCredential）管理挂在渠道维度（`/api/v1/channels/{channelId}/credentials`），替代早期 Provider API Key 设计。
 > - 「请求体/响应」列：`body:` 后为 JSON 请求体 DTO（`*` 为必填字段），`query:` 后为查询参数，`→` 后为 `$.data` 中的业务数据类型；删除/状态类操作无业务数据。

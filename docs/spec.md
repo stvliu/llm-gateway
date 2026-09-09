@@ -112,11 +112,11 @@
 | ID | 术语 | 定义 |
 |----|------|------|
 | T-001 | **Provider (提供商)** | 模型服务提供方，如 OpenAI、Anthropic、通义千问等 |
-| T-002 | **ProviderApiKey (Provider 调用凭证)** | 网关调用大模型 Provider 的凭据，管理员配置，支持多 Key 轮换 |
+| T-002 | **ChannelCredential (渠道凭证)** | 网关调用上游渠道的凭据（channel_credentials 表），管理员配置，渠道可配置多条凭证（weight/priority） |
 | T-003 | **Model (模型)** | 具体的 AI 模型，如 gpt-4o、claude-sonnet-4 等 |
-| T-004 | **RouteGroup (路由分组)** | 路由策略配置，支持负载均衡和故障转移 |
-| T-005 | **RouteGroupProviderApiKey (路由关联)** | 路由分组与 ProviderApiKey 的关联，含权重/优先级 |
-| T-006 | **GatewayApiKey (网关访问凭证)** | 用户调用 LLM-Gateway 网关的凭据，用户自管理 |
+| T-004 | **RouteGroup (路由分组)** | 已废弃：V1 遗留表，无代码使用；现按 RouterChain 链式路由 |
+| T-005 | **RouteGroupProviderApiKey (路由关联)** | 已废弃：V1 遗留表，无代码使用；现按 RouterChain 链式路由 |
+| T-006 | **UserApiKey (用户凭证)** | 用户调用 LLM-Gateway 网关的凭据（user_api_keys 表），用户自管理；历史术语 GatewayApiKey 已废弃 |
 | T-007 | **TokenLimit (Token限额)** | 用户级别 Token 用量限额，支持周期重置（天/周/月/总量） |
 | T-008 | **Trace ID** | 请求全链路追踪的唯一标识 |
 | T-009 | **Request ID** | 单次 API 请求的唯一标识 |
@@ -131,12 +131,14 @@
 
 | 类型 | 数据库表 | 代码命名 | 说明 |
 |------|---------|-------------|--------|------|
-| 网关凭证 | `gateway_api_keys`| GatewayApiKey | 用户调用网关的凭证（sk-xxx 格式） |
-| Provider 凭证 | `provider_api_keys` | ProviderApiKey | 网关调用 Provider 的凭证（管理员配置） |
+| 用户凭证 | `user_api_keys` | UserApiKey | 用户调用网关的凭证（sk-xxx 格式），明文加密存储 |
+| 渠道凭证 | `channel_credentials` | ChannelCredential | 网关调用上游渠道的凭证（管理员配置），加密存储 |
+| （遗留）网关凭证 | `gateway_api_keys` | 无实体绑定 | V1 遗留表，数据已迁 user_api_keys，保留降级兼容 |
+| （遗留）Provider 凭证 | `provider_api_keys` | 无实体绑定 | 遗留表，V16 数据已迁 channel_credentials，表未删 |
 
-> **重要区分**：两种 API Key 分别服务于不同的调用链路：
-> - **GatewayApiKey**：用户 → 网关（用户自管理，用于身份认证）
-> - **ProviderApiKey**：网关 → Provider（管理员配置，用于调用上游模型）
+> **重要区分**：两类 API Key 分别服务于不同的调用链路：
+> - **UserApiKey**：用户 → 网关（用户自管理，用于身份认证）
+> - **ChannelCredential**：网关 → 上游渠道（管理员配置，用于调用上游模型）
 
 ### 1.6 文档管理
 
@@ -156,7 +158,7 @@
 | 模块 | 功能 | 优先级 | 版本 | 说明 |
 |------|------|--------|------|------|
 | **API 网关** | OpenAI 兼容端点 | P0 | 标准版 | `/v1/chat/completions` 等 |
-| | Anthropic 兼容端点 | P0 | 标准版 | `/v1/messages` |
+| | Anthropic 兼容端点 | P0 | 标准版 | `/anthropic/v1/messages` |
 | | SSE 流式转发 | P0 | 标准版 | 实时双向流，首 token ≤100ms |
 | | 协议转换 | P0 | 标准版 | OpenAI ↔ Anthropic 互转 |
 | | 图像生成端点 | P1 | 标准版 | `/v1/images/generations` |
@@ -241,7 +243,7 @@
 | ID | 功能 | 详细描述 | 验收标准 | 版本 |
 |----|------|---------|---------|------|
 | GW-001 | OpenAI 端点 | 实现 `/v1/chat/completions`、`/v1/completions`、`/v1/embeddings`、`/v1/images/generations`、`/v1/audio/*`、`/v1/moderations` | 通过 OpenAI 官方 SDK 调用测试 | 标准版 |
-| GW-002 | Anthropic 端点 | 实现 `/v1/messages` | 通过 Anthropic 官方 SDK 调用测试 | 标准版 |
+| GW-002 | Anthropic 端点 | 实现 `/anthropic/v1/messages` | 通过 Anthropic 官方 SDK 调用测试 | 标准版 |
 | GW-003 | SSE 流式转发 | 支持 `stream: true` 参数，实时转发 | 首 token 延迟 ≤100ms (P95) | 标准版 |
 | GW-004 | 非流式响应 | 支持 `stream: false` 参数，等待完整响应后返回 | 响应体完整，无截断 | 标准版 |
 | GW-005 | 请求验证 | 验证请求体格式、必填字段、枚举值 | 返回标准错误格式 | 标准版 |
@@ -341,7 +343,7 @@
 | CH-005 | 渠道测试 | 测试渠道连通性 | 返回测试结果 | 标准版 |
 | CH-006 | 路由分组 | 创建/编辑/删除路由分组 | 支持按组路由 | 标准版 |
 
-> **概念映射**: CH-006"路由分组"功能在信息架构中对应 **RouteGroup（路由分组）** + **RouteGroupProviderApiKey（路由关联）** 业务对象。Provider 按用途/价格分组后，通过 RouteGroupProviderApiKey 关联到 RouteGroup，实现按组路由和负载均衡。
+> **概念映射**: CH-006"路由分组"对应的历史业务对象 **RouteGroup（路由分组）** + **RouteGroupProviderApiKey（路由关联）** 已废弃（V1 遗留表，无代码使用）；现按 RouterChain 链式路由（PermissionRouter/PriorityRouter/HealthRouter/LoadBalanceRouter）实现按组路由和负载均衡。
 | CH-007 | 多 Key 管理 | 单渠道添加/删除/禁用多个 API Key | Key 级故障隔离 | 标准版 |
 | CH-008 | 优先级设置 | 设置渠道优先级 | 高优先级优先使用 | 标准版 |
 | CH-009 | 权重设置 | 同优先级按权重分配流量 | 流量分配符合权重比例 | 标准版 |
@@ -427,7 +429,7 @@
 
 #### 2.2.7 用户管理模块
 
-**需求描述**: 用户共享全局 Provider/RouteGroup 资源，采用两级角色模型（管理员/普通用户）。
+**需求描述**: 用户共享全局 Provider 资源（历史规划中的 RouteGroup 资源已废弃），采用两级角色模型（管理员/普通用户）。
 
 **功能需求**:
 
@@ -846,14 +848,14 @@ LLM-Gateway 提供双协议兼容的网关 API：
 | 协议 | 兼容标准 | 核心端点 |
 |------|---------|---------|
 | **OpenAI API** | OpenAI API Reference | `/v1/chat/completions`、`/v1/embeddings`、`/v1/images/*`、`/v1/audio/*`、`/v1/moderations` |
-| **Anthropic API** | Anthropic Messages API | `/v1/messages`、`/v1/messages/batches` |
+| **Anthropic API** | Anthropic Messages API | `/anthropic/v1/messages`、`/anthropic/v1/messages/batches` |
 
 **核心端点总览**:
 
 | 端点 | 方法 | 说明 | 优先级 |
 |------|------|------|--------|
 | `/v1/chat/completions` | POST | OpenAI 兼容聊天补全 | P0 |
-| `/v1/messages` | POST | Anthropic 兼容消息 | P0 |
+| `/anthropic/v1/messages` | POST | Anthropic 兼容消息 | P0 |
 | `/v1/embeddings` | POST | 向量嵌入 | P0 |
 | `/v1/models` | GET | 模型列表 | P1 |
 | `/v1/images/generations` | POST | 图像生成 | P1 |
@@ -872,9 +874,8 @@ LLM-Gateway 提供双协议兼容的网关 API：
 | **用户** | `/api/v1/users` | Admin |
 | **Provider** | `/api/v1/providers` | Admin |
 | **Model** | `/api/v1/models` | Admin |
-| **API Key** | `/api/v1/api-keys` | 用户 |
+| **API Key** | `/api/v1/user-api-keys` | 用户 |
 | **TokenLimit** | `/api/v1/token-limits` | Admin |
-| **角色** | `/api/v1/roles` | Admin |
 
 > 详细 CRUD 端点定义（9.6.1-9.6.10）包含完整的分页查询、创建、更新、删除接口。
 
@@ -905,30 +906,28 @@ LLM-Gateway 提供双协议兼容的网关 API：
 
 ### 3.4 错误码汇总
 
-**网关 API 错误响应格式**（OpenAI 兼容）:
+**网关 API 错误响应**（代理端点短路 JSON，实际格式）:
 ```json
 {
-  "error": {
-    "message": "...",
-    "type": "invalid_request_error",
-    "code": "invalid_api_key",
-    "param": null,
-    "raw_code": "AUTH_001",
-    "raw_message": "无效的 API Key"
-  }
+  "code": "UNAUTHORIZED",
+  "message": "无效的 API Key"
 }
 ```
 
-**管理 API 错误码**:
+> 网关自身错误的实际 code 集合与各状态码响应体，参见 [API 接口规范](./api-spec.md) 5.3/5.4。
+
+**管理 API 错误码**（`error.code` 实际取值）:
 
 | 错误码 | HTTP 状态码 | 说明 |
 |--------|-------------|------|
-| `INVALID_PARAMETER` | 400 | 参数校验失败 |
-| `DUPLICATE_RESOURCE` | 409 | 资源已存在 |
-| `RESOURCE_NOT_FOUND` | 404 | 资源不存在 |
-| `RESOURCE_INACTIVE` | 400 | 资源已禁用 |
-| `OPERATION_NOT_ALLOWED` | 403 | 操作不允许 |
+| `BAD_REQUEST` | 400 | 请求体不合法 |
+| `VALIDATION_ERROR` | 400 | 参数校验失败 |
+| `NOT_FOUND` | 404 | 资源不存在 |
+| `CONFLICT` | 409 | 资源冲突（如重复创建） |
 | `INTERNAL_ERROR` | 500 | 内部错误 |
+| `UNAUTHORIZED` | 401 | 会话缺失/未认证 |
+| `ACCESS_DENIED` | 403 | 角色授权拒绝 |
+| `RATE_LIMIT_EXCEEDED` | 429 | 限流超限 |
 
 > 完整错误码定义（网关 API + 管理 API）参见 [API 接口规范](./api-spec.md) 第五章。
 
@@ -1383,7 +1382,7 @@ LLM-Gateway 是开源的 AI 模型 API 聚合分发网关，提供两个版本�
 
 | 模块 | 功能 | 说明 |
 |------|------|------|
-| **API 网关** | OpenAI/Anthropic 双端点 | `/v1/chat/completions`、`/v1/messages` |
+| **API 网关** | OpenAI/Anthropic 双端点 | `/v1/chat/completions`、`/anthropic/v1/messages` |
 | | SSE 流式转发 | 首 token ≤100ms |
 | | 协议转换 | OpenAI ↔ Anthropic 双向转换 |
 | **渠道管理** | 渠道 CRUD | 创建/查询/编辑/删除 |
@@ -1459,7 +1458,7 @@ LLM-Gateway 是开源的 AI 模型 API 聚合分发网关，提供两个版本�
 |------|---------|
 | **Phase 1** | ✅ **基础框架与实体完善**：实体设计、枚举定义、数据库迁移脚本、可观测性基础（Trace ID、结构化日志）、Docker Compose 部署脚本 |
 | **Phase 2** | **用户体系 + 核心 CRUD**：用户管理 CRUD、用户登录/登出/会话管理、API Key 管理、Provider & Model 管理、TokenLimit 管理、基础安全（IP 白/黑名单、密钥加密存储）、操作审计 |
-| **Phase 3** | **API 网关**：`/v1/chat/completions` 端点、`/v1/messages` 端点、SSE 流式转发、协议转换、Token 认证中间件、Token 计量、基础路由（模型别名映射、优先级权重） |
+| **Phase 3** | **API 网关**：`/v1/chat/completions` 端点、`/anthropic/v1/messages` 端点、SSE 流式转发、协议转换、Token 认证中间件、Token 计量、基础路由（模型别名映射、优先级权重） |
 | **Phase 4** | **前端管理后台**：登录页面、仪表盘、渠道管理页面、API Key 管理页面、用户管理页面、日志查询页面、系统设置页面 |
 | **Phase 5** | **安全合规增强**：PII 智能脱敏、Prompt 注入防护、完整审计链（WORM）、国密算法支持（企业版）、OAuth 登录（GitHub/QQ） |
 | **Phase 6** | **智能能力**：模型级智能降级、语义缓存（企业版）、场景路由、可视化策略编排（企业版） |
@@ -1469,6 +1468,8 @@ LLM-Gateway 是开源的 AI 模型 API 聚合分发网关，提供两个版本�
 ---
 
 ### 9.6 Phase 2: 核心 CRUD 功能
+
+> **说明**: 本节为历史规划快照，端点/DTO 以代码为准。
 
 > **目标**: 完成用户管理、Provider/Model 管理、API Key 管理、TokenLimit 管理的完整 CRUD 功能。
 
@@ -1481,8 +1482,8 @@ LLM-Gateway 是开源的 AI 模型 API 聚合分发网关，提供两个版本�
 | | `/api/v1/users/{id}` | GET | 获取用户详情 | Admin |
 | | `/api/v1/users/{id}` | PUT | 更新用户 | Admin |
 | | `/api/v1/users/{id}` | DELETE | 删除用户（软删除） | Admin |
-| | `/api/v1/users/{id}/status` | PATCH | 更新用户状态 | Admin |
-| | `/api/v1/users/{id}/role` | PATCH | 设置用户角色 | Admin |
+| | `/api/v1/users/{id}/state` | PATCH | 更新用户状态 | Admin |
+| | `/api/v1/users/{id}/roles` | PUT | 设置用户角色 | Admin |
 | **Provider 管理** | `/api/v1/providers` | GET | 分页查询 Provider 列表 | Admin |
 | | `/api/v1/providers` | POST | 创建 Provider | Admin |
 | | `/api/v1/providers/{id}` | GET | 获取 Provider 详情 | Admin |
@@ -1494,14 +1495,11 @@ LLM-Gateway 是开源的 AI 模型 API 聚合分发网关，提供两个版本�
 | | `/api/v1/models/{id}` | GET | 获取 Model 详情 | Admin |
 | | `/api/v1/models/{id}` | PUT | 更新 Model | Admin |
 | | `/api/v1/models/{id}` | DELETE | 删除 Model（软删除） | Admin |
-| **API Key 管理** | `/api/v1/api-keys` | GET | 分页查询 API Key 列表 | 用户 |
-| | `/api/v1/api-keys` | POST | 创建 API Key | 用户 |
-| | `/api/v1/api-keys/{id}` | GET | 获取 API Key 详情 | 用户 |
-| | `/api/v1/api-keys/{id}` | PUT | 更新 API Key | 用户 |
-| | `/api/v1/api-keys/{id}` | DELETE | 删除 API Key（软删除） | 用户 |
-| | `/api/v1/api-keys/{id}/rotate` | POST | 轮换 API Key | 用户 |
-| | `/api/v1/api-keys/{id}/disable` | POST | 禁用 API Key | 用户 |
-| | `/api/v1/api-keys/{id}/enable` | POST | 启用 API Key | 用户 |
+| **API Key 管理** | `/api/v1/user-api-keys` | GET | 分页查询 API Key 列表 | 用户 |
+| | `/api/v1/user-api-keys` | POST | 创建 API Key | 用户 |
+| | `/api/v1/user-api-keys/{id}/detail` | GET | 获取 API Key 详情（明文解密查看） | 用户 |
+| | `/api/v1/user-api-keys/{id}` | PUT | 更新 API Key | 用户 |
+| | `/api/v1/user-api-keys/{id}` | DELETE | 删除 API Key（软删除） | 用户 |
 | **TokenLimit 管理** | `/api/v1/token-limits` | GET | 分页查询 TokenLimit 列表 | Admin |
 | | `/api/v1/token-limits` | POST | 创建 TokenLimit | Admin |
 | | `/api/v1/token-limits/{id}` | GET | 获取 TokenLimit 详情 | Admin |
@@ -1608,15 +1606,15 @@ LLM-Gateway 是开源的 AI 模型 API 聚合分发网关，提供两个版本�
 }
 ```
 
-**UserStatusUpdateRequest** (更新状态请求)
+**UserStateUpdateRequest** (更新状态请求)
 
 | 字段 | 类型 | 必填 | 说明 |
 |------|------|------|------|
-| status | string | ✅ | 状态：ACTIVE/DISABLED/LOCKED |
+| state | string | ✅ | 状态：ACTIVE/INACTIVE |
 
 ```json
 {
-  "status": "DISABLED"
+  "state": "INACTIVE"
 }
 ```
 
@@ -1818,7 +1816,7 @@ LLM-Gateway 是开源的 AI 模型 API 聚合分发网关，提供两个版本�
 }
 ```
 
-> **注意**: `api_key` 只在创建时返回一次，之后无法找回。
+> **注意**: `api_key` 明文加密存储（AES-256-GCM），管理台详情可解密查看（管理台明文可见是产品定位）。
 
 ### 9.6.7 TokenLimit 管理
 
@@ -1902,7 +1900,7 @@ LLM-Gateway 是开源的 AI 模型 API 聚合分发网关，提供两个版本�
 
 ### 9.6.10 任务列表
 
-> **说明**：以下任务列表为早期单模块规划时的文件路径（`adapter/application/domain/infrastructure` 分层），项目已于 P1-P4.5 完成 17 模块化（模块 = 根包），实际实现位置按各功能域模块（gateway-web `web.api`、gateway-boot `boot.config` 等）为准。
+> **说明**：以下任务列表为早期单模块规划时的文件路径（`adapter/application/domain/infrastructure` 分层），项目已于 P1-P4.5 完成 38 个 Maven 模块 / 17 个顶层 gateway-* 分组的域模块化（模块 = 根包），实际实现位置按各功能域模块（gateway-web `web.api`、gateway-boot `boot.config` 等）为准。
 
 #### Task 1: 用户管理 CRUD
 
@@ -1969,6 +1967,8 @@ LLM-Gateway 是开源的 AI 模型 API 聚合分发网关，提供两个版本�
 
 ### 9.7 Phase 1 完成内容
 
+> **说明**: 本节为历史规划快照，实体/枚举现状以代码为准。
+
 Phase 1 已完成以下工作：
 
 #### 9.7.1 新增/修改实体
@@ -1976,18 +1976,18 @@ Phase 1 已完成以下工作：
 | 实体 | 变更类型 | 说明 |
 |------|----------|------|
 | User | 重构 | 新增 phone, avatarUrl, emailVerified, oauthProviders, piiSalt, lastLoginAt, deletedAt, role（枚举字段） |
-| Provider | 重构 | 使用 ProviderType 枚举，新增 websiteUrl, apiDocUrl |
+| Provider | 重构 | provider_type 列已删（V27），品牌信息由 name/icon/website/description 承载 |
 | Model | 重构 | 新增 providerModelId, contextWindow, input/outputPrice, capabilities (JSON) |
-| GatewayApiKey | 重构 | 使用 User 实体引用，新增 ipWhitelist |
+| GatewayApiKey（现 UserApiKey，user_api_keys 表） | 重构 | 使用 User 实体引用；ipWhitelist 已在 V48/V49 迁移中移除 |
 | TokenLimit | 重构 | 支持 user/provider/model 三维限额，新增 periodType, exceededAction |
 | UsageLog | 新增 | 记录每次 API 调用详情 |
 | AlertRule | 新增 | 预警规则配置 (USAGE/HEALTH/QUOTA) |
 | AlertNotification | 新增 | 预警通知记录 |
 
 #### 9.7.2 新增枚举
-- UserStatus (ACTIVE/DISABLED/LOCKED/DELETED)
+- UserState (ACTIVE/INACTIVE)
 - UserRole (ADMIN/USER)
-- ProviderType (OPENAI/ANTHROPIC/GEMINI/ZHIPU/QWEN/VOLCENGINE/WENXIN/OTHER)
+- ProviderType（已废弃：provider_type 列在 V27 迁移中删除，无对应实体字段）
 - PeriodType (DAILY/WEEKLY/MONTHLY/TOTAL)
 - ExceededAction (REJECT/DOWNGRADE)
 
@@ -2002,7 +2002,7 @@ MVP 必须包含以下最小可用功能：
 
 | 模块 | MVP 功能 | 优先级 | 版本 | 所属 Phase | 验收标准 |
 |------|---------|--------|------|-----------|---------|
-| **API 网关** | `/v1/chat/completions`、`/v1/messages` | P0 | 标准版 | Phase 3 | 通过 OpenAI/Anthropic 官方 SDK 调用测试 |
+| **API 网关** | `/v1/chat/completions`、`/anthropic/v1/messages` | P0 | 标准版 | Phase 3 | 通过 OpenAI/Anthropic 官方 SDK 调用测试 |
 | | SSE 流式转发 | P0 | 标准版 | Phase 3 | 首 token P95 延迟 ≤100ms |
 | **协议转换** | OpenAI ↔ Anthropic 双向转换 | P0 | 标准版 | Phase 3 | 参数映射准确率 ≥99.9% |
 | **渠道管理** | Provider CRUD、多 Key 管理、负载均衡 | P0 | 标准版 | Phase 2 | 支持渠道创建、测试、Key 轮换 |

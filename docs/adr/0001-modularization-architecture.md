@@ -27,8 +27,8 @@
 |------|------|---------|
 | gateway-provider | `com.codingas.gateway.provider` | cache / catalog / channel / encryption / health / model / vendor |
 | gateway-iam | `com.codingas.gateway.iam` | apikey / application / auth / encryption / exception / user（服务跟随聚合） |
-| gateway-protocol | `com.codingas.gateway.protocol` | contract / transport / tuning / validation |
-| gateway-web | `com.codingas.gateway.web.*` | api / interceptor / advice（Controller/Interceptor/Advice 承载层） |
+| gateway-protocol | `com.codingas.gateway.protocol` | canonical / raw / contract / transport / tuning / validation |
+| gateway-web | `com.codingas.gateway.web.*` | api / interceptor / advice / config（Controller/Interceptor/Advice/配置承载层） |
 | gateway-boot | `com.codingas.gateway.boot.*` | config / init / event（收拢后） |
 | 绑定模块 | `com.codingas.gateway.<域>data.<实体子域>` | 按实体子域聚合：`user` / `apikey` / `application`（DO + `XxxJpaRepository` + `JpaXxxRepository` 同包） |
 | starter | `com.codingas.gateway.autoconfigure.<域>` | - |
@@ -65,7 +65,7 @@
 
 ## 未决
 
-- boot 测试中少量"包名跟随被测域模块"的测试（如 `iam/application`、`iamdata/gateway`、`proxy/invoker` 等约 10 个）为历史遗留，因不影响主代码与构建，暂不处理
+- boot 测试中少量"包名跟随被测域模块"的测试（实测 6 个测试文件，如 `iam/application`、`proxy/conversion`、`proxy/invoker`、`resilience/failover`、`resiliencedata/gateway`）为历史遗留，因不影响主代码与构建，暂不处理
 - `docs/` 文档同步**已完成（2026-08-31）**：constitution.md / CLAUDE.md 已是模块化描述，本批次同步修正残留的 Gateway 模式 / service 包表述
 - alertdata 仅 `dataobject` 包（alert 域暂无 Repository 端口实现）
 - settings 域尚未纳入 ArchUnit `LayerDependencyTest` 的 CORE/BINDING 根包清单
