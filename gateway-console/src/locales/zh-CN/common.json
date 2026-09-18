@@ -14,9 +14,7 @@
     "settings": "系统设置",
     "changePassword": "修改密码",
     "group": {
-      "supply": "模型供给",
-      "identity": "身份与权限",
-      "operations": "运营与系统"
+      "adminGuide": "管理员指南"
     }
   },
   "app": {

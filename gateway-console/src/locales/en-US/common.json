@@ -14,9 +14,7 @@
     "settings": "Settings",
     "changePassword": "Change Password",
     "group": {
-      "supply": "Model Supply",
-      "identity": "Identity & Access",
-      "operations": "Operations & System"
+      "adminGuide": "Administrator Guide"
     }
   },
   "app": {

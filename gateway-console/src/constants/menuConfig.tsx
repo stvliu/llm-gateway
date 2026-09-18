@@ -56,11 +56,15 @@ export const topLevelMenuItems: MenuItemConfig[] = [
   },
 ];
 
-/** 菜单分组 */
+/**
+ * 菜单分组：镜像 Gitee wiki 侧边栏「管理员指南」单节结构。
+ * wiki 顶层 Home → 快速开始 → 管理员指南 → 开发者指南 → 参考；
+ * 管理台仅 Home（仪表盘，见 topLevelMenuItems）与「管理员指南」有对应页面。
+ */
 export const menuGroups: MenuGroupConfig[] = [
   {
-    key: 'supply',
-    label: 'menu.group.supply',
+    key: 'adminGuide',
+    label: 'menu.group.adminGuide',
     items: [
       {
         key: '/channels',
@@ -80,12 +84,6 @@ export const menuGroups: MenuGroupConfig[] = [
         label: 'menu.catalog',
         permission: 'catalog:read',
       },
-    ],
-  },
-  {
-    key: 'identity',
-    label: 'menu.group.identity',
-    items: [
       {
         key: '/keys',
         icon: <KeyOutlined />,
@@ -104,12 +102,6 @@ export const menuGroups: MenuGroupConfig[] = [
         label: 'menu.users',
         permission: 'user:read',
       },
-    ],
-  },
-  {
-    key: 'operations',
-    label: 'menu.group.operations',
-    items: [
       {
         key: '/token-limits',
         icon: <AccountBookOutlined />,
