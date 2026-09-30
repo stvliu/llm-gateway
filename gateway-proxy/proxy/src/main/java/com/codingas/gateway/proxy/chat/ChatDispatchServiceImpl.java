@@ -74,6 +74,8 @@ public class ChatDispatchServiceImpl implements ChatDispatchService {
     @Override
     public ProtocolResponse dispatch(ProtocolRequest request, Identity identity, RoutingStrategy strategy) {
         String traceId = UUID.randomUUID().toString();
+        // Trace ID 写入请求契约：经 copy() 透传到各候选出站请求，供 SessionStart hook 全链路关联
+        request.setTraceId(traceId);
         Protocol inboundProtocol = getInboundProtocol(request);
         // 阶段 2：路由解析 — 取候选列表（L1 候选内逐个试），主候选为首项
         List<RoutingContext> candidates = routingResolver.resolveCandidates(
@@ -129,6 +131,8 @@ public class ChatDispatchServiceImpl implements ChatDispatchService {
     public void dispatchStream(ProtocolRequest request, Identity identity, RoutingStrategy strategy,
                                StreamCallback callback) {
         String traceId = UUID.randomUUID().toString();
+        // Trace ID 写入请求契约：经 copy() 透传到各候选出站请求，供 SessionStart hook 全链路关联
+        request.setTraceId(traceId);
         Protocol inboundProtocol = getInboundProtocol(request);
         // 阶段 2：路由解析 — 取候选列表，主候选为首项
         List<RoutingContext> candidates = routingResolver.resolveCandidates(

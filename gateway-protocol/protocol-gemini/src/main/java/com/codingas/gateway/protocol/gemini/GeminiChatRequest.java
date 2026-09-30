@@ -35,6 +35,7 @@ public class GeminiChatRequest implements ProtocolRequest {
     private Integer maxTokens;
     private Double temperature;
     private boolean stream;
+    private String traceId;
 
     @Override
     public String getModel() {
@@ -70,7 +71,18 @@ public class GeminiChatRequest implements ProtocolRequest {
         copy.maxTokens = this.maxTokens;
         copy.temperature = this.temperature;
         copy.stream = this.stream;
+        copy.traceId = this.traceId;
         return copy;
+    }
+
+    @Override
+    public String getTraceId() {
+        return traceId;
+    }
+
+    @Override
+    public void setTraceId(String traceId) {
+        this.traceId = traceId;
     }
 
     public String getSystem() {

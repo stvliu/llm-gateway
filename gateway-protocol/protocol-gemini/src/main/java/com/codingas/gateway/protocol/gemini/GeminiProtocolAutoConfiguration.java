@@ -69,4 +69,12 @@ public class GeminiProtocolAutoConfiguration {
                                                                    List<SessionStartHook> sessionStartHooks) {
         return new GeminiUpstreamClientFactory(httpClient, objectMapper, sessionStartHooks);
     }
+
+    /**
+     * Gemini 协议出站调谐器（供 OutboundTuner 按 List&lt;ProtocolTuner&gt; 集合收集）
+     */
+    @Bean
+    public GeminiTuner geminiTuner() {
+        return new GeminiTuner();
+    }
 }

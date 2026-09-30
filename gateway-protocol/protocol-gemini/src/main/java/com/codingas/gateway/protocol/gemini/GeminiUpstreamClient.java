@@ -247,7 +247,7 @@ public class GeminiUpstreamClient implements UpstreamClient<GeminiChatRequest> {
     private void fireSessionStart(GeminiChatRequest request, String json, boolean stream) {
         try {
             sessionStartHook.onSessionStart(new SessionStartContext(
-                    "gemini", request.getModel(), endpointUrl, json,
+                    request.getTraceId(), "gemini", request.getModel(), endpointUrl, json,
                     json.getBytes(StandardCharsets.UTF_8).length, stream));
         } catch (RuntimeException e) {
             // hook 为审计/追踪类旁路：异常不阻断上游调用（fail-open），记录告警避免静默

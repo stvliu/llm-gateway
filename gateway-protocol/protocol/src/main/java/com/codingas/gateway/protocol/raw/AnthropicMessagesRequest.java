@@ -17,6 +17,7 @@ package com.codingas.gateway.protocol.raw;
 
 import com.codingas.gateway.protocol.ProtocolRequest;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;
@@ -53,6 +54,10 @@ public class AnthropicMessagesRequest implements ProtocolRequest {
 
     private Boolean stream;
 
+    /** 调用链 Trace ID（调度层写入；@JsonIgnore 防泄漏到上游请求体） */
+    @JsonIgnore
+    private String traceId;
+
     @Override
     public String getProtocol() {
         return "anthropic";
@@ -82,6 +87,7 @@ public class AnthropicMessagesRequest implements ProtocolRequest {
                 .tools(this.tools != null ? new ArrayList<>(this.tools) : null)
                 .toolChoice(this.toolChoice)
                 .stream(this.stream)
+                .traceId(this.traceId)
                 .build();
     }
 

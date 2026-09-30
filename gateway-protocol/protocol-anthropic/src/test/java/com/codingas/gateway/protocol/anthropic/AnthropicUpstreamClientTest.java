@@ -222,10 +222,14 @@ class AnthropicUpstreamClientTest {
         List<SessionStartContext> contexts = new CopyOnWriteArrayList<>();
         AnthropicUpstreamClient client = createClient("sk-ant-test-key", 30, contexts::add);
 
-        client.chat(createTestRequest());
+        // traceId 经 copy() 透传：验证请求契约扩展 + hook 全链路关联
+        AnthropicMessagesRequest request = createTestRequest();
+        request.setTraceId("trace-abc-123");
+        client.chat((AnthropicMessagesRequest) request.copy());
 
         assertThat(contexts).hasSize(1);
         SessionStartContext ctx = contexts.get(0);
+        assertThat(ctx.traceId()).isEqualTo("trace-abc-123");
         assertThat(ctx.provider()).isEqualTo("anthropic");
         assertThat(ctx.model()).isEqualTo("claude-sonnet-4-20250514");
         assertThat(ctx.endpointUrl()).isEqualTo(baseUrl);
@@ -242,7 +246,9 @@ class AnthropicUpstreamClientTest {
         AnthropicUpstreamClient client = createClient("sk-ant-test-key", 30, contexts::add);
         CountDownLatch latch = new CountDownLatch(1);
 
-        client.chatStream(createTestRequest(), new StreamCallback() {
+        AnthropicMessagesRequest request = createTestRequest();
+        request.setTraceId("trace-abc-123");
+        client.chatStream((AnthropicMessagesRequest) request.copy(), new StreamCallback() {
             @Override public void onChunk(String data) { }
             @Override public void onComplete() { latch.countDown(); }
             @Override public void onError(Throwable t) { latch.countDown(); }
@@ -250,8 +256,23 @@ class AnthropicUpstreamClientTest {
 
         assertThat(latch.await(5, TimeUnit.SECONDS)).isTrue();
         assertThat(contexts).hasSize(1);
+        assertThat(contexts.get(0).traceId()).isEqualTo("trace-abc-123");
         assertThat(contexts.get(0).provider()).isEqualTo("anthropic");
         assertThat(contexts.get(0).stream()).isTrue();
+    }
+
+    @Test
+    void chat_请求体不含traceId字段() throws Exception {
+        // @JsonIgnore 防泄漏：traceId 为内部字段，不得序列化进上游请求体
+        enqueueJson(200, anthropicSuccessBody());
+
+        AnthropicUpstreamClient client = createClient("sk-ant-test-key", 30);
+        AnthropicMessagesRequest request = createTestRequest();
+        request.setTraceId("trace-abc-123");
+        client.chat(request);
+
+        RecordedRequest recorded = server.takeRequest();
+        assertThat(recorded.getBody().readUtf8()).doesNotContain("trace-abc-123");
     }
 
     // ==================== 场景 3：流式调用 ====================

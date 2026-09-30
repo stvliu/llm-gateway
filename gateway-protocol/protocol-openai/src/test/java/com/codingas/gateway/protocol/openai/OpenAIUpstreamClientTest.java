@@ -214,10 +214,14 @@ class OpenAIUpstreamClientTest {
         List<SessionStartContext> contexts = new CopyOnWriteArrayList<>();
         OpenAIUpstreamClient client = createClient("sk-test-key", 30, contexts::add);
 
-        client.chat(createTestRequest());
+        // traceId 经 copy() 透传：验证请求契约扩展 + hook 全链路关联
+        OpenAIChatRequest request = createTestRequest();
+        request.setTraceId("trace-abc-123");
+        client.chat((OpenAIChatRequest) request.copy());
 
         assertThat(contexts).hasSize(1);
         SessionStartContext ctx = contexts.get(0);
+        assertThat(ctx.traceId()).isEqualTo("trace-abc-123");
         assertThat(ctx.provider()).isEqualTo("openai");
         assertThat(ctx.model()).isEqualTo("gpt-4o");
         assertThat(ctx.endpointUrl()).isEqualTo(baseUrl);
@@ -234,7 +238,9 @@ class OpenAIUpstreamClientTest {
         OpenAIUpstreamClient client = createClient("sk-test-key", 30, contexts::add);
         CountDownLatch latch = new CountDownLatch(1);
 
-        client.chatStream(createTestRequest(), new StreamCallback() {
+        OpenAIChatRequest request = createTestRequest();
+        request.setTraceId("trace-abc-123");
+        client.chatStream((OpenAIChatRequest) request.copy(), new StreamCallback() {
             @Override public void onChunk(String data) { }
             @Override public void onComplete() { latch.countDown(); }
             @Override public void onError(Throwable t) { latch.countDown(); }
@@ -242,8 +248,23 @@ class OpenAIUpstreamClientTest {
 
         assertThat(latch.await(5, TimeUnit.SECONDS)).isTrue();
         assertThat(contexts).hasSize(1);
+        assertThat(contexts.get(0).traceId()).isEqualTo("trace-abc-123");
         assertThat(contexts.get(0).provider()).isEqualTo("openai");
         assertThat(contexts.get(0).stream()).isTrue();
+    }
+
+    @Test
+    void chat_请求体不含traceId字段() throws Exception {
+        // @JsonIgnore 防泄漏：traceId 为内部字段，不得序列化进上游请求体
+        enqueueJson(200, openaiSuccessBody());
+
+        OpenAIUpstreamClient client = createClient("sk-test-key", 30);
+        OpenAIChatRequest request = createTestRequest();
+        request.setTraceId("trace-abc-123");
+        client.chat(request);
+
+        RecordedRequest recorded = server.takeRequest();
+        assertThat(recorded.getBody().readUtf8()).doesNotContain("trace-abc-123");
     }
 
     // ==================== 场景 3：流式调用 ====================

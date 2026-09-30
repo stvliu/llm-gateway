@@ -17,6 +17,7 @@ package com.codingas.gateway.protocol.raw;
 
 import com.codingas.gateway.protocol.ProtocolRequest;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
@@ -64,6 +65,10 @@ public class OpenAIChatRequest implements ProtocolRequest {
 
     private Boolean stream;
 
+    /** 调用链 Trace ID（调度层写入；@JsonIgnore 防泄漏到上游请求体） */
+    @JsonIgnore
+    private String traceId;
+
     @Override
     public String getProtocol() {
         return "openai";
@@ -96,6 +101,7 @@ public class OpenAIChatRequest implements ProtocolRequest {
         c.tools = this.tools != null ? new ArrayList<>(this.tools) : null;
         c.toolChoice = this.toolChoice;
         c.stream = this.stream;
+        c.traceId = this.traceId;
         return c;
     }
 

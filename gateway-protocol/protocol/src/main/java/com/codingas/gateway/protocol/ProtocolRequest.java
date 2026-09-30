@@ -46,6 +46,20 @@ public interface ProtocolRequest {
     void setStream(boolean stream);
 
     /**
+     * 获取调用链 Trace ID（出站 SessionStart hook 全链路关联用；未设置时为 null）
+     *
+     * <p>由调度层（{@code ChatDispatchServiceImpl}）在分发入口写入，
+     * 经 {@link #copy()} 随副本透传到各候选出站请求。实现类须以
+     * {@code @JsonIgnore} 标注，防止序列化泄漏到上游请求体。</p>
+     */
+    String getTraceId();
+
+    /**
+     * 设置调用链 Trace ID
+     */
+    void setTraceId(String traceId);
+
+    /**
      * 创建当前请求的同类型副本（手写字段拷贝）
      *
      * <p>用于调谐下沉场景：{@code ChannelFailoverInvoker} 对每个候选渠道基于原始请求的副本

@@ -19,12 +19,13 @@ package com.codingas.gateway.protocol.transport;
  * 出站会话开始上下文
  *
  * <p>由各协议 {@link UpstreamClient} 在发起上游 HTTP 请求前构造并传入
- * {@link SessionStartHook}，承载会话级元数据（不含 Trace ID——传输契约
- * 无该参数，如需全链路关联走请求契约扩展）。</p>
+ * {@link SessionStartHook}，承载会话级元数据。Trace ID 由调度层写入
+ * {@code ProtocolRequest}，经请求契约透传至此，实现全链路关联。</p>
  *
  * <p><b>PII 注意</b>：{@link #requestBody} 为完整序列化请求体，含用户对话内容
  * （PII）；消费方负责脱敏，不得直接写入日志或外部系统。</p>
  *
+ * @param traceId      调用链 Trace ID（调度层写入；未设置时为 null）
  * @param provider     上游协议标识（"openai"/"anthropic"/"gemini"）
  * @param model        出站模型名（调谐后）
  * @param endpointUrl  上游端点地址
@@ -32,6 +33,6 @@ package com.codingas.gateway.protocol.transport;
  * @param requestBytes 请求体字节数
  * @param stream       是否流式调用
  */
-public record SessionStartContext(String provider, String model, String endpointUrl,
+public record SessionStartContext(String traceId, String provider, String model, String endpointUrl,
                                   String requestBody, long requestBytes, boolean stream) {
 }
