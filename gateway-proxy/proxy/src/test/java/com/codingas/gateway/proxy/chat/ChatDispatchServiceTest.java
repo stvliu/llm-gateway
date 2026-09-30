@@ -124,7 +124,7 @@ class ChatDispatchServiceTest {
             assertThat(result).isInstanceOf(OpenAIChatResponse.class);
             // 阶段3/4 下沉 Invoker：dispatch 不再做请求转换/调谐，protocolConverter 不被 dispatch 调用
             verify(protocolConversionFacade, never()).convertRequest(any(ProtocolRequest.class), anyString());
-            verify(protocolConversionFacade, never()).convertResponse(any(ProtocolResponse.class), anyString());
+            verify(protocolConversionFacade, never()).convertResponse(any(ProtocolResponse.class), anyString(), anyString());
             verify(channelFailoverInvoker).invoke(eq(openAIContext), anyList(), any(ProtocolRequest.class),
                     eq(Protocol.OPENAI), eq(7L), anyString());
         }
@@ -162,7 +162,7 @@ class ChatDispatchServiceTest {
                     eq(Protocol.OPENAI), eq(7L), anyString());
             // 请求转换(toAnthropic) + 响应转换(toOpenAI) 均下沉 Invoker，dispatch 不再调用 protocolConverter
             verify(protocolConversionFacade, never()).convertRequest(any(ProtocolRequest.class), anyString());
-            verify(protocolConversionFacade, never()).convertResponse(any(ProtocolResponse.class), anyString());
+            verify(protocolConversionFacade, never()).convertResponse(any(ProtocolResponse.class), anyString(), anyString());
         }
 
         @Test

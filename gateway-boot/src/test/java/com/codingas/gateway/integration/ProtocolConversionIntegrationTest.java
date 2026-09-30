@@ -21,6 +21,8 @@ import com.codingas.gateway.protocol.raw.AnthropicMessagesResponse;
 import com.codingas.gateway.protocol.raw.OpenAIChatRequest;
 import com.codingas.gateway.protocol.raw.OpenAIChatResponse;
 import com.codingas.gateway.protocol.anthropic.AnthropicProtocolAdapter;
+import com.codingas.gateway.protocol.gemini.GeminiChatResponse;
+import com.codingas.gateway.protocol.gemini.GeminiProtocolAdapter;
 import com.codingas.gateway.protocol.openai.OpenAIProtocolAdapter;
 import com.codingas.gateway.proxy.conversion.ProtocolStreamConverter;
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -65,7 +67,8 @@ class ProtocolConversionIntegrationTest {
         facade = new ProtocolConversionFacade(
                 List.of(
                     new OpenAIProtocolAdapter(objectMapper),
-                    new AnthropicProtocolAdapter()),
+                    new AnthropicProtocolAdapter(),
+                    new GeminiProtocolAdapter()),
                 new ProtocolStreamConverter(objectMapper));
     }
 
@@ -210,7 +213,7 @@ class ProtocolConversionIntegrationTest {
                             .build())
                     .build();
 
-            OpenAIChatResponse result = (OpenAIChatResponse) facade.convertResponse(response, "anthropic");
+            OpenAIChatResponse result = (OpenAIChatResponse) facade.convertResponse(response, "anthropic", "openai");
 
             assertThat(result.getId()).isEqualTo("msg_001");
             assertThat(result.getModel()).isEqualTo("claude-sonnet-4");
@@ -267,7 +270,7 @@ class ProtocolConversionIntegrationTest {
                             .build())
                     .build();
 
-            AnthropicMessagesResponse result = (AnthropicMessagesResponse) facade.convertResponse(response, "openai");
+            AnthropicMessagesResponse result = (AnthropicMessagesResponse) facade.convertResponse(response, "openai", "anthropic");
 
             assertThat(result.getId()).isEqualTo("chatcmpl-001");
             assertThat(result.getModel()).isEqualTo("gpt-4o");
@@ -290,6 +293,41 @@ class ProtocolConversionIntegrationTest {
             // usage 映射：prompt_tokens→input_tokens, completion_tokens→output_tokens
             assertThat(result.getUsage().getInputTokens()).isEqualTo(5);
             assertThat(result.getUsage().getOutputTokens()).isEqualTo(3);
+        }
+
+        @Test
+        @DisplayName("GeminiChatResponse → OpenAIChatResponse：文本/usage/finish_reason 映射（通用 Adapter 路由）")
+        void testConvert_geminiResponseToOpenAI() {
+            GeminiChatResponse response = new GeminiChatResponse(null, "gemini-2.5-pro", "Hello from Gemini", 10, 8, "STOP");
+
+            OpenAIChatResponse result = (OpenAIChatResponse) facade.convertResponse(response, "gemini", "openai");
+
+            assertThat(result).isNotNull();
+            assertThat(result.getModel()).isEqualTo("gemini-2.5-pro");
+            assertThat(result.getChoices()).hasSize(1);
+            assertThat(result.getChoices().get(0).getMessage().getContent()).isEqualTo("Hello from Gemini");
+            // usage 映射：input_tokens→prompt_tokens, output_tokens→completion_tokens
+            assertThat(result.getUsage().getPromptTokens()).isEqualTo(10);
+            assertThat(result.getUsage().getCompletionTokens()).isEqualTo(8);
+            // finishReason STOP → finish_reason "stop"
+            assertThat(result.getChoices().get(0).getFinishReason()).isEqualTo("stop");
+        }
+
+        @Test
+        @DisplayName("GeminiChatResponse → AnthropicMessagesResponse：文本/usage/stop_reason 映射（通用 Adapter 路由）")
+        void testConvert_geminiResponseToAnthropic() {
+            GeminiChatResponse response = new GeminiChatResponse(null, "gemini-2.5-pro", "Hello from Gemini", 10, 8, "STOP");
+
+            AnthropicMessagesResponse result = (AnthropicMessagesResponse) facade.convertResponse(response, "gemini", "anthropic");
+
+            assertThat(result).isNotNull();
+            assertThat(result.getModel()).isEqualTo("gemini-2.5-pro");
+            assertThat(result.getContent()).hasSize(1);
+            assertThat(result.getContent().get(0).getText()).isEqualTo("Hello from Gemini");
+            assertThat(result.getUsage().getInputTokens()).isEqualTo(10);
+            assertThat(result.getUsage().getOutputTokens()).isEqualTo(8);
+            // finishReason STOP → stop_reason "end_turn"
+            assertThat(result.getStopReason()).isEqualTo("end_turn");
         }
     }
 }

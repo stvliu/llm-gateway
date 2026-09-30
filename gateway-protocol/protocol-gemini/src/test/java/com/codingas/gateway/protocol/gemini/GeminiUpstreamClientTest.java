@@ -13,12 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.codingas.gateway.protocol.openai;
+package com.codingas.gateway.protocol.gemini;
 
 import com.codingas.gateway.common.enums.ProviderErrorType;
 import com.codingas.gateway.protocol.StreamCallback;
-import com.codingas.gateway.protocol.raw.OpenAIChatRequest;
-import com.codingas.gateway.protocol.raw.OpenAIChatResponse;
 import com.codingas.gateway.protocol.transport.ConnectivityTestResult;
 import com.codingas.gateway.protocol.transport.SessionStartContext;
 import com.codingas.gateway.protocol.transport.SessionStartHook;
@@ -46,9 +44,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
- * OpenAIUpstreamClient 测试 — 覆盖 8 个核心场景（协议插件自包含）
+ * GeminiUpstreamClient 测试 — 覆盖核心场景（协议插件自包含：格式转换 + 传输调用）
  */
-class OpenAIUpstreamClientTest {
+class GeminiUpstreamClientTest {
 
     private MockWebServer server;
     private OkHttpClient httpClient;
@@ -78,13 +76,13 @@ class OpenAIUpstreamClientTest {
         }
     }
 
-    private OpenAIUpstreamClient createClient(String apiKey, int timeout) {
+    private GeminiUpstreamClient createClient(String apiKey, int timeout) {
         return createClient(apiKey, timeout, null);
     }
 
-    private OpenAIUpstreamClient createClient(String apiKey, int timeout, SessionStartHook hook) {
-        return new OpenAIUpstreamClient(httpClient, baseUrl, apiKey, timeout,
-                objectMapper, new OpenAIErrorClassifier(), hook);
+    private GeminiUpstreamClient createClient(String apiKey, int timeout, SessionStartHook hook) {
+        return new GeminiUpstreamClient(httpClient, baseUrl, apiKey, timeout,
+                objectMapper, new GeminiErrorClassifier(), hook);
     }
 
     private void enqueueJson(int code, String body) {
@@ -108,130 +106,133 @@ class OpenAIUpstreamClientTest {
                 .setBody("timeout simulation"));
     }
 
-    private static String openaiSuccessBody() {
+    private static String geminiSuccessBody() {
         return """
                 {
-                  "id": "chatcmpl-test-001",
-                  "object": "chat.completion",
-                  "created": 1700000000,
-                  "model": "gpt-4o",
-                  "choices": [
+                  "candidates": [
                     {
-                      "index": 0,
-                      "message": {
-                        "role": "assistant",
-                        "content": "Hello! How can I help you today?"
+                      "content": {
+                        "parts": [{"text": "Hello! How can I help?"}],
+                        "role": "model"
                       },
-                      "finish_reason": "stop"
+                      "finishReason": "STOP",
+                      "index": 0
                     }
                   ],
-                  "usage": {
-                    "prompt_tokens": 10,
-                    "completion_tokens": 8,
-                    "total_tokens": 18
-                  }
+                  "usageMetadata": {
+                    "promptTokenCount": 10,
+                    "candidatesTokenCount": 8,
+                    "totalTokenCount": 18
+                  },
+                  "modelVersion": "gemini-2.5-pro"
                 }""";
     }
 
-    private static String openaiStreamBody() {
+    private static String geminiStreamBody() {
         return """
-                data: {"id":"chatcmpl-test-002","object":"chat.completion.chunk","created":1700000000,"model":"gpt-4o","choices":[{"index":0,"delta":{"role":"assistant","content":""},"finish_reason":null}]}
+                data: {"candidates":[{"content":{"parts":[{"text":"Hello"}],"role":"model"},"finishReason":null,"index":0}]}
 
-                data: {"id":"chatcmpl-test-002","object":"chat.completion.chunk","created":1700000000,"model":"gpt-4o","choices":[{"index":0,"delta":{"content":"Hello"},"finish_reason":null}]}
+                data: {"candidates":[{"content":{"parts":[{"text":"!"}],"role":"model"},"finishReason":null,"index":0}]}
 
-                data: {"id":"chatcmpl-test-002","object":"chat.completion.chunk","created":1700000000,"model":"gpt-4o","choices":[{"index":0,"delta":{"content":"!"},"finish_reason":null}]}
+                data: {"candidates":[{"content":{"parts":[],"role":"model"},"finishReason":"STOP","index":0}],"usageMetadata":{"promptTokenCount":10,"candidatesTokenCount":8,"totalTokenCount":18}}
 
-                data: {"id":"chatcmpl-test-002","object":"chat.completion.chunk","created":1700000000,"model":"gpt-4o","choices":[{"index":0,"delta":{},"finish_reason":"stop"}]}
-
-                data: [DONE]
                 """;
     }
 
-    private static String openaiErrorBody(int statusCode) {
-        return "{\"error\":{\"type\":\"error\",\"message\":\"Simulated error with status code " + statusCode + "\"}}";
+    private static String geminiErrorBody(int statusCode) {
+        return "{\"error\":{\"code\":" + statusCode + ",\"status\":\"ERROR\",\"message\":\"Simulated error\"}}";
     }
 
     /**
-     * 创建标准 OpenAI Chat 请求
+     * 创建标准 Gemini Chat 请求
      */
-    private OpenAIChatRequest createTestRequest() {
-        return OpenAIChatRequest.builder()
-                .model("gpt-4o")
-                .messages(List.of(
-                        OpenAIChatRequest.Message.builder()
-                                .role("user")
-                                .content("Hello")
-                                .build()
-                ))
-                .maxTokens(100)
-                .build();
+    private GeminiChatRequest createTestRequest() {
+        GeminiChatRequest req = new GeminiChatRequest();
+        req.setModel("gemini-2.5-pro");
+        req.setSystem("You are helpful.");
+        req.addMessage(new GeminiChatRequest.Message("user", "Hello"));
+        req.setMaxTokens(100);
+        req.setTemperature(0.7);
+        return req;
     }
 
     // ==================== 场景 1：非流式正常调用 ====================
 
     @Test
-    void chat_非流式正常调用_返回正确响应() throws Exception {
-        enqueueJson(200, openaiSuccessBody());
+    void chat_非流式正常调用_返回正确响应() {
+        enqueueJson(200, geminiSuccessBody());
 
-        OpenAIUpstreamClient client = createClient("sk-test-key", 30);
-        OpenAIChatResponse response = (OpenAIChatResponse) client.chat(createTestRequest());
+        GeminiUpstreamClient client = createClient("gem-key", 30);
+        GeminiChatResponse response = (GeminiChatResponse) client.chat(createTestRequest());
 
         assertThat(response).isNotNull();
-        assertThat(response.getId()).isEqualTo("chatcmpl-test-001");
-        assertThat(response.getModel()).isEqualTo("gpt-4o");
-        assertThat(response.getChoices()).isNotEmpty();
-        assertThat(response.getChoices().get(0).getMessage().getContent())
-                .isEqualTo("Hello! How can I help you today?");
-        assertThat(response.getChoices().get(0).getFinishReason()).isEqualTo("stop");
-        assertThat(response.getUsage()).isNotNull();
-        assertThat(response.getUsage().getPromptTokens()).isEqualTo(10);
-        assertThat(response.getUsage().getCompletionTokens()).isEqualTo(8);
-        assertThat(response.getUsage().getTotalTokens()).isEqualTo(18);
+        assertThat(response.text()).isEqualTo("Hello! How can I help?");
+        assertThat(response.inputTokens()).isEqualTo(10);
+        assertThat(response.outputTokens()).isEqualTo(8);
+        // geminiSuccessBody 的 finishReason=STOP 应被解析
+        assertThat(response.finishReason()).isEqualTo("STOP");
     }
 
     // ==================== 场景 2：请求路径和头部验证 ====================
 
     @Test
-    void chat_请求发送到正确路径并携带Authorization头() throws Exception {
-        enqueueJson(200, openaiSuccessBody());
+    void chat_请求发送到generateContent路径并携带x_goog_api_key头() throws Exception {
+        enqueueJson(200, geminiSuccessBody());
 
-        OpenAIUpstreamClient client = createClient("sk-secret-key", 30);
+        GeminiUpstreamClient client = createClient("gem-secret-key", 30);
         client.chat(createTestRequest());
 
         RecordedRequest recorded = server.takeRequest();
-        assertThat(recorded.getPath()).isEqualTo("/v1/chat/completions");
-        assertThat(recorded.getHeader("Authorization")).isEqualTo("Bearer sk-secret-key");
+        assertThat(recorded.getPath()).isEqualTo("/v1beta/models/gemini-2.5-pro:generateContent");
+        assertThat(recorded.getHeader("x-goog-api-key")).isEqualTo("gem-secret-key");
         assertThat(recorded.getHeader("Content-Type")).contains("application/json");
         assertThat(recorded.getMethod()).isEqualTo("POST");
+    }
+
+    @Test
+    void chat_请求体序列化为Gemini原生格式() throws Exception {
+        enqueueJson(200, geminiSuccessBody());
+
+        GeminiUpstreamClient client = createClient("gem-secret-key", 30);
+        client.chat(createTestRequest());
+
+        RecordedRequest recorded = server.takeRequest();
+        String body = recorded.getBody().readUtf8();
+        assertThat(body).contains("\"contents\"");
+        assertThat(body).contains("\"role\":\"user\"");
+        assertThat(body).contains("\"text\":\"Hello\"");
+        assertThat(body).contains("\"systemInstruction\"");
+        assertThat(body).contains("\"maxOutputTokens\":100");
     }
 
     // ==================== 场景 2.5：SessionStart hook（请求发出前触发） ====================
 
     @Test
     void chat_请求发出前_触发SessionStartHook() {
-        enqueueJson(200, openaiSuccessBody());
+        enqueueJson(200, geminiSuccessBody());
 
         List<SessionStartContext> contexts = new CopyOnWriteArrayList<>();
-        OpenAIUpstreamClient client = createClient("sk-test-key", 30, contexts::add);
+        GeminiUpstreamClient client = createClient("gem-key", 30, contexts::add);
 
         client.chat(createTestRequest());
 
         assertThat(contexts).hasSize(1);
         SessionStartContext ctx = contexts.get(0);
-        assertThat(ctx.provider()).isEqualTo("openai");
-        assertThat(ctx.model()).isEqualTo("gpt-4o");
+        assertThat(ctx.provider()).isEqualTo("gemini");
+        assertThat(ctx.model()).isEqualTo("gemini-2.5-pro");
         assertThat(ctx.endpointUrl()).isEqualTo(baseUrl);
-        assertThat(ctx.requestBody()).contains("gpt-4o");
+        // Gemini 模型名在 URL 路径而非请求体：断言请求体为 Gemini 原生格式
+        assertThat(ctx.requestBody()).contains("\"contents\"");
         assertThat(ctx.requestBytes()).isGreaterThan(0);
         assertThat(ctx.stream()).isFalse();
     }
 
     @Test
     void chatStream_请求发出前_触发SessionStartHook() throws Exception {
-        enqueueStream(openaiStreamBody());
+        enqueueStream(geminiStreamBody());
 
         List<SessionStartContext> contexts = new CopyOnWriteArrayList<>();
-        OpenAIUpstreamClient client = createClient("sk-test-key", 30, contexts::add);
+        GeminiUpstreamClient client = createClient("gem-key", 30, contexts::add);
         CountDownLatch latch = new CountDownLatch(1);
 
         client.chatStream(createTestRequest(), new StreamCallback() {
@@ -242,7 +243,7 @@ class OpenAIUpstreamClientTest {
 
         assertThat(latch.await(5, TimeUnit.SECONDS)).isTrue();
         assertThat(contexts).hasSize(1);
-        assertThat(contexts.get(0).provider()).isEqualTo("openai");
+        assertThat(contexts.get(0).provider()).isEqualTo("gemini");
         assertThat(contexts.get(0).stream()).isTrue();
     }
 
@@ -250,9 +251,9 @@ class OpenAIUpstreamClientTest {
 
     @Test
     void chatStream_流式调用_收到多个chunk并正常完成() throws Exception {
-        enqueueStream(openaiStreamBody());
+        enqueueStream(geminiStreamBody());
 
-        OpenAIUpstreamClient client = createClient("sk-test-key", 30);
+        GeminiUpstreamClient client = createClient("gem-key", 30);
 
         CountDownLatch latch = new CountDownLatch(1);
         List<String> chunks = new CopyOnWriteArrayList<>();
@@ -280,17 +281,17 @@ class OpenAIUpstreamClientTest {
 
         assertThat(latch.await(5, TimeUnit.SECONDS)).isTrue();
         assertThat(completed.get()).isTrue();
-        assertThat(chunks).hasSizeGreaterThanOrEqualTo(2);
+        assertThat(chunks).hasSize(3);
         assertThat(chunks).anyMatch(chunk -> chunk.contains("Hello"));
     }
 
     // ==================== 场景 4：429 限流 ====================
 
     @Test
-    void chat_429限流_抛出RATE_LIMIT_ERROR() throws IOException {
-        enqueueJson(429, openaiErrorBody(429));
+    void chat_429限流_抛出RATE_LIMIT_ERROR() {
+        enqueueJson(429, geminiErrorBody(429));
 
-        OpenAIUpstreamClient client = createClient("sk-test-key", 30);
+        GeminiUpstreamClient client = createClient("gem-key", 30);
 
         assertThatThrownBy(() -> client.chat(createTestRequest()))
                 .isInstanceOf(UpstreamException.class)
@@ -303,10 +304,10 @@ class OpenAIUpstreamClientTest {
     // ==================== 场景 5：401 鉴权失败 ====================
 
     @Test
-    void chat_401鉴权失败_抛出AUTHENTICATION_ERROR() throws IOException {
-        enqueueJson(401, openaiErrorBody(401));
+    void chat_401鉴权失败_抛出AUTHENTICATION_ERROR() {
+        enqueueJson(401, geminiErrorBody(401));
 
-        OpenAIUpstreamClient client = createClient("sk-invalid-key", 30);
+        GeminiUpstreamClient client = createClient("gem-invalid-key", 30);
 
         assertThatThrownBy(() -> client.chat(createTestRequest()))
                 .isInstanceOf(UpstreamException.class)
@@ -319,10 +320,10 @@ class OpenAIUpstreamClientTest {
     // ==================== 场景 5.5：404 模型不存在 ====================
 
     @Test
-    void chat_404模型不存在_抛出MODEL_NOT_FOUND并透传httpStatus() throws IOException {
-        enqueueJson(404, "{\"error\":{\"message\":\"The model 'gpt-4o' does not exist\",\"code\":\"model_not_found\"}}");
+    void chat_404模型不存在_抛出MODEL_NOT_FOUND并透传httpStatus() {
+        enqueueJson(404, "{\"error\":{\"code\":404,\"status\":\"NOT_FOUND\",\"message\":\"models/gemini-2.5-pro not found\"}}");
 
-        OpenAIUpstreamClient client = createClient("sk-test-key", 30);
+        GeminiUpstreamClient client = createClient("gem-key", 30);
 
         assertThatThrownBy(() -> client.chat(createTestRequest()))
                 .isInstanceOf(UpstreamException.class)
@@ -333,37 +334,13 @@ class OpenAIUpstreamClientTest {
                 });
     }
 
-    @Test
-    void chatStream_HTTP404_触发onError并透传httpStatus() throws Exception {
-        server.enqueue(new MockResponse()
-                .setResponseCode(404)
-                .setHeader("Content-Type", "application/json")
-                .setBody("{\"error\":{\"message\":\"The model 'gpt-4o' does not exist\",\"code\":\"model_not_found\"}}"));
-
-        OpenAIUpstreamClient client = createClient("sk-test-key", 30);
-        CountDownLatch latch = new CountDownLatch(1);
-        AtomicReference<Throwable> error = new AtomicReference<>();
-
-        client.chatStream(createTestRequest(), new StreamCallback() {
-            @Override public void onChunk(String data) { }
-            @Override public void onComplete() { latch.countDown(); }
-            @Override public void onError(Throwable t) { error.set(t); latch.countDown(); }
-        });
-
-        assertThat(latch.await(5, TimeUnit.SECONDS)).isTrue();
-        assertThat(error.get()).isInstanceOf(UpstreamException.class);
-        UpstreamException pe = (UpstreamException) error.get();
-        assertThat(pe.getErrorType()).isEqualTo(ProviderErrorType.MODEL_NOT_FOUND);
-        assertThat(pe.getHttpStatus()).isEqualTo(404);
-    }
-
     // ==================== 场景 6：500 服务端错误 ====================
 
     @Test
-    void chat_500服务端错误_抛出UPSTREAM_ERROR() throws IOException {
-        enqueueJson(500, openaiErrorBody(500));
+    void chat_500服务端错误_抛出UPSTREAM_ERROR() {
+        enqueueJson(500, geminiErrorBody(500));
 
-        OpenAIUpstreamClient client = createClient("sk-test-key", 30);
+        GeminiUpstreamClient client = createClient("gem-key", 30);
 
         assertThatThrownBy(() -> client.chat(createTestRequest()))
                 .isInstanceOf(UpstreamException.class)
@@ -376,11 +353,11 @@ class OpenAIUpstreamClientTest {
     // ==================== 场景 7：超时 ====================
 
     @Test
-    void chat_超时_抛出TIMEOUT_ERROR() throws Exception {
+    void chat_超时_抛出TIMEOUT_ERROR() {
         enqueueTimeout();
 
         // 使用 1 秒短超时客户端
-        OpenAIUpstreamClient client = createClient("sk-test-key", 1);
+        GeminiUpstreamClient client = createClient("gem-key", 1);
 
         assertThatThrownBy(() -> client.chat(createTestRequest()))
                 .isInstanceOf(UpstreamException.class)
@@ -393,11 +370,11 @@ class OpenAIUpstreamClientTest {
     // ==================== 场景 8：连通性测试 ====================
 
     @Test
-    void testConnectivity_连通性测试成功() throws Exception {
-        // 连通性测试请求 /v1/models，入队一个 200 响应
-        enqueueJson(200, openaiSuccessBody());
+    void testConnectivity_连通性测试成功() {
+        // 连通性测试请求 GET /v1beta/models，入队一个 200 响应
+        enqueueJson(200, "{\"models\":[]}");
 
-        OpenAIUpstreamClient client = createClient("sk-test-key", 30);
+        GeminiUpstreamClient client = createClient("gem-key", 30);
         ConnectivityTestResult result = client.testConnectivity();
 
         assertThat(result.success()).isTrue();
@@ -405,10 +382,10 @@ class OpenAIUpstreamClientTest {
     }
 
     @Test
-    void testConnectivity_HTTP失败_返回失败结果() throws Exception {
-        enqueueJson(500, openaiErrorBody(500));
+    void testConnectivity_HTTP失败_返回失败结果() {
+        enqueueJson(500, geminiErrorBody(500));
 
-        OpenAIUpstreamClient client = createClient("sk-test-key", 30);
+        GeminiUpstreamClient client = createClient("gem-key", 30);
         ConnectivityTestResult result = client.testConnectivity();
 
         assertThat(result.success()).isFalse();
@@ -416,12 +393,11 @@ class OpenAIUpstreamClientTest {
     }
 
     @Test
-    void testConnectivity_服务不可达_返回失败结果() throws Exception {
-        // 先关闭服务端，请求必然连接失败 → 捕获异常返回失败结果
+    void testConnectivity_服务不可达_返回失败结果() throws IOException {
         server.shutdown();
         server = null;
 
-        OpenAIUpstreamClient client = createClient("sk-test-key", 30);
+        GeminiUpstreamClient client = createClient("gem-key", 30);
         ConnectivityTestResult result = client.testConnectivity();
 
         assertThat(result.success()).isFalse();
@@ -431,8 +407,8 @@ class OpenAIUpstreamClientTest {
     // ==================== 场景 9：supportedProvider ====================
 
     @Test
-    void supportedProvider_返回openai() {
-        assertThat(createClient("sk-test-key", 30).supportedProvider()).isEqualTo("openai");
+    void supportedProvider_返回gemini() {
+        assertThat(createClient("gem-key", 30).supportedProvider()).isEqualTo("gemini");
     }
 
     // ==================== 场景 10：流式错误与边界 ====================
@@ -442,9 +418,9 @@ class OpenAIUpstreamClientTest {
         server.enqueue(new MockResponse()
                 .setResponseCode(429)
                 .setHeader("Content-Type", "application/json")
-                .setBody(openaiErrorBody(429)));
+                .setBody(geminiErrorBody(429)));
 
-        OpenAIUpstreamClient client = createClient("sk-test-key", 30);
+        GeminiUpstreamClient client = createClient("gem-key", 30);
         CountDownLatch latch = new CountDownLatch(1);
         AtomicReference<Throwable> error = new AtomicReference<>();
 
@@ -465,7 +441,7 @@ class OpenAIUpstreamClientTest {
         // 服务端立即断开连接 → okhttp onFailure → 回调 onError(NETWORK_ERROR)
         server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AT_START));
 
-        OpenAIUpstreamClient client = createClient("sk-test-key", 30);
+        GeminiUpstreamClient client = createClient("gem-key", 30);
         CountDownLatch latch = new CountDownLatch(1);
         AtomicReference<Throwable> error = new AtomicReference<>();
 
@@ -482,19 +458,19 @@ class OpenAIUpstreamClientTest {
     }
 
     @Test
-    void chatStream_无DONE标记_循环结束触发onComplete() throws Exception {
-        // SSE 流不含 [DONE] 标记时，读到 EOF 后应 onComplete
+    void chatStream_无结束标记_EOF触发onComplete() throws Exception {
+        // Gemini SSE 无 [DONE]/message_stop 标记，读到 EOF 后应 onComplete
         server.enqueue(new MockResponse()
                 .setResponseCode(200)
                 .setHeader("Content-Type", "text/event-stream")
                 .setBody("""
-                        data: {"id":"c1","choices":[{"delta":{"content":"hi"}}]}
+                        data: {"candidates":[{"content":{"parts":[{"text":"hi"}],"role":"model"}}]}
 
-                        data: {"id":"c1","choices":[{"delta":{"content":"!"}}]}
+                        data: {"candidates":[{"content":{"parts":[{"text":"!"}],"role":"model"}}]}
 
                         """));
 
-        OpenAIUpstreamClient client = createClient("sk-test-key", 30);
+        GeminiUpstreamClient client = createClient("gem-key", 30);
         CountDownLatch latch = new CountDownLatch(1);
         List<String> chunks = new CopyOnWriteArrayList<>();
         AtomicReference<Throwable> error = new AtomicReference<>();
@@ -511,39 +487,11 @@ class OpenAIUpstreamClientTest {
     }
 
     @Test
-    void chatStream_空data行_不触发onChunk() throws Exception {
-        server.enqueue(new MockResponse()
-                .setResponseCode(200)
-                .setHeader("Content-Type", "text/event-stream")
-                .setBody("""
-                        data:
-
-                        data: {"id":"c1","choices":[{"delta":{"content":"x"}}]}
-
-                        data: [DONE]
-                        """));
-
-        OpenAIUpstreamClient client = createClient("sk-test-key", 30);
-        CountDownLatch latch = new CountDownLatch(1);
-        List<String> chunks = new CopyOnWriteArrayList<>();
-
-        client.chatStream(createTestRequest(), new StreamCallback() {
-            @Override public void onChunk(String data) { chunks.add(data); }
-            @Override public void onComplete() { latch.countDown(); }
-            @Override public void onError(Throwable t) { latch.countDown(); }
-        });
-
-        assertThat(latch.await(5, TimeUnit.SECONDS)).isTrue();
-        // 空 data 行被跳过，仅 1 个 chunk
-        assertThat(chunks).hasSize(1);
-    }
-
-    @Test
-    void chat_服务不可达_抛出NETWORK_ERROR() throws Exception {
+    void chat_服务不可达_抛出NETWORK_ERROR() throws IOException {
         server.shutdown();
         server = null;
 
-        OpenAIUpstreamClient client = createClient("sk-test-key", 30);
+        GeminiUpstreamClient client = createClient("gem-key", 30);
         assertThatThrownBy(() -> client.chat(createTestRequest()))
                 .isInstanceOf(UpstreamException.class)
                 .satisfies(ex -> {

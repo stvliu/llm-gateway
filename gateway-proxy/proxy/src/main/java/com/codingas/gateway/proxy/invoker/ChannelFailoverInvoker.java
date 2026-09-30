@@ -147,7 +147,7 @@ public class ChannelFailoverInvoker {
                         : keyFailoverInvoker.invoke(candidate, candidateReq);
                 // 响应转换下沉：基于实际成功候选(非主候选) 转换响应为入站协议格式（与流式 buildStreamCallback 对称）
                 // 修复跨协议换候选时按主候选协议转换方向错误/跳过转换，返回错误协议响应的问题
-                return adaptResponseForCandidate(response, candidate);
+                return adaptResponseForCandidate(response, candidate, inboundProtocol);
             } catch (UpstreamException e) {
                 FailoverDecision decision = errorClassifier.classify(e.getErrorType());
                 log.warn("候选渠道 channelId={} endpointId={} 失败: {} (决策:{}, 策略:{})",
@@ -358,11 +358,12 @@ public class ChannelFailoverInvoker {
      * @param candidate 实际成功候选路由上下文
      * @return 入站协议格式的响应；同协议候选原样返回
      */
-    private ProtocolResponse adaptResponseForCandidate(ProtocolResponse response, RoutingContext candidate) {
+    private ProtocolResponse adaptResponseForCandidate(ProtocolResponse response, RoutingContext candidate,
+                                                       Protocol inboundProtocol) {
         if (!candidate.needsProtocolAdaptation()) {
             return response;
         }
-        return convertResponse(response, candidate);
+        return convertResponse(response, candidate, inboundProtocol);
     }
 
     /**
@@ -372,9 +373,10 @@ public class ChannelFailoverInvoker {
      * @param ctx      路由上下文（提供上游协议，决定转换方向）
      * @return 转换后的响应；无法匹配时原样返回并告警
      */
-    private ProtocolResponse convertResponse(ProtocolResponse response, RoutingContext ctx) {
-        // 源协议 = 候选上游协议（响应来源）；Facade 内部按协议类型分支（normalize→denormalize 两跳）
-        return protocolConversionFacade.convertResponse(response, ctx.upstreamProtocol().name().toLowerCase());
+    private ProtocolResponse convertResponse(ProtocolResponse response, RoutingContext ctx, Protocol inboundProtocol) {
+        // 源协议 = 候选上游协议（响应来源），目标协议 = 入站协议；Facade 内部按 Adapter 通用路由（normalize→denormalize 两跳）
+        return protocolConversionFacade.convertResponse(response,
+                ctx.upstreamProtocol().name().toLowerCase(), inboundProtocol.name().toLowerCase());
     }
 
     /**

@@ -16,6 +16,7 @@
 package com.codingas.gateway.protocol.openai;
 
 import com.codingas.gateway.protocol.ProtocolAdapter;
+import com.codingas.gateway.protocol.transport.SessionStartHook;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import okhttp3.OkHttpClient;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
@@ -23,6 +24,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -62,8 +64,9 @@ public class OpenAIProtocolAutoConfiguration {
      * OpenAI 上游客户端工厂（供协议域注册表收集）
      */
     @Bean
-    public OpenAIUpstreamClientFactory openAIUpstreamClientFactory(OkHttpClient httpClient, ObjectMapper objectMapper) {
-        return new OpenAIUpstreamClientFactory(httpClient, objectMapper);
+    public OpenAIUpstreamClientFactory openAIUpstreamClientFactory(OkHttpClient httpClient, ObjectMapper objectMapper,
+                                                                   List<SessionStartHook> sessionStartHooks) {
+        return new OpenAIUpstreamClientFactory(httpClient, objectMapper, sessionStartHooks);
     }
 
     /**

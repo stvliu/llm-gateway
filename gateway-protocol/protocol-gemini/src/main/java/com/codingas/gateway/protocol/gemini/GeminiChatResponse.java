@@ -15,15 +15,29 @@
  */
 package com.codingas.gateway.protocol.gemini;
 
+import com.codingas.gateway.protocol.ProtocolResponse;
+
 /**
- * Gemini 原生响应契约（示例插件提供，简化模型）。
+ * Gemini 原生响应契约（简化模型）。
  *
- * @param id            响应 ID
+ * @param id            响应 ID（Gemini 响应无 id 字段，可为 null）
  * @param model         模型名
  * @param text          文本内容
  * @param inputTokens   输入 token 数
  * @param outputTokens  输出 token 数
+ * @param finishReason  Gemini 结束原因（STOP/MAX_TOKENS/SAFETY 等，可为 null）
  */
 public record GeminiChatResponse(String id, String model, String text,
-                                 Integer inputTokens, Integer outputTokens) {
+                                 Integer inputTokens, Integer outputTokens, String finishReason)
+        implements ProtocolResponse {
+
+    @Override
+    public String getModel() {
+        return model;
+    }
+
+    @Override
+    public String getFinishReason() {
+        return finishReason;
+    }
 }

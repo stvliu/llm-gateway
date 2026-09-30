@@ -54,7 +54,21 @@
     "defaultMode": "bypassPermissions"
   },
   "skillOverrides": {
-    "brainstorming": "user-invocable-only"
+    "brainstorming": "user-invocable-only",
+    "speckit-analyze": "off",
+    "speckit-checklist": "off",
+    "speckit-clarify": "off",
+    "speckit-constitution": "off",
+    "speckit-git-commit": "off",
+    "speckit-git-feature": "off",
+    "speckit-git-initialize": "off",
+    "speckit-git-remote": "off",
+    "speckit-git-validate": "off",
+    "speckit-implement": "off",
+    "speckit-plan": "off",
+    "speckit-specify": "off",
+    "speckit-tasks": "off",
+    "speckit-taskstoissues": "off"
   },
   "outputStyle": "default",
   "askUserQuestionTimeout": "60s",
@@ -68,10 +82,20 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"E:/workspace/llm-gateway/.claude/skills/comet/scripts/comet-hook-router.mjs\" --platform \"claude\" --project-root \"E:/workspace/llm-gateway\""
+            "command": "node",
+            "args": [
+              "E:\\workspace\\llm-gateway\\.claude\\skills\\comet\\scripts\\comet-hook-router.mjs",
+              "--platform",
+              "claude",
+              "--project-root",
+              "E:\\workspace\\llm-gateway"
+            ]
           }
         ]
       }
     ]
+  },
+  "enabledPlugins": {
+    "frontend-design@claude-plugins-official": false
   }
 }

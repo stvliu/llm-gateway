@@ -20,6 +20,8 @@ import com.codingas.gateway.protocol.StreamCallback;
 import com.codingas.gateway.protocol.raw.AnthropicMessagesRequest;
 import com.codingas.gateway.protocol.raw.AnthropicMessagesResponse;
 import com.codingas.gateway.protocol.transport.ConnectivityTestResult;
+import com.codingas.gateway.protocol.transport.SessionStartContext;
+import com.codingas.gateway.protocol.transport.SessionStartHook;
 import com.codingas.gateway.protocol.transport.UpstreamException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -77,8 +79,12 @@ class AnthropicUpstreamClientTest {
     }
 
     private AnthropicUpstreamClient createClient(String apiKey, int timeout) {
+        return createClient(apiKey, timeout, null);
+    }
+
+    private AnthropicUpstreamClient createClient(String apiKey, int timeout, SessionStartHook hook) {
         return new AnthropicUpstreamClient(httpClient, baseUrl, apiKey, timeout,
-                objectMapper, new AnthropicErrorClassifier());
+                objectMapper, new AnthropicErrorClassifier(), hook);
     }
 
     private void enqueueJson(int code, String body) {
@@ -205,6 +211,47 @@ class AnthropicUpstreamClientTest {
         assertThat(recorded.getHeader("anthropic-version")).isEqualTo("2023-06-01");
         assertThat(recorded.getHeader("Content-Type")).contains("application/json");
         assertThat(recorded.getMethod()).isEqualTo("POST");
+    }
+
+    // ==================== 场景 2.5：SessionStart hook（请求发出前触发） ====================
+
+    @Test
+    void chat_请求发出前_触发SessionStartHook() {
+        enqueueJson(200, anthropicSuccessBody());
+
+        List<SessionStartContext> contexts = new CopyOnWriteArrayList<>();
+        AnthropicUpstreamClient client = createClient("sk-ant-test-key", 30, contexts::add);
+
+        client.chat(createTestRequest());
+
+        assertThat(contexts).hasSize(1);
+        SessionStartContext ctx = contexts.get(0);
+        assertThat(ctx.provider()).isEqualTo("anthropic");
+        assertThat(ctx.model()).isEqualTo("claude-sonnet-4-20250514");
+        assertThat(ctx.endpointUrl()).isEqualTo(baseUrl);
+        assertThat(ctx.requestBody()).contains("claude-sonnet-4-20250514");
+        assertThat(ctx.requestBytes()).isGreaterThan(0);
+        assertThat(ctx.stream()).isFalse();
+    }
+
+    @Test
+    void chatStream_请求发出前_触发SessionStartHook() throws Exception {
+        enqueueStream(anthropicStreamBody());
+
+        List<SessionStartContext> contexts = new CopyOnWriteArrayList<>();
+        AnthropicUpstreamClient client = createClient("sk-ant-test-key", 30, contexts::add);
+        CountDownLatch latch = new CountDownLatch(1);
+
+        client.chatStream(createTestRequest(), new StreamCallback() {
+            @Override public void onChunk(String data) { }
+            @Override public void onComplete() { latch.countDown(); }
+            @Override public void onError(Throwable t) { latch.countDown(); }
+        });
+
+        assertThat(latch.await(5, TimeUnit.SECONDS)).isTrue();
+        assertThat(contexts).hasSize(1);
+        assertThat(contexts.get(0).provider()).isEqualTo("anthropic");
+        assertThat(contexts.get(0).stream()).isTrue();
     }
 
     // ==================== 场景 3：流式调用 ====================

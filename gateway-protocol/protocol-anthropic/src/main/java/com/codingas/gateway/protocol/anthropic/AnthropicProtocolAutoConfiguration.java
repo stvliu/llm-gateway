@@ -16,6 +16,7 @@
 package com.codingas.gateway.protocol.anthropic;
 
 import com.codingas.gateway.protocol.ProtocolAdapter;
+import com.codingas.gateway.protocol.transport.SessionStartHook;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import okhttp3.OkHttpClient;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
@@ -23,6 +24,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -62,8 +64,9 @@ public class AnthropicProtocolAutoConfiguration {
      * Anthropic 上游客户端工厂（供协议域注册表收集）
      */
     @Bean
-    public AnthropicUpstreamClientFactory anthropicUpstreamClientFactory(OkHttpClient httpClient, ObjectMapper objectMapper) {
-        return new AnthropicUpstreamClientFactory(httpClient, objectMapper);
+    public AnthropicUpstreamClientFactory anthropicUpstreamClientFactory(OkHttpClient httpClient, ObjectMapper objectMapper,
+                                                                         List<SessionStartHook> sessionStartHooks) {
+        return new AnthropicUpstreamClientFactory(httpClient, objectMapper, sessionStartHooks);
     }
 
     /**

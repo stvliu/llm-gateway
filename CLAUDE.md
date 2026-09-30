@@ -31,78 +31,6 @@ LLM-Gateway 是新一代企业级 AI 模型 API 聚合分发与智能路由网�
 - **配置外部化**: 所有可变参数通过 `@ConfigurationProperties`，禁止魔法数字
 - **全实体可审计**: 每张业务表必须包含 `created_by/created_at/updated_by/updated_at`
 
-## 项目结构（多模块 Maven 项目，域模块化三明治结构：模块 = 根包）
-
-```
-llm-gateway/                          # 项目根目录（父 POM，统一依赖管理）
-├── pom.xml                           # 父 POM，打包类型: pom
-├── gateway-common/                   # 横切底座（common.data/entity/dto/enums/event/exception/util）
-├── gateway-protocol/                 # 协议核心（canonical/raw/transport/tuning/validation）
-│   ├── protocol/                     # 协议核心（canonical/contract/raw/transport/tuning/validation）
-│   ├── protocol-openai/              # OpenAI 协议实现（插件）
-│   ├── protocol-anthropic/           # Anthropic 协议实现（插件）
-│   └── protocol-gemini/              # Gemini 协议实现（插件）
-├── gateway-provider/                 # 供给域（channel/catalog/model/vendor/health/cache/encryption）
-│   ├── provider-data/                # 供给持久化（DO/Repository 按实体子域聚合：catalog/channel/model/vendor）
-│   └── provider-starter/             # 供给自动装配（autoconfigure.provider）
-├── gateway-iam/                      # 身份访问域（auth/apikey/encryption/user/application/exception）
-│   ├── iam-data/
-│   └── iam-starter/
-├── gateway-usage/                    # 用量管控域（tokenlimit 等）
-│   ├── usage-data/
-│   └── usage-starter/
-├── gateway-security/                 # 安全威胁域（threat/dataprotection）
-│   ├── security-data/
-│   └── security-starter/
-├── gateway-audit/                    # 审计追溯域（event 等）
-│   ├── audit-data/
-│   └── audit-starter/
-├── gateway-alert/                    # 告警通知域
-│   ├── alert-data/
-│   └── alert-starter/
-├── gateway-settings/                 # 系统设置域（SystemSetting/SystemSettingService，system_settings 表）
-│   ├── settings/
-│   ├── settings-data/
-│   └── settings-starter/
-├── gateway-resilience/               # 韧性域（retry/circuitbreaker/failover/upstream/metrics）
-│   ├── resilience-data/
-│   └── resilience-starter/
-├── gateway-proxy/                    # 模型代理域（chat/invoker/routing/experience/conversion）
-│   └── proxy-starter/
-├── gateway-stats/                    # 聚合统计域
-│   └── stats-starter/
-├── gateway-web/                      # HTTP 承载层（web.api 全部 Controller + web.interceptor + web.advice + web.config）
-├── gateway-boot/                     # 启动装配（boot.config/init/event + GatewayApplication）
-├── gateway-cli/                      # CLI 管理工具
-├── gateway-simulator/                # 提供商模拟器
-├── gateway-coverage/                 # 覆盖率聚合（jacoco report-aggregate）
-└── gateway-console/                  # Web 管理界面（React，Vite）
-```
-
-| 模块 | 职责 |
-|------|------|
-| gateway-boot | 启动装配（config/init/event + GatewayApplication），依赖各域 starter |
-| gateway-web | HTTP 承载层（web.api 全部 Controller + interceptor + advice） |
-| gateway-common | 横切底座（被所有模块依赖） |
-| gateway-<域>（provider/iam/usage/security/audit/alert/settings/resilience/proxy/stats/protocol） | 业务域核心（根包 = 模块名） |
-| gateway-<域>-data | 绑定持久化模块（DO/Repository 按实体子域聚合） |
-| gateway-<域>-starter | 自动装配（autoconfigure.<域>） |
-| gateway-settings（settings/settings-data/settings-starter） | 系统设置域（系统设置，system_settings 表） |
-| gateway-console | Web 管理界面（React，Vite），API 消费者（HTTP 调用） |
-| gateway-cli | 命令行管理工具，API 消费者（HTTP 调用） |
-
-## 各层职责（模块化落位）
-
-> 分层依赖规则由模块边界 + ArchUnit 铁律强制执行（见 `docs/adr/0001-modularization-architecture.md`）；包名不再保留 `adapter/application/domain/infrastructure` DDD 层名前缀。
-
-| 层（概念） | 职责 | 模块化落位 |
-|---|------|---------|
-| **web（原 adapter）** | 接收请求、返回响应 | gateway-web（web.api / web.interceptor / web.advice） |
-| **application（用例编排）** | 用例编排，跨域协调 | 域核心模块（服务跟随聚合分包） |
-| **domain（域核心）** | 业务逻辑、模型 | 域核心模块（provider/iam/proxy/protocol...） |
-| **infrastructure（持久化实现）** | Repository/Client 端口实现、数据持久化 | 绑定模块 `<域>data`（JpaXxxRepository 实现 + XxxJpaRepository 同包） |
-| **common（横切）** | 跨域共享 | gateway-common（data/entity/dto/enums/event/exception/util） |
-
 ## 服务分类
 
 | 类型 | 放置位置 | 示例 |
@@ -123,25 +51,6 @@ llm-gateway/                          # 项目根目录（父 POM，统一依赖
 - `docs/spec.md` - 完整需求规格说明书
 - `docs/api-spec.md` - API 规格文档
 - `docs/adr/0001-modularization-architecture.md` - 模块化后分层与命名规范决策（ADR-0001）
-
-## 开发命令
-
-```bash
-# 构建所有模块
-./mvnw clean install
-
-# 构建并跳过测试
-./mvnw clean install -DskipTests
-
-# 只构建 gateway-boot 模块
-./mvnw clean install -pl gateway-boot
-
-# 运行 gateway-boot
-./mvnw spring-boot:run -pl gateway-boot
-
-# 运行 gateway-cli
-./mvnw spring-boot:run -pl gateway-cli
-```
 
 ## 数据库规范
 
@@ -170,11 +79,6 @@ GatewayException (根异常，gateway-common)
 - 常量: UPPER_SNAKE_CASE
 - **包名**: 域模块化（模块 = 根包，去 `domain/application/infrastructure` DDD 前缀；绑定模块拼接 `Xdata` 根包；starter 用 `autoconfigure.<域>`）。详见 `docs/constitution.md` §3.1 包名规范
 
-## Active Technologies
-- Java 21 + Spring Boot 3.5.x, Spring MVC (Web), JPA (数据持久化) 
-- H2（开发调试）/ PostgreSQL 14+（生产）
-- RestClient, OkHttp 4.12.0, Jackson
-
 ## 项目语言规范
 请严格遵守以下规则：
 1. 所有对话、解释、建议必须使用**简体中文**。
@@ -191,10 +95,13 @@ GatewayException (根异常，gateway-common)
 在这个仓库中，开始处理需要改动或调查的任务前，如果可能存在活跃 Comet workflow，把当前用户请求传入只读探针：`comet resume-probe . --stdin --json`。
 
 - 如果用户通过宿主明确调用任意 Comet Skill（例如 `@comet`、`/comet`、`@comet-native` 或 `/comet-hotfix`），显式调用优先于本恢复协议；不要运行 resume probe，直接进入被调用的 Skill。
+- 如果用户通过宿主明确调用的是非 Comet 的 Skill 或斜杠命令，任务意图已由该调用明确：不要运行 resume probe，直接执行该 Skill。
+- 如果你正在 Comet 流程内（包括正在等待用户回复你在流程中提出的问题），不要运行 resume probe；把这类回复（例如方案/选项选择）当作当前 change 的继续，直接按用户的选择推进。
 - 只信任返回的 `workflow`、`skill` 和 `entrySource`；它们只由项目配置或无配置兼容回退决定。不得扫描或切换另一套 workflow。
 - 如果 probe 返回 `auto_resume`，简短说明选中的 active change，并进入 `nextCommand` 指向的永久入口。不要把状态命令当作恢复入口直接推进。
 - 如果 probe 返回 `ask_user`，只问一个简短问题并等待用户回复。
 - 如果当前请求未明确调用 Comet Skill，且 probe 返回 `out_of_scope` 或 `none`，不要进入 Comet workflow。
+- `out_of_scope` 或 `none` 只表示不要因为这个新请求进入 Comet workflow；它绝不表示要暂停或退出一个已在进行的 Comet 流程。
 - 如果配置或状态无效且没有 `nextCommand`，停止并报告原因；不要猜测另一个 workflow。
 - 不能只因为存在 active change 就把无关任务挂到该 change。Native 的未提交改动由 Native 入口检查，不由探针自动归因。
 </comet-ambient-resume>

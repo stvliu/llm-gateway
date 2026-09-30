@@ -110,6 +110,73 @@ class ProtocolStreamConverterTest {
             String chunk = "{\"type\":\"message_start\"}";
             assertThat(converter.convertStreamChunk(chunk, "anthropic", "openai")).isNull();
         }
+
+        @Test
+        @DisplayName("Gemini chunk → OpenAI：chat.completion.chunk（文本映射）")
+        void geminiChunkToOpenAI() {
+            String chunk = "{\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"hi\"}],\"role\":\"model\"},\"finishReason\":null,\"index\":0}]}";
+            StreamChunkResult result = converter.convertStreamChunk(chunk, "gemini", "openai");
+            assertThat(result).isNotNull();
+            assertThat(result.eventType()).isNull();
+            assertThat(result.data()).contains("chat.completion.chunk")
+                    .contains("\"content\":\"hi\"");
+        }
+
+        @Test
+        @DisplayName("Gemini 结束 chunk（仅 finishReason）→ OpenAI：finish_reason 映射")
+        void geminiFinishChunkToOpenAI() {
+            String chunk = "{\"candidates\":[{\"content\":{\"parts\":[],\"role\":\"model\"},\"finishReason\":\"STOP\",\"index\":0}],\"usageMetadata\":{\"promptTokenCount\":5}}";
+            StreamChunkResult result = converter.convertStreamChunk(chunk, "gemini", "openai");
+            assertThat(result).isNotNull();
+            assertThat(result.data()).contains("\"finish_reason\":\"stop\"");
+        }
+
+        @Test
+        @DisplayName("Gemini 纯 usageMetadata chunk（无候选）→ null 跳过")
+        void geminiUsageOnlyChunkReturnsNull() {
+            String chunk = "{\"usageMetadata\":{\"promptTokenCount\":5}}";
+            assertThat(converter.convertStreamChunk(chunk, "gemini", "openai")).isNull();
+        }
+
+        @Test
+        @DisplayName("Gemini chunk → Anthropic：content_block_delta 事件")
+        void geminiChunkToAnthropic() {
+            String chunk = "{\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"hi\"}],\"role\":\"model\"},\"finishReason\":null,\"index\":0}]}";
+            StreamChunkResult result = converter.convertStreamChunk(chunk, "gemini", "anthropic");
+            assertThat(result).isNotNull();
+            assertThat(result.eventType()).isEqualTo("content_block_delta");
+            assertThat(result.data()).contains("\"type\":\"content_block_delta\"")
+                    .contains("\"text\":\"hi\"");
+        }
+
+        @Test
+        @DisplayName("Gemini 结束 chunk（仅 finishReason）→ Anthropic：跳过（结束标记由 convertStreamDone 补发，避免重复）")
+        void geminiFinishChunkToAnthropic() {
+            String chunk = "{\"candidates\":[{\"content\":{\"parts\":[],\"role\":\"model\"},\"finishReason\":\"STOP\",\"index\":0}]}";
+            assertThat(converter.convertStreamChunk(chunk, "gemini", "anthropic")).isNull();
+        }
+
+        @Test
+        @DisplayName("gemini→anthropic 完整流：文本 chunk 转 content_block_delta，结束标记仅一条 message_delta")
+        void geminiStreamToAnthropic_fullSequence_noDuplicateMessageDelta() {
+            StreamChunkResult c1 = converter.convertStreamChunk(
+                    "{\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"Hello\"}],\"role\":\"model\"},\"finishReason\":null,\"index\":0}]}",
+                    "gemini", "anthropic");
+            StreamChunkResult c2 = converter.convertStreamChunk(
+                    "{\"candidates\":[{\"content\":{\"parts\":[],\"role\":\"model\"},\"finishReason\":\"STOP\",\"index\":0}]}",
+                    "gemini", "anthropic");
+            StreamChunkResult done = converter.convertStreamDone("gemini", "anthropic");
+
+            assertThat(c1).isNotNull();
+            assertThat(c1.eventType()).isEqualTo("content_block_delta");
+            assertThat(c1.data()).contains("\"text\":\"Hello\"");
+            // 末 chunk 无文本：跳过，不重复发结束
+            assertThat(c2).isNull();
+            // 结束标记仅一条 message_delta
+            assertThat(done).isNotNull();
+            assertThat(done.eventType()).isEqualTo("message_delta");
+            assertThat(done.data()).contains("\"stop_reason\":\"end_turn\"");
+        }
     }
 
     @Nested
@@ -139,6 +206,24 @@ class ProtocolStreamConverterTest {
         void unknownDirectionDoneReturnsNull() {
             assertThat(converter.convertStreamDone("openai", "openai")).isNull();
             assertThat(converter.convertStreamDone("anthropic", "anthropic")).isNull();
+        }
+
+        @Test
+        @DisplayName("Gemini 结束 → OpenAI：[DONE]")
+        void geminiDoneToOpenAI() {
+            StreamChunkResult result = converter.convertStreamDone("gemini", "openai");
+            assertThat(result).isNotNull();
+            assertThat(result.eventType()).isNull();
+            assertThat(result.data()).isEqualTo("[DONE]");
+        }
+
+        @Test
+        @DisplayName("Gemini 结束 → Anthropic：message_delta 事件（end_turn）")
+        void geminiDoneToAnthropic() {
+            StreamChunkResult result = converter.convertStreamDone("gemini", "anthropic");
+            assertThat(result).isNotNull();
+            assertThat(result.eventType()).isEqualTo("message_delta");
+            assertThat(result.data()).contains("\"stop_reason\":\"end_turn\"");
         }
     }
 }

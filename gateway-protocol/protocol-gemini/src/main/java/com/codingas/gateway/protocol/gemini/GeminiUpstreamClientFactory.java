@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.codingas.gateway.protocol.anthropic;
+package com.codingas.gateway.protocol.gemini;
 
 import com.codingas.gateway.protocol.ProtocolRequest;
 import com.codingas.gateway.protocol.transport.ErrorClassificationStrategy;
@@ -26,40 +26,40 @@ import okhttp3.OkHttpClient;
 import java.util.List;
 
 /**
- * Anthropic 上游客户端工厂（协议插件自包含：格式转换 + 传输调用）
+ * Gemini 上游客户端工厂（协议插件自包含：格式转换 + 传输调用）
  */
-public class AnthropicUpstreamClientFactory implements UpstreamClientFactory {
+public class GeminiUpstreamClientFactory implements UpstreamClientFactory {
 
     private final OkHttpClient httpClient;
     private final ObjectMapper objectMapper;
     private final ErrorClassificationStrategy classifier;
     private final SessionStartHook sessionStartHook;
 
-    public AnthropicUpstreamClientFactory(OkHttpClient httpClient, ObjectMapper objectMapper) {
+    public GeminiUpstreamClientFactory(OkHttpClient httpClient, ObjectMapper objectMapper) {
         this(httpClient, objectMapper, List.of());
     }
 
     /**
-     * 创建 Anthropic 上游客户端工厂
+     * 创建 Gemini 上游客户端工厂
      *
      * @param sessionStartHooks 出站会话开始钩子集合（Spring 收集全部 Bean），空列表时使用空实现
      */
-    public AnthropicUpstreamClientFactory(OkHttpClient httpClient, ObjectMapper objectMapper,
-                                          List<SessionStartHook> sessionStartHooks) {
+    public GeminiUpstreamClientFactory(OkHttpClient httpClient, ObjectMapper objectMapper,
+                                       List<SessionStartHook> sessionStartHooks) {
         this.httpClient = httpClient;
         this.objectMapper = objectMapper;
-        this.classifier = new AnthropicErrorClassifier();
+        this.classifier = new GeminiErrorClassifier();
         this.sessionStartHook = SessionStartHook.composite(sessionStartHooks);
     }
 
     @Override
     public String supportedProtocol() {
-        return "anthropic";
+        return "gemini";
     }
 
     @Override
     public UpstreamClient<? extends ProtocolRequest> create(String endpointUrl, String apiKey, int timeoutSeconds) {
-        return new AnthropicUpstreamClient(httpClient, endpointUrl, apiKey, timeoutSeconds, objectMapper, classifier,
+        return new GeminiUpstreamClient(httpClient, endpointUrl, apiKey, timeoutSeconds, objectMapper, classifier,
                 sessionStartHook);
     }
 }

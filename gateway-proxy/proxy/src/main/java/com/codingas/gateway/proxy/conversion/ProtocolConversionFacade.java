@@ -18,14 +18,12 @@ package com.codingas.gateway.proxy.conversion;
 import com.codingas.gateway.protocol.canonical.CanonicalChatRequest;
 import com.codingas.gateway.protocol.canonical.CanonicalChatResponse;
 import com.codingas.gateway.protocol.ProtocolAdapter;
-import com.codingas.gateway.protocol.raw.AnthropicMessagesRequest;
-import com.codingas.gateway.protocol.raw.AnthropicMessagesResponse;
-import com.codingas.gateway.protocol.raw.OpenAIChatRequest;
-import com.codingas.gateway.protocol.raw.OpenAIChatResponse;
 import com.codingas.gateway.protocol.ProtocolRequest;
 import com.codingas.gateway.protocol.ProtocolResponse;
 import com.codingas.gateway.protocol.StreamChunkResult;
 import com.codingas.gateway.proxy.conversion.ProtocolStreamConverter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -47,6 +45,8 @@ import java.util.stream.Collectors;
  */
 @Component
 public class ProtocolConversionFacade {
+
+    private static final Logger log = LoggerFactory.getLogger(ProtocolConversionFacade.class);
 
     /** 协议名 → Adapter 映射（如 "openai" → OpenAIProtocolAdapter） */
     private final Map<String, ProtocolAdapter<?>> adapters;
@@ -85,24 +85,29 @@ public class ProtocolConversionFacade {
     /**
      * 跨协议响应转换：源协议 ≠ 目标协议时 normalize→denormalize；否则原样返回。
      *
-     * <p>源协议由参数指定（上游响应协议），目标协议由响应自身 {@code getProtocol()} 标识，
-     * 从 {@link #adapters} 取对应 Adapter 做 normalize→denormalize。
-     * 未注册对应 Adapter 时原样返回。</p>
+     * <p>源协议由参数指定（上游响应来源协议），目标协议为入站协议，从 {@link #adapters}
+     * 取对应 Adapter 做 normalize→denormalize。任一协议未注册 Adapter，或响应类型与
+     * 源协议标识不匹配时原样返回。通用路由消除 N×N 两两硬编码——新增协议（如 gemini）
+     * 仅需注册 Adapter，本方法无需再改。</p>
      */
-    public ProtocolResponse convertResponse(ProtocolResponse response, String sourceProtocol) {
-        if (response instanceof AnthropicMessagesResponse anthropic && "anthropic".equals(sourceProtocol)) {
-            ProtocolAdapter<AnthropicMessagesResponse> src = adapterFor("anthropic");
-            ProtocolAdapter<OpenAIChatResponse> dst = adapterFor("openai");
-            CanonicalChatResponse canonical = src.normalizeResponse(anthropic);
-            return (OpenAIChatResponse) dst.denormalizeResponse(canonical);
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ProtocolResponse convertResponse(ProtocolResponse response, String sourceProtocol, String targetProtocol) {
+        if (response == null || sourceProtocol == null || targetProtocol == null || sourceProtocol.equals(targetProtocol)) {
+            return response;
         }
-        if (response instanceof OpenAIChatResponse openai && "openai".equals(sourceProtocol)) {
-            ProtocolAdapter<OpenAIChatResponse> src = adapterFor("openai");
-            ProtocolAdapter<AnthropicMessagesResponse> dst = adapterFor("anthropic");
-            CanonicalChatResponse canonical = src.normalizeResponse(openai);
-            return (AnthropicMessagesResponse) dst.denormalizeResponse(canonical);
+        ProtocolAdapter src = adapters.get(sourceProtocol);
+        ProtocolAdapter dst = adapters.get(targetProtocol);
+        if (src == null || dst == null) {
+            return response;
         }
-        return response;
+        try {
+            CanonicalChatResponse canonical = src.normalizeResponse(response);
+            return (ProtocolResponse) dst.denormalizeResponse(canonical);
+        } catch (ClassCastException e) {
+            // 响应类型与源协议标识不匹配（防御性兜底）：告警后原样返回，避免静默吞错掩盖 Adapter 内部 bug
+            log.warn("响应类型与源协议 {} 不匹配，跳过转换: {}", sourceProtocol, e.getMessage());
+            return response;
+        }
     }
 
     /** 流式 chunk 转换（委托 ProtocolStreamConverter，方向 from→to） */
@@ -113,15 +118,5 @@ public class ProtocolConversionFacade {
     /** 流式结束标记转换（委托 ProtocolStreamConverter） */
     public StreamChunkResult convertStreamDone(String fromProtocol, String toProtocol) {
         return streamConverter.convertStreamDone(fromProtocol, toProtocol);
-    }
-
-    /**
-     * 按协议标识获取 Adapter（泛型桥接，规避通配符捕获限制）。
-     *
-     * @param protocol 协议标识（如 "openai"）
-     */
-    @SuppressWarnings("unchecked")
-    private <T> ProtocolAdapter<T> adapterFor(String protocol) {
-        return (ProtocolAdapter<T>) adapters.get(protocol);
     }
 }

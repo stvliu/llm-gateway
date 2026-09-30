@@ -44,7 +44,7 @@ public class GeminiProtocolAdapter implements ProtocolAdapter<GeminiChatRequest>
     public CanonicalChatRequest normalizeRequest(GeminiChatRequest req) {
         List<CanonicalMessage> messages = new ArrayList<>();
         for (GeminiChatRequest.Message m : req.getMessages()) {
-            messages.add(CanonicalMessage.builder().role(m.role()).content(m.content()).build());
+            messages.add(CanonicalMessage.builder().role(toCanonicalRole(m.role())).content(m.content()).build());
         }
         return CanonicalChatRequest.builder()
                 .model(req.getModel())
@@ -66,10 +66,42 @@ public class GeminiProtocolAdapter implements ProtocolAdapter<GeminiChatRequest>
         out.setStream(c.isStream());
         if (c.getMessages() != null) {
             for (CanonicalMessage cm : c.getMessages()) {
-                out.addMessage(new GeminiChatRequest.Message(cm.getRole(), cm.getContent()));
+                out.addMessage(new GeminiChatRequest.Message(toGeminiRole(cm.getRole()), cm.getContent()));
             }
         }
         return out;
+    }
+
+    /**
+     * 规范角色 → Gemini 角色（出站方向）。
+     *
+     * <p>Gemini generateContent 仅接受 user/model/function 角色；OpenAI/Anthropic
+     * 入站的 assistant/tool 必须归一，否则多轮对话（含 assistant 历史）会被 Gemini
+     * 以 400 INVALID_ARGUMENT 拒绝。</p>
+     */
+    private String toGeminiRole(String role) {
+        if (role == null) {
+            return null;
+        }
+        return switch (role) {
+            case "assistant" -> "model";
+            case "tool" -> "function";
+            default -> role;
+        };
+    }
+
+    /**
+     * Gemini 角色 → 规范角色（入站方向，对称映射）。
+     */
+    private String toCanonicalRole(String role) {
+        if (role == null) {
+            return null;
+        }
+        return switch (role) {
+            case "model" -> "assistant";
+            case "function" -> "tool";
+            default -> role;
+        };
     }
 
     @Override
@@ -84,6 +116,7 @@ public class GeminiProtocolAdapter implements ProtocolAdapter<GeminiChatRequest>
                         .inputTokens(resp.inputTokens())
                         .outputTokens(resp.outputTokens())
                         .build())
+                .stopReason(toCanonicalStopReason(resp.finishReason()))
                 .build();
     }
 
@@ -99,6 +132,37 @@ public class GeminiProtocolAdapter implements ProtocolAdapter<GeminiChatRequest>
         }
         return new GeminiChatResponse(c.getId(), c.getModel(), text.toString(),
                 c.getUsage() == null ? null : c.getUsage().getInputTokens(),
-                c.getUsage() == null ? null : c.getUsage().getOutputTokens());
+                c.getUsage() == null ? null : c.getUsage().getOutputTokens(),
+                c.getStopReason() == null ? null : toGeminiFinishReason(c.getStopReason()));
+    }
+
+    /**
+     * Gemini finishReason → 规范 stopReason（end_turn/max_tokens/tool_use）
+     */
+    private String toCanonicalStopReason(String finishReason) {
+        if (finishReason == null) {
+            return null;
+        }
+        return switch (finishReason) {
+            case "STOP" -> "end_turn";
+            case "MAX_TOKENS" -> "max_tokens";
+            case "TOOL_CALLS" -> "tool_use";
+            default -> null;
+        };
+    }
+
+    /**
+     * 规范 stopReason → Gemini finishReason（反方向映射）
+     */
+    private String toGeminiFinishReason(String stopReason) {
+        if (stopReason == null) {
+            return null;
+        }
+        return switch (stopReason) {
+            case "end_turn" -> "STOP";
+            case "max_tokens" -> "MAX_TOKENS";
+            case "tool_use" -> "TOOL_CALLS";
+            default -> null;
+        };
     }
 }

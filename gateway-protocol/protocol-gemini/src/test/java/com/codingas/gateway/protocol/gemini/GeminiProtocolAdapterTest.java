@@ -104,9 +104,9 @@ class GeminiProtocolAdapterTest {
     }
 
     @Test
-    @DisplayName("normalizeResponse 应映射文本与 token 用量")
+    @DisplayName("normalizeResponse 应映射文本、token 用量与 stopReason")
     void normalizeResponse_mapsTextAndUsage() {
-        GeminiChatResponse resp = new GeminiChatResponse("r1", "gemini-1.5-pro", "你好", 10, 5);
+        GeminiChatResponse resp = new GeminiChatResponse("r1", "gemini-1.5-pro", "你好", 10, 5, "STOP");
 
         CanonicalChatResponse canonical = adapter.normalizeResponse(resp);
 
@@ -117,12 +117,14 @@ class GeminiProtocolAdapterTest {
         assertThat(canonical.getContent().get(0).getText()).isEqualTo("你好");
         assertThat(canonical.getUsage().getInputTokens()).isEqualTo(10);
         assertThat(canonical.getUsage().getOutputTokens()).isEqualTo(5);
+        // finishReason STOP → 规范 stopReason end_turn
+        assertThat(canonical.getStopReason()).isEqualTo("end_turn");
     }
 
     @Test
     @DisplayName("normalizeResponse 文本为空时返回空内容块")
     void normalizeResponse_nullText_returnsEmptyContent() {
-        GeminiChatResponse resp = new GeminiChatResponse("r1", "gemini-1.5-pro", null, null, null);
+        GeminiChatResponse resp = new GeminiChatResponse("r1", "gemini-1.5-pro", null, null, null, null);
 
         CanonicalChatResponse canonical = adapter.normalizeResponse(resp);
 

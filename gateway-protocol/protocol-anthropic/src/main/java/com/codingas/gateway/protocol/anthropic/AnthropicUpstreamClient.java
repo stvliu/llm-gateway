@@ -22,10 +22,14 @@ import com.codingas.gateway.protocol.raw.AnthropicMessagesResponse;
 import com.codingas.gateway.common.enums.ProviderErrorType;
 import com.codingas.gateway.protocol.transport.ConnectivityTestResult;
 import com.codingas.gateway.protocol.transport.ErrorClassificationStrategy;
+import com.codingas.gateway.protocol.transport.SessionStartContext;
+import com.codingas.gateway.protocol.transport.SessionStartHook;
 import com.codingas.gateway.protocol.transport.UpstreamException;
 import com.codingas.gateway.protocol.transport.UpstreamClient;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import okhttp3.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -39,6 +43,8 @@ import java.util.concurrent.TimeUnit;
  */
 public class AnthropicUpstreamClient implements UpstreamClient<AnthropicMessagesRequest> {
 
+    private static final Logger log = LoggerFactory.getLogger(AnthropicUpstreamClient.class);
+
     private static final String MESSAGES_PATH = "/v1/messages";
     private static final String ANTHROPIC_VERSION = "2023-06-01";
 
@@ -48,16 +54,47 @@ public class AnthropicUpstreamClient implements UpstreamClient<AnthropicMessages
     private final int timeoutSeconds;
     private final ObjectMapper objectMapper;
     private final ErrorClassificationStrategy classifier;
+    private final SessionStartHook sessionStartHook;
 
     public AnthropicUpstreamClient(OkHttpClient httpClient, String endpointUrl, String apiKey,
                                    int timeoutSeconds, ObjectMapper objectMapper,
                                    ErrorClassificationStrategy classifier) {
+        this(httpClient, endpointUrl, apiKey, timeoutSeconds, objectMapper, classifier, null);
+    }
+
+    /**
+     * 创建 Anthropic 上游客户端
+     *
+     * @param sessionStartHook 出站会话开始钩子（请求发出前触发）；null 时使用空实现
+     */
+    public AnthropicUpstreamClient(OkHttpClient httpClient, String endpointUrl, String apiKey,
+                                   int timeoutSeconds, ObjectMapper objectMapper,
+                                   ErrorClassificationStrategy classifier, SessionStartHook sessionStartHook) {
         this.httpClient = httpClient;
         this.endpointUrl = endpointUrl;
         this.apiKey = apiKey;
         this.timeoutSeconds = timeoutSeconds;
         this.objectMapper = objectMapper;
         this.classifier = classifier;
+        this.sessionStartHook = sessionStartHook != null ? sessionStartHook : SessionStartHook.NOOP;
+    }
+
+    /**
+     * 触发会话开始钩子（上游请求发出前）
+     *
+     * @param request  已调谐的出站请求
+     * @param json     已序列化请求体
+     * @param stream   是否流式调用
+     */
+    private void fireSessionStart(AnthropicMessagesRequest request, String json, boolean stream) {
+        try {
+            sessionStartHook.onSessionStart(new SessionStartContext(
+                    "anthropic", request.getModel(), endpointUrl, json,
+                    json.getBytes(StandardCharsets.UTF_8).length, stream));
+        } catch (RuntimeException e) {
+            // hook 为审计/追踪类旁路：异常不阻断上游调用（fail-open），记录告警避免静默
+            log.warn("SessionStart hook 执行失败（不阻断请求）: {}", e.getMessage());
+        }
     }
 
     @Override
@@ -76,6 +113,9 @@ public class AnthropicUpstreamClient implements UpstreamClient<AnthropicMessages
                     .addHeader("Content-Type", "application/json")
                     .post(RequestBody.create(json, MediaType.parse("application/json")))
                     .build();
+
+            // 会话开始钩子：请求发出前触发（初始化审计/用量/追踪上下文）
+            fireSessionStart(request, json, false);
 
             try (Response response = timedClient.newCall(httpRequest).execute()) {
                 String responseBody = response.body() != null ? response.body().string() : "";
@@ -111,6 +151,9 @@ public class AnthropicUpstreamClient implements UpstreamClient<AnthropicMessages
                     .addHeader("Content-Type", "application/json")
                     .post(RequestBody.create(json, MediaType.parse("application/json")))
                     .build();
+
+            // 会话开始钩子：流式请求发出前触发
+            fireSessionStart(request, json, true);
 
             timedClient.newCall(httpRequest).enqueue(new Callback() {
                 @Override
