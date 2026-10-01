@@ -19,6 +19,8 @@ import com.codingas.gateway.iam.apikey.UserApiKey;
 import com.codingas.gateway.iam.apikey.UserApiKeyRepository;
 import com.codingas.gateway.iam.encryption.ApiKeyEncryptor;
 import com.codingas.gateway.iam.auth.Identity;
+import com.codingas.gateway.iam.user.User;
+import com.codingas.gateway.iam.user.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -46,11 +48,14 @@ class AuthenticationServiceTest {
     @Mock
     private ApiKeyEncryptor encryptionService;
 
+    @Mock
+    private UserRepository userRepository;
+
     private AuthenticationService service;
 
     @BeforeEach
     void setUp() {
-        service = new AuthenticationService(userApiKeyRepository, encryptionService);
+        service = new AuthenticationService(userApiKeyRepository, encryptionService, userRepository);
     }
 
     @Nested
@@ -63,14 +68,49 @@ class AuthenticationServiceTest {
             UserApiKey apiKey = createSampleApiKey();
             when(userApiKeyRepository.findByKeyPrefix("sk-abc1x")).thenReturn(Optional.of(apiKey));
             when(encryptionService.hashKey("sk-abc1xxxxx")).thenReturn("hash123");
+            // 身份携带 users.role 真实角色（默认 USER）
+            User user = new User();
+            user.setRole("USER");
+            when(userRepository.findById(50L)).thenReturn(Optional.of(user));
 
             Identity result = service.authenticateUser("sk-abc1xxxxx");
 
             assertThat(result.userId()).isEqualTo(50L);
             assertThat(result.credentialId()).isEqualTo(100L);
-            assertThat(result.role()).isEqualTo("user");
+            assertThat(result.role()).isEqualTo("USER");
             // 权限锚点 applicationId 必须从 UserApiKey 透传到 Identity
             assertThat(result.applicationId()).isEqualTo(7L);
+        }
+
+        @Test
+        @DisplayName("认证成功：身份携带真实用户角色（users.role）")
+        void authenticate_validKey_returnsRealRole() {
+            UserApiKey apiKey = createSampleApiKey();
+            when(userApiKeyRepository.findByKeyPrefix("sk-abc1x")).thenReturn(Optional.of(apiKey));
+            when(encryptionService.hashKey("sk-abc1xxxxx")).thenReturn("hash123");
+            User user = new User();
+            user.setRole("ADMIN");
+            when(userRepository.findById(50L)).thenReturn(Optional.of(user));
+
+            Identity identity = service.authenticateUser("sk-abc1xxxxx");
+
+            assertThat(identity.role()).isEqualTo("ADMIN");
+            assertThat(identity.userId()).isEqualTo(50L);
+        }
+
+        @Test
+        @DisplayName("用户已删除：角色为 null（数据面不消费 role，无影响）")
+        void authenticate_userDeleted_roleIsNull() {
+            UserApiKey apiKey = createSampleApiKey();
+            when(userApiKeyRepository.findByKeyPrefix("sk-abc1x")).thenReturn(Optional.of(apiKey));
+            when(encryptionService.hashKey("sk-abc1xxxxx")).thenReturn("hash123");
+            // findById 返回 empty：用户已删除，角色为 null
+            when(userRepository.findById(50L)).thenReturn(Optional.empty());
+
+            Identity identity = service.authenticateUser("sk-abc1xxxxx");
+
+            assertThat(identity.role()).isNull();
+            assertThat(identity.userId()).isEqualTo(50L);
         }
 
         @Test

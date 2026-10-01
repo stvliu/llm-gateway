@@ -19,6 +19,8 @@ import com.codingas.gateway.iam.apikey.UserApiKey;
 import com.codingas.gateway.iam.apikey.UserApiKeyRepository;
 import com.codingas.gateway.iam.encryption.ApiKeyEncryptor;
 import com.codingas.gateway.iam.auth.Identity;
+import com.codingas.gateway.iam.user.User;
+import com.codingas.gateway.iam.user.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -38,11 +40,14 @@ public class AuthenticationService {
 
     private final UserApiKeyRepository userApiKeyRepository;
     private final ApiKeyEncryptor encryptionService;
+    private final UserRepository userRepository;
 
     public AuthenticationService(UserApiKeyRepository userApiKeyRepository,
-                                       ApiKeyEncryptor encryptionService) {
+                                       ApiKeyEncryptor encryptionService,
+                                       UserRepository userRepository) {
         this.userApiKeyRepository = userApiKeyRepository;
         this.encryptionService = encryptionService;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -79,9 +84,15 @@ public class AuthenticationService {
             throw new AuthenticationFailedException("API Key 已禁用");
         }
 
+        // 真实用户角色（统一 RBAC 语义：主体=用户，users.role 为控制面角色域事实源）；
+        // 用户已删除时角色为 null（数据面透传链无 role 消费者，无行为影响）
+        String role = userRepository.findById(userApiKey.getUserId())
+                .map(User::getRole)
+                .orElse(null);
+
         return Identity.of(
                 userApiKey.getUserId(),
-                "user",
+                role,
                 userApiKey.getId(),
                 userApiKey.getApplicationId()
         );
