@@ -22,7 +22,12 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 /**
- * 应用根实体实体
+ * 应用（数据面角色实体）
+ *
+ * <p>在统一 RBAC 语义下，应用即「APPLICATION 类型角色」：无 owner 的全局实体，
+ * 可被多个用户（经各自 API Key 绑定）共享，其授权范围由
+ * {@link ApplicationChannel}（角色-渠道权限）决定。数据面授权判定
+ * 以 applicationId（角色 ID）为锚点，D9 约束：无用户角色特权旁路。</p>
  *
  * <p>应用根实体：权限+行为双聚合，承载 Key 归属、渠道可见性、应用级超时，
  * 预留配额/看板字段。</p>

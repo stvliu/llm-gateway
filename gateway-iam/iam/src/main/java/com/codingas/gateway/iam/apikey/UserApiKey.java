@@ -21,9 +21,14 @@ import lombok.Setter;
 import java.time.Instant;
 
 /**
- * 用户 API Key 实体
+ * 用户 API Key（主体-角色绑定凭证）
+ *
+ * <p>统一 RBAC 语义下：userId 为认证主体（用户），applicationId 为数据面角色
+ * （APPLICATION 类型）——一个 Key 绑定「主体 + 角色」，认证后 {@code Identity}
+ * 同时携带两者。凭证验证为 RBAC 前置（主体解析），不属于 RBAC 构件。</p>
+ *
  * <p>
- * 一个 Key 归属一个用户，并挂载到具体应用（applicationId）作为权限锚点——
+ * 一个 Key 归属一个用户，并挂载到具体应用（applicationId）作为数据面角色锚点——
  * 通过应用-渠道授权关系（ApplicationChannel）继承渠道访问权限。
  * keyHash 用于认证验证，keyPlain 用于创建时传入和详情展示（由基础设施层加解密）。
  * </p>

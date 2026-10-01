@@ -100,12 +100,14 @@ public class AuthorizationService {
     }
 
     /**
-     * 数据面授权：应用可见渠道集合
+     * 数据面授权：应用角色可见渠道集合
      *
-     * <p>D9 语义保留：无角色特权旁路；applicationId 为 null（无权限锚点）返回空集。</p>
+     * <p>统一 RBAC 语义下，applicationId 即「APPLICATION 类型角色」ID——本方法
+     * 按角色解析可见渠道权限（委托 {@link ApplicationChannelRepository}）。
+     * D9 语义保留：无用户角色特权旁路；applicationId 为 null（无角色）返回空集。</p>
      *
-     * @param applicationId 应用 ID（数据面权限锚点）
-     * @return 应用可见的渠道 ID 集合
+     * @param applicationId 应用 ID（数据面角色锚点）
+     * @return 该角色（应用）可见的渠道 ID 集合
      */
     public Set<Long> permittedChannelIds(Long applicationId) {
         if (applicationId == null) {

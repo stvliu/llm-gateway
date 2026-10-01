@@ -28,14 +28,15 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * 权限路由器 — 按应用-渠道授权过滤模型实例
+ * 权限路由器 — 按应用-渠道授权（ApplicationChannel）过滤模型实例
  *
- * <p>数据面权限锚点为 {@link RoutingRequest#getApplicationId()}：
- * 经统一授权门面 {@link AuthorizationService#permittedChannelIds(Long)} 查询应用可见渠道集合，
+ * <p>统一 RBAC 语义下，applicationId 即「APPLICATION 类型角色」ID；
+ * 数据面权限锚点为 {@link RoutingRequest#getApplicationId()}：
+ * 经统一授权门面 {@link AuthorizationService#permittedChannelIds(Long)} 按角色解析可见渠道集合，
  * 仅保留该集合内的实例，再过滤出活跃（{@code state.isRoutable()}）渠道。</p>
  *
- * <p>D9 约束：ADMIN 退管理面，数据面权限路由无特权旁路 —— 任何角色都按应用授权过滤，
- * 不再保留 ADMIN 跳过分支。{@code applicationId} 为 null（无权限锚点）时直接返回空集。</p>
+ * <p>D9 约束：无用户角色特权旁路 —— 任何角色都按应用授权过滤，
+ * 不再保留 ADMIN 跳过分支。{@code applicationId} 为 null（无角色）时直接返回空集。</p>
  */
 @Component
 @Order(100)
