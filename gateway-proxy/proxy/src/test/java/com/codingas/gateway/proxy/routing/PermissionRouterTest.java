@@ -15,15 +15,15 @@
  */
 package com.codingas.gateway.proxy.routing;
 
-import com.codingas.gateway.iam.application.ApplicationChannelRepository;
+import com.codingas.gateway.iam.auth.AuthorizationService;
 import com.codingas.gateway.provider.channel.Channel;
-import com.codingas.gateway.provider.model.ModelInstance;
-import com.codingas.gateway.provider.channel.ChannelState;
 import com.codingas.gateway.provider.channel.ChannelRepository;
+import com.codingas.gateway.provider.channel.ChannelState;
+import com.codingas.gateway.provider.model.ModelInstance;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -31,122 +31,113 @@ import java.util.List;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 /**
- * PermissionRouter 单元测试
+ * {@link PermissionRouter} 权限路由测试（授权查询委托统一门面）
  *
- * <p>验证数据面权限路由按应用-渠道授权（ApplicationChannel）过滤，且 ADMIN 角色不再跳过过滤
- * （D9：ADMIN 退管理面，数据面无特权旁路）。</p>
+ * <p>验证数据面权限路由经 {@link AuthorizationService#permittedChannelIds(Long)}
+ * 获取应用可见渠道，且 ADMIN 角色不再跳过过滤（D9：ADMIN 退管理面，数据面无特权旁路）。</p>
  */
 @ExtendWith(MockitoExtension.class)
-@DisplayName("PermissionRouter 单元测试")
+@DisplayName("PermissionRouter（数据面权限路由）测试")
 class PermissionRouterTest {
 
     @Mock
     private ChannelRepository channelRepository;
 
     @Mock
-    private ApplicationChannelRepository applicationChannelRepository;
+    private AuthorizationService authorizationService;
 
-    @InjectMocks
     private PermissionRouter router;
 
-    @Test
-    @DisplayName("应用授权渠道过滤：仅保留 ApplicationChannel 授权集与活跃渠道交集内的实例")
-    void normalApplication_filtersByApplicationChannel() {
-        // applicationId=1 授权渠道 {100, 200}，候选实例分布在 100 与 300 → 仅 100 保留
-        ModelInstance mi1 = new ModelInstance();
-        mi1.setId(1L);
-        mi1.setChannelId(100L);
-        ModelInstance mi3 = new ModelInstance();
-        mi3.setId(3L);
-        mi3.setChannelId(300L);
+    @BeforeEach
+    void setUp() {
+        router = new PermissionRouter(channelRepository, authorizationService);
+    }
 
-        Channel ch1 = new Channel();
-        ch1.setId(100L);
-        ch1.setState(ChannelState.ACTIVE);
+    private ModelInstance instance(long id, long channelId) {
+        ModelInstance mi = new ModelInstance();
+        mi.setId(id);
+        mi.setChannelId(channelId);
+        return mi;
+    }
 
-        when(applicationChannelRepository.findChannelIdsByApplicationId(1L)).thenReturn(Set.of(100L, 200L));
-        when(channelRepository.findByIds(List.of(100L))).thenReturn(List.of(ch1));
+    private Channel activeChannel(long id) {
+        Channel ch = new Channel();
+        ch.setId(id);
+        ch.setState(ChannelState.ACTIVE);
+        return ch;
+    }
 
-        RoutingRequest request = new RoutingRequest(1L, 1L, 1L, "USER", RoutingStrategy.WEIGHTED);
-        List<ModelInstance> result = router.filter(List.of(mi1, mi3), request);
-
-        assertThat(result).hasSize(1);
-        assertThat(result.getFirst().getId()).isEqualTo(1L);
+    private RoutingRequest request(Long applicationId) {
+        return new RoutingRequest(1L, applicationId, 1L, "USER", RoutingStrategy.WEIGHTED);
     }
 
     @Test
-    @DisplayName("applicationId 为 null 时无权限锚点，返回空集")
-    void noApplication_returnsEmpty() {
-        ModelInstance mi1 = new ModelInstance();
-        mi1.setId(1L);
-        mi1.setChannelId(100L);
+    @DisplayName("应用可见渠道内的实例通过过滤")
+    void filter_permittedChannelInstances_passed() {
+        ModelInstance mi1 = instance(1L, 10L);
+        ModelInstance mi2 = instance(2L, 20L);
+        when(authorizationService.permittedChannelIds(100L)).thenReturn(Set.of(10L, 20L));
+        when(channelRepository.findByIds(List.of(10L, 20L)))
+                .thenReturn(List.of(activeChannel(10L), activeChannel(20L)));
 
-        RoutingRequest request = new RoutingRequest(1L, null, 1L, "USER", RoutingStrategy.WEIGHTED);
-        List<ModelInstance> result = router.filter(List.of(mi1), request);
+        List<ModelInstance> result = router.filter(List.of(mi1, mi2), request(100L));
 
-        assertThat(result).isEmpty();
-        // 无权限锚点时不应触碰应用-渠道授权网关
-        verify(applicationChannelRepository, org.mockito.Mockito.never())
-                .findChannelIdsByApplicationId(org.mockito.ArgumentMatchers.any());
+        assertThat(result).containsExactly(mi1, mi2);
     }
 
     @Test
-    @DisplayName("ADMIN 角色不跳过过滤：仍按 ApplicationChannel 授权过滤（D9 数据面无特权旁路）")
+    @DisplayName("非授权渠道实例被过滤")
+    void filter_unauthorizedChannelInstance_filtered() {
+        ModelInstance mi1 = instance(1L, 10L);
+        ModelInstance mi2 = instance(2L, 30L);
+        when(authorizationService.permittedChannelIds(100L)).thenReturn(Set.of(10L));
+        when(channelRepository.findByIds(List.of(10L))).thenReturn(List.of(activeChannel(10L)));
+
+        List<ModelInstance> result = router.filter(List.of(mi1, mi2), request(100L));
+
+        assertThat(result).containsExactly(mi1);
+    }
+
+    @Test
+    @DisplayName("无权限锚点（applicationId null）返回空集，不查门面")
+    void filter_nullApplicationId_empty() {
+        assertThat(router.filter(List.of(instance(1L, 10L)), request(null))).isEmpty();
+        verifyNoInteractions(authorizationService);
+    }
+
+    @Test
+    @DisplayName("非活跃渠道的实例被过滤")
+    void filter_inactiveChannelInstances_filtered() {
+        ModelInstance mi1 = instance(1L, 10L);
+        when(authorizationService.permittedChannelIds(100L)).thenReturn(Set.of(10L));
+        Channel inactive = new Channel();
+        inactive.setId(10L);
+        inactive.setState(ChannelState.SUSPENDED);
+        when(channelRepository.findByIds(List.of(10L))).thenReturn(List.of(inactive));
+
+        assertThat(router.filter(List.of(mi1), request(100L))).isEmpty();
+    }
+
+    @Test
+    @DisplayName("ADMIN 角色不跳过过滤：仍按统一门面授权过滤（D9 数据面无特权旁路）")
     void admin_doesNotSkip() {
-        // role=ADMIN 且 applicationId=1：仍走 ApplicationChannel 过滤，授权集 {100} → 仅 100 保留
-        ModelInstance mi1 = new ModelInstance();
-        mi1.setId(1L);
-        mi1.setChannelId(100L);
-        ModelInstance mi2 = new ModelInstance();
-        mi2.setId(2L);
-        mi2.setChannelId(200L);
+        // role=ADMIN 且 applicationId=1：仍走统一门面授权过滤，授权集 {10} → 仅 10 保留
+        ModelInstance mi1 = instance(1L, 10L);
+        ModelInstance mi2 = instance(2L, 20L);
 
-        Channel ch1 = new Channel();
-        ch1.setId(100L);
-        ch1.setState(ChannelState.ACTIVE);
-
-        when(applicationChannelRepository.findChannelIdsByApplicationId(1L)).thenReturn(Set.of(100L));
-        when(channelRepository.findByIds(List.of(100L))).thenReturn(List.of(ch1));
+        when(authorizationService.permittedChannelIds(1L)).thenReturn(Set.of(10L));
+        when(channelRepository.findByIds(List.of(10L))).thenReturn(List.of(activeChannel(10L)));
 
         RoutingRequest request = new RoutingRequest(1L, 1L, 1L, "ADMIN", RoutingStrategy.WEIGHTED);
         List<ModelInstance> result = router.filter(List.of(mi1, mi2), request);
 
         assertThat(result).hasSize(1);
         assertThat(result.getFirst().getId()).isEqualTo(1L);
-        // 关键断言：ADMIN 角色仍调用应用-渠道授权网关（无旁路）
-        verify(applicationChannelRepository).findChannelIdsByApplicationId(1L);
-    }
-
-    @Test
-    @DisplayName("非活跃渠道实例被过滤掉")
-    void inactiveChannel_filtered() {
-        ModelInstance mi1 = new ModelInstance();
-        mi1.setId(1L);
-        mi1.setChannelId(100L);
-        ModelInstance mi2 = new ModelInstance();
-        mi2.setId(2L);
-        mi2.setChannelId(200L);
-
-        Channel ch1 = new Channel();
-        ch1.setId(100L);
-        ch1.setState(ChannelState.ACTIVE);
-        Channel ch2 = new Channel();
-        ch2.setId(200L);
-        ch2.setState(ChannelState.SUSPENDED);
-
-        when(applicationChannelRepository.findChannelIdsByApplicationId(1L)).thenReturn(Set.of(100L, 200L));
-        when(channelRepository.findByIds(List.of(100L, 200L))).thenReturn(List.of(ch1, ch2));
-
-        RoutingRequest request = new RoutingRequest(1L, 1L, 1L, "USER", RoutingStrategy.WEIGHTED);
-        List<ModelInstance> result = router.filter(List.of(mi1, mi2), request);
-
-        // ch2 非 routable，mi2 被过滤
-        assertThat(result).hasSize(1);
-        assertThat(result.getFirst().getId()).isEqualTo(1L);
+        // 关键断言：ADMIN 角色仍调用统一授权门面（无旁路）
+        verify(authorizationService).permittedChannelIds(1L);
     }
 
     @Test

@@ -15,7 +15,7 @@
  */
 package com.codingas.gateway.proxy.routing;
 
-import com.codingas.gateway.iam.application.ApplicationChannelRepository;
+import com.codingas.gateway.iam.auth.AuthorizationService;
 import com.codingas.gateway.provider.channel.Channel;
 import com.codingas.gateway.provider.model.ModelInstance;
 import com.codingas.gateway.provider.channel.ChannelRepository;
@@ -28,10 +28,10 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * 权限路由器 — 按应用-渠道授权（ApplicationChannel）过滤模型实例
+ * 权限路由器 — 按应用-渠道授权过滤模型实例
  *
  * <p>数据面权限锚点为 {@link RoutingRequest#getApplicationId()}：
- * 通过 {@link ApplicationChannelRepository#findChannelIdsByApplicationId(Long)} 查询应用可见的渠道集合，
+ * 经统一授权门面 {@link AuthorizationService#permittedChannelIds(Long)} 查询应用可见渠道集合，
  * 仅保留该集合内的实例，再过滤出活跃（{@code state.isRoutable()}）渠道。</p>
  *
  * <p>D9 约束：ADMIN 退管理面，数据面权限路由无特权旁路 —— 任何角色都按应用授权过滤，
@@ -43,11 +43,11 @@ import java.util.stream.Collectors;
 public class PermissionRouter implements Router {
 
     private final ChannelRepository channelRepository;
-    private final ApplicationChannelRepository applicationChannelRepository;
+    private final AuthorizationService authorizationService;
 
     @Override
     public List<ModelInstance> filter(List<ModelInstance> instances, RoutingRequest request) {
-        // 获取应用可见的渠道 ID 集合（权限锚点）
+        // 获取应用可见的渠道 ID 集合（统一授权门面：数据面授权入口）
         Set<Long> permittedChannelIds = getPermittedChannelIds(request);
 
         if (permittedChannelIds.isEmpty()) {
@@ -79,10 +79,10 @@ public class PermissionRouter implements Router {
     public boolean isForce() { return true; }
 
     /**
-     * 计算应用可见的渠道 ID 集合
+     * 计算应用可见的渠道 ID 集合（经统一授权门面）
      *
-     * <p>无权限锚点（applicationId 为 null）时返回空集；
-     * 否则查询应用-渠道授权关联。ADMIN 角色不再跳过此过滤。</p>
+     * <p>无权限锚点（applicationId 为 null）时直接返回空集，不查询门面；
+     * ADMIN 角色不跳过此过滤。</p>
      *
      * @param request 路由请求上下文
      * @return 应用可见的渠道 ID 集合
@@ -90,9 +90,9 @@ public class PermissionRouter implements Router {
     private Set<Long> getPermittedChannelIds(RoutingRequest request) {
         Long applicationId = request.getApplicationId();
         if (applicationId == null) {
-            // 无权限锚点：不允许访问任何渠道
+            // 无权限锚点：不允许访问任何渠道，不查询门面
             return Set.of();
         }
-        return applicationChannelRepository.findChannelIdsByApplicationId(applicationId);
+        return authorizationService.permittedChannelIds(applicationId);
     }
 }
