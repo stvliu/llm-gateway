@@ -15,7 +15,6 @@
  */
 package com.codingas.gateway.web.api;
 
-import cn.dev33.satoken.stp.StpUtil;
 import com.codingas.gateway.iam.auth.Identity;
 import com.codingas.gateway.iam.user.UserService;
 import com.codingas.gateway.web.api.dto.ChangePasswordRequest;

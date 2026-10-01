@@ -47,7 +47,7 @@ public class PermissionInterceptor extends AbstractGatewayInterceptor {
 
     /** 管理 API 路径前缀（需授权校验） */
     private static final String MANAGED_PREFIX = "/api/v1/";
-    /** API Key 认证路径前缀（网关代理端点，由 ApiKeyAuthInterceptor 处理） */
+    /** API Key 认证路径前缀（网关代理端点，由统一认证拦截器 GatewayAuthenticatorInterceptor 处理） */
     private static final String API_KEY_PREFIX = "/v1/";
 
     /** 公开路径（无需登录）：登录接口 */
@@ -104,7 +104,7 @@ public class PermissionInterceptor extends AbstractGatewayInterceptor {
 
         String uri = request.getRequestURI();
 
-        // API Key 网关路径（/v1/...），由 ApiKeyAuthInterceptor 处理
+        // API Key 网关路径（/v1/...），由统一认证拦截器 GatewayAuthenticatorInterceptor 处理
         if (uri.startsWith(API_KEY_PREFIX)) {
             return true;
         }
