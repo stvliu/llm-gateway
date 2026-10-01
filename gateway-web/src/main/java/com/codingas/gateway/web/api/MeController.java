@@ -15,11 +15,12 @@
  */
 package com.codingas.gateway.web.api;
 
-import cn.dev33.satoken.stp.StpUtil;
 import com.codingas.gateway.iam.apikey.UserApiKeyService;
+import com.codingas.gateway.iam.auth.Identity;
 import com.codingas.gateway.web.api.dto.UserApiKeyResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -41,8 +42,7 @@ public class MeController {
      * 查询当前用户的所有 API Key
      */
     @GetMapping("/api-keys")
-    public List<UserApiKeyResponse> listMyApiKeys() {
-        Long userId = StpUtil.getLoginIdAsLong();
-        return UserApiKeyResponse.from(userApiKeyService.findByUserId(userId));
+    public List<UserApiKeyResponse> listMyApiKeys(@RequestAttribute("identity") Identity identity) {
+        return UserApiKeyResponse.from(userApiKeyService.findByUserId(identity.userId()));
     }
 }

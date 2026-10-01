@@ -17,6 +17,7 @@ package com.codingas.gateway.web.interceptor;
 
 import com.codingas.gateway.common.event.AuditEvent;
 import com.codingas.gateway.common.event.BizEventPublisher;
+import com.codingas.gateway.iam.auth.Identity;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.DisplayName;
@@ -44,6 +45,12 @@ class AuditLogInterceptorTest {
     @Mock
     private BizEventPublisher eventPublisher;
 
+    @Mock
+    private HttpServletRequest request;
+
+    @Mock
+    private HttpServletResponse response;
+
     @InjectMocks
     private AuditLogInterceptor interceptor;
 
@@ -52,7 +59,9 @@ class AuditLogInterceptorTest {
         // lenient：读操作/非管理路径/仅 preHandle 场景不会读取全部属性，避免 UnnecessaryStubbing
         lenient().when(req.getRequestURI()).thenReturn(uri);
         lenient().when(req.getMethod()).thenReturn(method);
-        lenient().when(req.getAttribute("userId")).thenReturn(userId);
+        // 统一身份 Identity 桩：userId 为空（未认证）时桩返回 null
+        lenient().when(req.getAttribute("identity")).thenReturn(
+                userId != null ? Identity.of(userId, "ADMIN", null, null) : null);
         lenient().when(req.getHeader("X-Forwarded-For")).thenReturn(null);
         lenient().when(req.getHeader("X-Real-IP")).thenReturn(null);
         lenient().when(req.getRemoteAddr()).thenReturn("127.0.0.1");
@@ -115,7 +124,7 @@ class AuditLogInterceptorTest {
     @Test
     @DisplayName("未认证主体（无 userId，如登录请求）userId 归 0 发布")
     void afterCompletion_withoutUserId_publishesWithZero() {
-        // given：登录请求，TokenAuth 未注入 userId
+        // given：登录请求，认证拦截器未注入身份
         HttpServletRequest req = request("POST", "/api/v1/auth/login", null);
 
         // when：登录失败 401
@@ -128,6 +137,22 @@ class AuditLogInterceptorTest {
         assertThat(event.userId()).isZero();
         assertThat(event.action()).isEqualTo("POST /api/v1/auth/login");
         assertThat(event.responseStatus()).isEqualTo(401);
+    }
+
+    @Test
+    @DisplayName("未认证主体（identity 缺失）以 0 记录操作人")
+    void missingIdentity_recordsZeroUserId() throws Exception {
+        when(request.getRequestURI()).thenReturn("/api/v1/channels");
+        when(request.getMethod()).thenReturn("POST");
+        when(request.getAttribute("identity")).thenReturn(null);
+        when(request.getRemoteAddr()).thenReturn("127.0.0.1");
+        when(response.getStatus()).thenReturn(200);
+
+        interceptor.afterCompletion(request, response, null, null);
+
+        ArgumentCaptor<AuditEvent> captor = ArgumentCaptor.forClass(AuditEvent.class);
+        verify(eventPublisher).publish(captor.capture());
+        assertThat(captor.getValue().userId()).isZero();
     }
 
     @Test

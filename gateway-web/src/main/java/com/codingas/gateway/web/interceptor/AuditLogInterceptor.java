@@ -17,6 +17,7 @@ package com.codingas.gateway.web.interceptor;
 
 import com.codingas.gateway.common.event.AuditEvent;
 import com.codingas.gateway.common.event.BizEventPublisher;
+import com.codingas.gateway.iam.auth.Identity;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -35,8 +36,8 @@ import java.util.Set;
  * {@link AuditEvent}，由 audit 域监听器落库。</p>
  *
  * <p>审计范围：{@code /api/v1/**} 的 POST/PUT/PATCH/DELETE。
- * 操作人取 {@link TokenAuthInterceptor} 注入的 {@code userId} request attribute；
- * 未认证主体（如登录请求，userId 为空）以 0 记录，规避 audit_logs.user_id NOT NULL 约束。
+ * 操作人取统一认证拦截器注入的 {@code identity} request attribute；
+ * 未认证主体（如登录请求，identity 缺失）以 0 记录，规避 audit_logs.user_id NOT NULL 约束。
  * 登录成功/失败随响应状态自动覆盖（login 为公开路径，必然走到 afterCompletion）。
  * 审计发布失败仅记录日志，不影响主流程。</p>
  */
@@ -69,9 +70,11 @@ public class AuditLogInterceptor implements HandlerInterceptor {
                 return;
             }
 
-            Long userId = (Long) request.getAttribute("userId");
+            // 操作人取统一身份 Identity（GatewayAuthenticatorInterceptor 注入）；
+            // 未认证主体（如登录请求）以 0 记录，规避 audit_logs.user_id NOT NULL 约束
+            Identity identity = (Identity) request.getAttribute("identity");
             AuditEvent event = AuditEvent.builder()
-                    .userId(userId != null ? userId : 0L)
+                    .userId(identity != null && identity.userId() != null ? identity.userId() : 0L)
                     .action(method + " " + uri)
                     .resource(uri)
                     .clientIp(getClientIp(request))

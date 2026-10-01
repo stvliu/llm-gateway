@@ -16,6 +16,7 @@
 package com.codingas.gateway.web.api;
 
 import cn.dev33.satoken.stp.StpUtil;
+import com.codingas.gateway.iam.auth.Identity;
 import com.codingas.gateway.iam.user.UserService;
 import com.codingas.gateway.web.api.dto.ChangePasswordRequest;
 import com.codingas.gateway.web.api.dto.LoginRequest;
@@ -57,17 +58,16 @@ public class AuthController {
      * 获取当前用户信息
      */
     @GetMapping("/me")
-    public UserResponse getCurrentUser() {
-        Long userId = StpUtil.getLoginIdAsLong();
-        return UserResponse.from(userService.getById(userId));
+    public UserResponse getCurrentUser(@RequestAttribute("identity") Identity identity) {
+        return UserResponse.from(userService.getById(identity.userId()));
     }
 
     /**
      * 修改密码
      */
     @PatchMapping("/me/password")
-    public void updatePassword(@Valid @RequestBody ChangePasswordRequest request) {
-        Long userId = StpUtil.getLoginIdAsLong();
-        userService.changePassword(userId, request.currentPassword(), request.newPassword());
+    public void updatePassword(@RequestAttribute("identity") Identity identity,
+                               @Valid @RequestBody ChangePasswordRequest request) {
+        userService.changePassword(identity.userId(), request.currentPassword(), request.newPassword());
     }
 }
