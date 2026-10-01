@@ -1469,7 +1469,7 @@ anthropic-version: 2023-06-01
 | `users` | 主体 | 用户；`role` 字段为控制面角色域（USER/ADMIN，单一事实源 `users.role`） |
 | `user_api_keys` | 主体-角色绑定凭证 | `user_id`=主体（用户）、`application_id`=数据面角色；凭证验证为 RBAC 前置（主体解析） |
 | `applications` | 数据面角色（APPLICATION 类型） | 无 owner 的全局实体，多用户可共享；业务属性（timeout/开通等）随实体保留 |
-| `application_channel` | 角色-渠道权限 | action 恒为 route（路由调用），`priority` 为路由转移顺序 |
+| `application_channel` | 角色-渠道权限 | action 恒为 route（路由调用，语义常量而非存储字段，实体无 action 物理列），`priority` 为路由转移顺序 |
 | `channels` / `model_instances` | 资源 | 数据面权限对象 |
 
 控制面角色域（`users.role`）与数据面角色域（应用即角色）并存，D9 约束：数据面无用户角色特权旁路。

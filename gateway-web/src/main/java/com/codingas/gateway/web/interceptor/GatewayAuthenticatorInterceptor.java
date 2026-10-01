@@ -67,14 +67,13 @@ public class GatewayAuthenticatorInterceptor extends AbstractGatewayInterceptor 
 
     private final AuthenticationService authenticationService;
     private final SessionAuthenticationService sessionAuthenticationService;
-    private final AuthorizationService authorizationService;
 
     public GatewayAuthenticatorInterceptor(AuthenticationService authenticationService,
                                            SessionAuthenticationService sessionAuthenticationService,
                                            AuthorizationService authorizationService) {
         this.authenticationService = authenticationService;
         this.sessionAuthenticationService = sessionAuthenticationService;
-        this.authorizationService = authorizationService;
+        // 授权服务仅用于构造期派生 publicPaths 快照（单一事实源），不保留实例引用
         this.publicPaths = Set.copyOf(authorizationService.publicPathPatterns());
     }
 

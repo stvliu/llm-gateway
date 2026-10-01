@@ -52,6 +52,9 @@ class AuthorizationServiceTest {
     void publicPathPatterns_returnsPublicRules() {
         assertThat(service.publicPathPatterns()).containsExactly(
                 "/api/v1/auth/login", "/api/v1/auth/logout");
+        // 约束可执行化：PUBLIC 规则必须为精确路径（无 Ant 通配符），认证侧按精确匹配消费
+        assertThat(service.publicPathPatterns())
+                .allSatisfy(p -> assertThat(p).doesNotContain("*", "?"));
     }
 
     // ---------- 控制面：LOGIN_ONLY ----------
