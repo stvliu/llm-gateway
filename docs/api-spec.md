@@ -1448,6 +1448,18 @@ anthropic-version: 2023-06-01
 
 两套凭证机制保留（API Key 无状态 / 会话有状态），授权边界不变：数据面按 `applicationId` 路由可见渠道，控制面按 USER/ADMIN 角色校验白名单。
 
+### 统一授权模型（资源-动作-范围，v1.x）
+
+授权判定经统一门面 `AuthorizationService`，以「资源-动作-范围」统一模型承载两面授权：
+
+| 面 | 主体 | 授权判定 | 范围 |
+|----|------|---------|------|
+| 控制面（管理 API `/api/v1/**`） | 用户（Identity.role） | 代码化权限表（PUBLIC / LOGIN_ONLY / USER 白名单 / 默认拒绝仅 ADMIN） | ALL / 登录即可 / 角色 |
+| 数据面（代理 API `/v1/**`） | 应用（applicationId 权限锚点） | 应用-渠道授权（`application_channel`，D9 无角色特权旁路） | 应用可见渠道集合 |
+
+控制面规则表代码化于 iam 域（`AuthorizationService.CONTROL_RULES`），与前端 `RolePermissions` 权限码语义对齐；
+数据面渠道授权由 `PermissionRouter` 经统一门面查询，过滤语义不变（可见渠道为空 → 路由空候选）。
+
 ### 7.14 个人中心（MeController，`/api/v1/me`）
 
 | HTTP 动词 | 路径 | 用途 | 请求体/响应 |
