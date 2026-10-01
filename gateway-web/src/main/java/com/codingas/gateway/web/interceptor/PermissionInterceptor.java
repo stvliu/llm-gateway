@@ -15,7 +15,7 @@
  */
 package com.codingas.gateway.web.interceptor;
 
-import cn.dev33.satoken.stp.StpUtil;
+import com.codingas.gateway.iam.auth.Identity;
 import com.codingas.gateway.iam.auth.RolePermissions;
 import jakarta.servlet.DispatcherType;
 import jakarta.servlet.http.HttpServletRequest;
@@ -29,11 +29,13 @@ import java.util.List;
 /**
  * 角色授权拦截器
  *
- * <p>基于 USER/ADMIN 两角色授权（users.role 为唯一事实源，与前端角色判断保持一致）：</p>
+ * <p>基于 USER/ADMIN 两角色授权，角色取自统一身份 {@link Identity#role()}（users.role
+ * 为唯一事实源，由 SessionAuthenticationService 填充，经 GatewayAuthenticatorInterceptor
+ * 以 {@code identity} request attribute 注入）：</p>
  * <ul>
  *   <li><b>ADMIN</b>：全部管理端点放行；</li>
  *   <li><b>USER</b>：仅放行白名单（模型/应用只读、体验中心、自己的 API Key，归属由 Service 层 owner check 兜底）；</li>
- *   <li>其他/未登录角色：管理端点默认拒绝（403）。</li>
+ *   <li>其他/身份缺失：管理端点默认拒绝（403）。</li>
  * </ul>
  *
  * <p>公开路径（登录）与登录即可路径（个人认证）直接放行；
@@ -53,7 +55,7 @@ public class PermissionInterceptor extends AbstractGatewayInterceptor {
             "POST /api/v1/auth/login"
     );
 
-    /** 登录即可路径（已通过 TokenAuth 认证，无需额外角色） */
+    /** 登录即可路径（已通过统一认证，无需额外角色） */
     private static final List<String> LOGIN_ONLY_RULES = List.of(
             "POST /api/v1/auth/logout",
             "GET /api/v1/auth/me",
@@ -90,7 +92,7 @@ public class PermissionInterceptor extends AbstractGatewayInterceptor {
 
     @Override
     public int order() {
-        return 3; // 在 TokenAuth(order=2) 之后执行
+        return 3; // 在 GatewayAuthenticator(order=1) 之后执行
     }
 
     @Override
@@ -119,16 +121,22 @@ public class PermissionInterceptor extends AbstractGatewayInterceptor {
             return true;
         }
 
-        // 登录即可路径：TokenAuth 已保证登录态
+        // 登录即可路径：统一认证已保证登录态
         if (matches(LOGIN_ONLY_RULES, method, uri)) {
             return true;
         }
 
-        // 角色授权：ADMIN 全通；USER 仅白名单
-        if (StpUtil.hasRole(RolePermissions.ROLE_ADMIN)) {
+        // 角色授权：身份由 GatewayAuthenticatorInterceptor 注入（identity attribute）
+        Identity identity = (Identity) request.getAttribute("identity");
+        if (identity == null) {
+            log.warn("认证身份缺失: {} {} 被拒绝", method, uri);
+            return rejectForbidden(response, "无访问权限");
+        }
+        String role = identity.role();
+        if (RolePermissions.ROLE_ADMIN.equals(role)) {
             return true;
         }
-        if (StpUtil.hasRole(RolePermissions.ROLE_USER) && matches(USER_ALLOWED_RULES, method, uri)) {
+        if (RolePermissions.ROLE_USER.equals(role) && matches(USER_ALLOWED_RULES, method, uri)) {
             return true;
         }
 
