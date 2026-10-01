@@ -128,7 +128,15 @@ public class GatewayAuthenticatorInterceptor extends AbstractGatewayInterceptor 
 
     /** 管理端点：会话认证 */
     private boolean authenticateSession(HttpServletRequest request, HttpServletResponse response, String path) {
-        Optional<Identity> identityOpt = sessionAuthenticationService.authenticateSession();
+        Optional<Identity> identityOpt;
+        try {
+            identityOpt = sessionAuthenticationService.authenticateSession();
+        } catch (Exception e) {
+            // 会话校验异常（如无效 token 触发 SaTokenException）不得传播为 500，
+            // 与 api-spec 的 401 语义一致：管理面会话缺失/无效 → 401「认证失败」
+            log.error("会话认证异常: path={}", path, e);
+            return rejectUnauthorized(response, "认证失败");
+        }
         if (identityOpt.isEmpty()) {
             log.warn("会话认证失败: path={}", path);
             return rejectUnauthorized(response, "请先登录");

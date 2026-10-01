@@ -155,6 +155,20 @@ class GatewayAuthenticatorInterceptorTest {
     }
 
     @Test
+    @DisplayName("管理端点会话认证异常 → 401 认证失败（不传播 500）")
+    void managedPath_sessionAuthThrows_rejected401() throws Exception {
+        when(request.getRequestURI()).thenReturn("/api/v1/channels");
+        when(sessionAuthenticationService.authenticateSession())
+                .thenThrow(new RuntimeException("invalid token"));
+        StringWriter sw = new StringWriter();
+        when(response.getWriter()).thenReturn(new PrintWriter(sw));
+
+        assertThat(interceptor.preHandle(request, response)).isFalse();
+        verify(response).setStatus(401);
+        assertThat(sw.toString()).contains("认证失败");
+    }
+
+    @Test
     @DisplayName("公开路径（auth/login、auth/logout）放行不认证")
     void managedPath_publicPaths_pass() {
         when(request.getRequestURI()).thenReturn("/api/v1/auth/login");
