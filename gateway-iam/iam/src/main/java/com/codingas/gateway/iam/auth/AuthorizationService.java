@@ -41,10 +41,10 @@ public class AuthorizationService {
      * （dashboard、model:read、quickstart:access、key:read、key:write、application:read）。</p>
      */
     static final List<ControlPermissionRule> CONTROL_RULES = List.of(
-            // PUBLIC：无需登录
+            // PUBLIC：无需登录（login；logout 幂等，与 GatewayAuthenticatorInterceptor 公开路径语义一致）
             new ControlPermissionRule("auth", "login", SCOPE_PUBLIC, "POST", "/api/v1/auth/login"),
+            new ControlPermissionRule("auth", "logout", SCOPE_PUBLIC, "POST", "/api/v1/auth/logout"),
             // LOGIN_ONLY：登录即可（个人认证与只读能力）
-            new ControlPermissionRule("auth", "logout", SCOPE_LOGIN_ONLY, "POST", "/api/v1/auth/logout"),
             new ControlPermissionRule("me", "read", SCOPE_LOGIN_ONLY, "GET", "/api/v1/auth/me"),
             new ControlPermissionRule("me", "read", SCOPE_LOGIN_ONLY, "PATCH", "/api/v1/auth/me/password"),
             new ControlPermissionRule("me", "read", SCOPE_LOGIN_ONLY, "GET", "/api/v1/me/**"),

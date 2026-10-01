@@ -40,6 +40,13 @@ class AuthorizationServiceTest {
         assertThat(service.checkControl(null, "POST", "/api/v1/auth/login")).isTrue();
     }
 
+    @Test
+    @DisplayName("PUBLIC 规则（auth/logout）：未登录与已登录均放行（与认证拦截器公开路径语义一致，幂等）")
+    void publicRule_logout_passesWithoutAndWithIdentity() {
+        assertThat(service.checkControl(null, "POST", "/api/v1/auth/logout")).isTrue();
+        assertThat(service.checkControl(identity("USER"), "POST", "/api/v1/auth/logout")).isTrue();
+    }
+
     // ---------- 控制面：LOGIN_ONLY ----------
 
     @Test
@@ -50,9 +57,8 @@ class AuthorizationServiceTest {
     }
 
     @Test
-    @DisplayName("LOGIN_ONLY 规则（auth/logout、auth/me、protocols）")
+    @DisplayName("LOGIN_ONLY 规则（auth/me、protocols）")
     void loginOnlyRules_allVariants() {
-        assertThat(service.checkControl(identity("USER"), "POST", "/api/v1/auth/logout")).isTrue();
         assertThat(service.checkControl(identity("USER"), "GET", "/api/v1/auth/me")).isTrue();
         assertThat(service.checkControl(identity("USER"), "PATCH", "/api/v1/auth/me/password")).isTrue();
         assertThat(service.checkControl(identity("USER"), "GET", "/api/v1/protocols")).isTrue();
