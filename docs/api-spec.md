@@ -1437,6 +1437,17 @@ anthropic-version: 2023-06-01
 | GET | `/api/v1/auth/me` | 当前登录用户 | → `UserResponse` |
 | PATCH | `/api/v1/auth/me/password` | 修改密码 | body: `ChangePasswordRequest`，无业务数据 |
 
+### 统一认证架构（v1.x）
+
+入站认证由统一认证拦截器 `GatewayAuthenticatorInterceptor` 完成，按路径分类认证并统一产出身份上下文 `Identity`：
+
+| 面 | 路径 | 认证机制 | 身份字段 |
+|----|------|---------|---------|
+| 数据面（代理） | `/v1/chat/completions`、`/v1/messages`、`/v1/models`、`/anthropic/v1/messages`、`/anthropic/v1/models` | API Key（`Authorization: Bearer` 或 `x-api-key`） | `userId`/`role`/`credentialId`/`applicationId` |
+| 控制面（管理） | `/api/v1/**`（除 `auth/login`、`auth/logout` 公开路径） | Sa-Token 会话 | `userId`/`role`（`credentialId`/`applicationId` 为 null） |
+
+两套凭证机制保留（API Key 无状态 / 会话有状态），授权边界不变：数据面按 `applicationId` 路由可见渠道，控制面按 USER/ADMIN 角色校验白名单。
+
 ### 7.14 个人中心（MeController，`/api/v1/me`）
 
 | HTTP 动词 | 路径 | 用途 | 请求体/响应 |
