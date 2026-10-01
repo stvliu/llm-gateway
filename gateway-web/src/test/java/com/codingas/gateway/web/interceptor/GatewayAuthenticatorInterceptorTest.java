@@ -17,6 +17,7 @@ package com.codingas.gateway.web.interceptor;
 
 import com.codingas.gateway.iam.auth.AuthenticationFailedException;
 import com.codingas.gateway.iam.auth.AuthenticationService;
+import com.codingas.gateway.iam.auth.AuthorizationService;
 import com.codingas.gateway.iam.auth.Identity;
 import com.codingas.gateway.iam.auth.SessionAuthenticationService;
 import jakarta.servlet.DispatcherType;
@@ -31,6 +32,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -47,6 +49,9 @@ class GatewayAuthenticatorInterceptorTest {
     private SessionAuthenticationService sessionAuthenticationService;
 
     @Mock
+    private AuthorizationService authorizationService;
+
+    @Mock
     private HttpServletRequest request;
 
     @Mock
@@ -56,7 +61,12 @@ class GatewayAuthenticatorInterceptorTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        interceptor = new GatewayAuthenticatorInterceptor(authenticationService, sessionAuthenticationService);
+        // 公开路径由授权侧 PUBLIC 规则派生（单一事实源），stub 须先于构造器注册
+        //（构造器内即消费 publicPathPatterns()）
+        lenient().when(authorizationService.publicPathPatterns())
+                .thenReturn(List.of("/api/v1/auth/login", "/api/v1/auth/logout"));
+        interceptor = new GatewayAuthenticatorInterceptor(
+                authenticationService, sessionAuthenticationService, authorizationService);
         lenient().when(response.getWriter()).thenReturn(new PrintWriter(new StringWriter()));
         lenient().when(request.getDispatcherType()).thenReturn(DispatcherType.REQUEST);
     }

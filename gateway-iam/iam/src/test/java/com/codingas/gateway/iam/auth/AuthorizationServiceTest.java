@@ -47,6 +47,13 @@ class AuthorizationServiceTest {
         assertThat(service.checkControl(identity("USER"), "POST", "/api/v1/auth/logout")).isTrue();
     }
 
+    @Test
+    @DisplayName("publicPathPatterns：返回 PUBLIC scope 规则路径（单一事实源）")
+    void publicPathPatterns_returnsPublicRules() {
+        assertThat(service.publicPathPatterns()).containsExactly(
+                "/api/v1/auth/login", "/api/v1/auth/logout");
+    }
+
     // ---------- 控制面：LOGIN_ONLY ----------
 
     @Test

@@ -61,6 +61,22 @@ public class AuthorizationService {
             new ControlPermissionRule("apikey", "write", SCOPE_USER, "DELETE", "/api/v1/user-api-keys/*")
     );
 
+    /**
+     * 公开路径列表（单一事实源）
+     *
+     * <p>返回 {@link SCOPE_PUBLIC} 规则的路径模式——认证侧（GatewayAuthenticatorInterceptor）
+     * 的公开路径由此派生，避免双事实源漂移。约束：PUBLIC 规则必须为精确路径
+     * （无 Ant 通配符），认证侧按精确匹配消费。</p>
+     *
+     * @return PUBLIC scope 规则的 pathPattern 列表
+     */
+    public List<String> publicPathPatterns() {
+        return CONTROL_RULES.stream()
+                .filter(rule -> SCOPE_PUBLIC.equals(rule.scope()))
+                .map(ControlPermissionRule::pathPattern)
+                .toList();
+    }
+
     private final ApplicationChannelRepository applicationChannelRepository;
 
     public AuthorizationService(ApplicationChannelRepository applicationChannelRepository) {

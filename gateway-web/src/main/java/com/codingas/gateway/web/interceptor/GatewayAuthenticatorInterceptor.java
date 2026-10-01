@@ -17,6 +17,7 @@ package com.codingas.gateway.web.interceptor;
 
 import com.codingas.gateway.iam.auth.AuthenticationFailedException;
 import com.codingas.gateway.iam.auth.AuthenticationService;
+import com.codingas.gateway.iam.auth.AuthorizationService;
 import com.codingas.gateway.iam.auth.Identity;
 import com.codingas.gateway.iam.auth.SessionAuthenticationService;
 import jakarta.servlet.DispatcherType;
@@ -27,6 +28,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * 统一认证拦截器
@@ -60,19 +62,20 @@ public class GatewayAuthenticatorInterceptor extends AbstractGatewayInterceptor 
     /** 管理 API 路径前缀（会话认证） */
     private static final String MANAGED_PREFIX = "/api/v1/";
 
-    /** 公开路径（无需认证） */
-    private static final List<String> PUBLIC_PATHS = List.of(
-            "/api/v1/auth/login",
-            "/api/v1/auth/logout"
-    );
+    /** 公开路径（无需认证）——由授权侧 PUBLIC 规则派生（单一事实源） */
+    private final Set<String> publicPaths;
 
     private final AuthenticationService authenticationService;
     private final SessionAuthenticationService sessionAuthenticationService;
+    private final AuthorizationService authorizationService;
 
     public GatewayAuthenticatorInterceptor(AuthenticationService authenticationService,
-                                           SessionAuthenticationService sessionAuthenticationService) {
+                                           SessionAuthenticationService sessionAuthenticationService,
+                                           AuthorizationService authorizationService) {
         this.authenticationService = authenticationService;
         this.sessionAuthenticationService = sessionAuthenticationService;
+        this.authorizationService = authorizationService;
+        this.publicPaths = Set.copyOf(authorizationService.publicPathPatterns());
     }
 
     @Override
@@ -102,7 +105,7 @@ public class GatewayAuthenticatorInterceptor extends AbstractGatewayInterceptor 
         }
 
         if (path.startsWith(MANAGED_PREFIX)) {
-            return PUBLIC_PATHS.contains(path)
+            return publicPaths.contains(path)
                     || authenticateSession(request, response, path);
         }
 
