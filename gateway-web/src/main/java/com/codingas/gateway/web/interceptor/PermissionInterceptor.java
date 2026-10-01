@@ -41,7 +41,7 @@ public class PermissionInterceptor extends AbstractGatewayInterceptor {
     /** 管理 API 路径前缀（需授权校验） */
     private static final String MANAGED_PREFIX = "/api/v1/";
 
-    /** API Key 认证路径前缀（网关代理端点，由 ApiKeyAuth 认证、数据面授权处理） */
+    /** API Key 认证路径前缀（网关代理端点，由 GatewayAuthenticatorInterceptor 统一认证、数据面授权处理） */
     private static final String API_KEY_PREFIX = "/v1/";
 
     private final AuthorizationService authorizationService;
