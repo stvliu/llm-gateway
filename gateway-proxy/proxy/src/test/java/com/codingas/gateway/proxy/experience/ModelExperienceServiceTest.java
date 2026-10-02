@@ -24,6 +24,10 @@ import com.codingas.gateway.provider.model.ModelRepository;
 import com.codingas.gateway.provider.model.ModelInstance;
 import com.codingas.gateway.provider.model.ModelInstanceRepository;
 import com.codingas.gateway.provider.vendor.ProviderRepository;
+import com.codingas.gateway.iam.apikey.UserApiKey;
+import com.codingas.gateway.iam.apikey.UserApiKeyRepository;
+import com.codingas.gateway.iam.application.ApplicationChannelRepository;
+import com.codingas.gateway.iam.auth.RolePermissions;
 import com.codingas.gateway.protocol.ProtocolRequest;
 import com.codingas.gateway.protocol.StreamCallback;
 import com.codingas.gateway.protocol.raw.AnthropicMessagesRequest;
@@ -54,6 +58,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BooleanSupplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -101,6 +106,12 @@ class ModelExperienceServiceTest {
     @Mock
     private ModelRepository modelRepository;
 
+    @Mock
+    private UserApiKeyRepository userApiKeyRepository;
+
+    @Mock
+    private ApplicationChannelRepository applicationChannelRepository;
+
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     private ModelExperienceService service;
@@ -108,7 +119,8 @@ class ModelExperienceServiceTest {
     @BeforeEach
     void setUp() {
         service = new ModelExperienceService(upstreamClientRegistry, providerRepository, channelRepository,
-                modelInstanceRepository, channelCredentialRepository, modelRepository, objectMapper);
+                modelInstanceRepository, channelCredentialRepository, modelRepository,
+                userApiKeyRepository, applicationChannelRepository, objectMapper);
     }
 
     // ------------------------------------------------------------------
@@ -196,7 +208,7 @@ class ModelExperienceServiceTest {
     private SseEmitter startStream(ExperienceChatParams request,
                                    UpstreamClient<ProtocolRequest> client,
                                    ArgumentCaptor<StreamCallback> captor) {
-        SseEmitter emitter = service.chatStream(request);
+        SseEmitter emitter = service.chatStream(request, 1L, RolePermissions.ROLE_ADMIN);
         verify(client, timeout(5000)).chatStream(any(ProtocolRequest.class), captor.capture());
         return emitter;
     }
@@ -321,7 +333,7 @@ class ModelExperienceServiceTest {
                     List.of(Map.of("role", "user", "content", "hello")),
                     null, null, null, null, null, null, null, false);
 
-            SseEmitter emitter = service.chatStream(request);
+            SseEmitter emitter = service.chatStream(request, 1L, RolePermissions.ROLE_ADMIN);
             RecordingHandler recorder = new RecordingHandler();
             initialize(emitter, recorder.proxy());
 
@@ -475,6 +487,17 @@ class ModelExperienceServiceTest {
     @DisplayName("chatStream 已保存配置")
     class ChatStreamSavedConfigTests {
 
+        @BeforeEach
+        void authorizeAccess() {
+            // 授权 userId=1 的应用（applicationId=100）可见渠道 10/99，覆盖本类全部已保存配置用例
+            UserApiKey key = new UserApiKey();
+            key.setId(1L);
+            key.setUserId(1L);
+            key.setApplicationId(100L);
+            when(userApiKeyRepository.findByUserId(1L)).thenReturn(List.of(key));
+            when(applicationChannelRepository.findChannelIdsByApplicationId(100L)).thenReturn(Set.of(10L, 99L));
+        }
+
         private ExperienceChatParams savedConfigRequest(Long channelId, Long credentialId) {
             return new ExperienceChatParams(
                     "gpt-4o", null,
@@ -539,7 +562,7 @@ class ModelExperienceServiceTest {
         void savedConfig_channelNotFound_sendsError() throws Exception {
             when(channelRepository.findById(99L)).thenReturn(Optional.empty());
 
-            SseEmitter emitter = service.chatStream(savedConfigRequest(99L, null));
+            SseEmitter emitter = service.chatStream(savedConfigRequest(99L, null), 1L, RolePermissions.ROLE_ADMIN);
             RecordingHandler recorder = new RecordingHandler();
             initialize(emitter, recorder.proxy());
 
@@ -554,7 +577,7 @@ class ModelExperienceServiceTest {
             when(channelRepository.findById(10L)).thenReturn(Optional.of(channel(10L)));
             when(channelCredentialRepository.findById(20L)).thenReturn(Optional.of(credential(20L, 999L, "sk-x")));
 
-            SseEmitter emitter = service.chatStream(savedConfigRequest(10L, 20L));
+            SseEmitter emitter = service.chatStream(savedConfigRequest(10L, 20L), 1L, RolePermissions.ROLE_ADMIN);
             RecordingHandler recorder = new RecordingHandler();
             initialize(emitter, recorder.proxy());
 
@@ -569,7 +592,7 @@ class ModelExperienceServiceTest {
             when(channelRepository.findById(10L)).thenReturn(Optional.of(channel(10L)));
             when(channelCredentialRepository.findDefaultByChannelId(10L)).thenReturn(Optional.empty());
 
-            SseEmitter emitter = service.chatStream(savedConfigRequest(10L, null));
+            SseEmitter emitter = service.chatStream(savedConfigRequest(10L, null), 1L, RolePermissions.ROLE_ADMIN);
             RecordingHandler recorder = new RecordingHandler();
             initialize(emitter, recorder.proxy());
 
@@ -584,7 +607,7 @@ class ModelExperienceServiceTest {
             when(channelRepository.findById(10L)).thenReturn(Optional.of(channel(10L)));
             when(channelCredentialRepository.findById(20L)).thenReturn(Optional.empty());
 
-            SseEmitter emitter = service.chatStream(savedConfigRequest(10L, 20L));
+            SseEmitter emitter = service.chatStream(savedConfigRequest(10L, 20L), 1L, RolePermissions.ROLE_ADMIN);
             RecordingHandler recorder = new RecordingHandler();
             initialize(emitter, recorder.proxy());
 
@@ -630,6 +653,102 @@ class ModelExperienceServiceTest {
     }
 
     // ------------------------------------------------------------------
+    // chatStream：体验中心授权校验（渠道归属 + 临时配置限 ADMIN）
+    // ------------------------------------------------------------------
+
+    @Nested
+    @DisplayName("chatStream 体验中心授权校验")
+    class ChatStreamAuthorizationTests {
+
+        /** 已保存配置请求（channelId/credentialId 可指定） */
+        private ExperienceChatParams savedRequest(Long channelId, Long credentialId) {
+            return new ExperienceChatParams(
+                    "gpt-4o", null,
+                    List.of(Map.of("role", "user", "content", "hello")),
+                    null, null, null, channelId, credentialId, null, null, true);
+        }
+
+        /** 临时配置请求（openai / sk-test-key，直连上游） */
+        private ExperienceChatParams tempRequest() {
+            return new ExperienceChatParams(
+                    "gpt-4o", "openai",
+                    List.of(Map.of("role", "user", "content", "hello")),
+                    null, null, null, null, null, "sk-test-key", null, false);
+        }
+
+        /** stub 用户密钥与应用渠道授权：userId=1 的应用（applicationId=100）可见渠道集 */
+        private void stubOwnedChannels(Set<Long> channelIds) {
+            UserApiKey key = new UserApiKey();
+            key.setId(1L);
+            key.setUserId(1L);
+            key.setApplicationId(100L);
+            when(userApiKeyRepository.findByUserId(1L)).thenReturn(List.of(key));
+            when(applicationChannelRepository.findChannelIdsByApplicationId(100L)).thenReturn(channelIds);
+        }
+
+        private Channel channel(Long id) {
+            Channel channel = new Channel();
+            channel.setId(id);
+            return channel;
+        }
+
+        private ChannelCredential credential(Long id, Long channelId, String key) {
+            ChannelCredential credential = new ChannelCredential();
+            credential.setId(id);
+            credential.setChannelId(channelId);
+            credential.setApiKeyPlain(key);
+            return credential;
+        }
+
+        @Test
+        @DisplayName("使用已保存配置：体验渠道在用户应用渠道配置内 → 放行")
+        void chatStream_savedConfig_channelInUserApps_passes() throws Exception {
+            // 用户应用（applicationId=100）可见渠道包含体验渠道 1L
+            stubOwnedChannels(Set.of(1L));
+            when(channelRepository.findById(1L)).thenReturn(Optional.of(channel(1L)));
+            when(channelCredentialRepository.findById(1L)).thenReturn(Optional.of(credential(1L, 1L, "sk-saved-1")));
+
+            UpstreamClient<ProtocolRequest> client = org.mockito.Mockito.mock(UpstreamClient.class);
+            when(upstreamClientRegistry.getClient(eq("openai"), eq(""), eq("sk-saved-1"), eq(60))).thenReturn(client);
+
+            // 校验同步放行，进入正常流程（上游客户端被调用）
+            SseEmitter emitter = service.chatStream(savedRequest(1L, 1L), 1L, RolePermissions.ROLE_USER);
+
+            assertThat(emitter).isNotNull();
+            verify(client, timeout(5000)).chatStream(any(ProtocolRequest.class), any(StreamCallback.class));
+        }
+
+        @Test
+        @DisplayName("使用已保存配置：体验渠道不在用户应用配置内 → 抛 IllegalArgumentException")
+        void chatStream_savedConfig_channelNotInUserApps_rejected() {
+            // 用户应用（applicationId=100）仅授权渠道 2L，体验渠道 1L 不在集合内
+            stubOwnedChannels(Set.of(2L));
+
+            assertThatThrownBy(() -> service.chatStream(savedRequest(1L, 1L), 1L, RolePermissions.ROLE_USER))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("渠道");
+        }
+
+        @Test
+        @DisplayName("临时配置（useSavedConfig=false）：USER 拒绝，ADMIN 放行")
+        void chatStream_temporaryConfig_roleGated() throws Exception {
+            // USER 角色 → 同步拒绝
+            assertThatThrownBy(() -> service.chatStream(tempRequest(), 1L, RolePermissions.ROLE_USER))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("管理员");
+
+            // ADMIN 角色 → 放行（进入正常流程，上游客户端被调用）
+            UpstreamClient<ProtocolRequest> client = org.mockito.Mockito.mock(UpstreamClient.class);
+            when(upstreamClientRegistry.getClient(eq("openai"), eq(""), eq("sk-test-key"), eq(60))).thenReturn(client);
+
+            SseEmitter emitter = service.chatStream(tempRequest(), 1L, RolePermissions.ROLE_ADMIN);
+
+            assertThat(emitter).isNotNull();
+            verify(client, timeout(5000)).chatStream(any(ProtocolRequest.class), any(StreamCallback.class));
+        }
+    }
+
+    // ------------------------------------------------------------------
     // shutdown
     // ------------------------------------------------------------------
 
@@ -641,7 +760,8 @@ class ModelExperienceServiceTest {
         @DisplayName("shutdown 关闭执行器且不抛异常")
         void shutdown_terminatesCleanly() {
             ModelExperienceService fresh = new ModelExperienceService(upstreamClientRegistry, providerRepository,
-                    channelRepository, modelInstanceRepository, channelCredentialRepository, modelRepository, objectMapper);
+                    channelRepository, modelInstanceRepository, channelCredentialRepository, modelRepository,
+                    userApiKeyRepository, applicationChannelRepository, objectMapper);
             fresh.shutdown();
             assertThat(fresh).isNotNull();
         }

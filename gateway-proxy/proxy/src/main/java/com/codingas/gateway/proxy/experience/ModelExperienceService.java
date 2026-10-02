@@ -15,6 +15,10 @@
  */
 package com.codingas.gateway.proxy.experience;
 
+import com.codingas.gateway.iam.apikey.UserApiKey;
+import com.codingas.gateway.iam.apikey.UserApiKeyRepository;
+import com.codingas.gateway.iam.application.ApplicationChannelRepository;
+import com.codingas.gateway.iam.auth.RolePermissions;
 import com.codingas.gateway.provider.channel.Channel;
 import com.codingas.gateway.provider.channel.ChannelCredential;
 import com.codingas.gateway.provider.model.ModelInstance;
@@ -43,9 +47,12 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  * 模型体验服务
@@ -66,6 +73,8 @@ public class ModelExperienceService {
     private final ModelInstanceRepository modelInstanceRepository;
     private final ChannelCredentialRepository channelCredentialRepository;
     private final ModelRepository modelRepository;
+    private final UserApiKeyRepository userApiKeyRepository;
+    private final ApplicationChannelRepository applicationChannelRepository;
     private final ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
     private final ObjectMapper objectMapper;
 
@@ -75,6 +84,8 @@ public class ModelExperienceService {
                                   ModelInstanceRepository modelInstanceRepository,
                                   ChannelCredentialRepository channelCredentialRepository,
                                   ModelRepository modelRepository,
+                                  UserApiKeyRepository userApiKeyRepository,
+                                  ApplicationChannelRepository applicationChannelRepository,
                                   ObjectMapper objectMapper) {
         this.upstreamClientRegistry = upstreamClientRegistry;
         this.providerRepository = providerRepository;
@@ -82,6 +93,8 @@ public class ModelExperienceService {
         this.modelInstanceRepository = modelInstanceRepository;
         this.channelCredentialRepository = channelCredentialRepository;
         this.modelRepository = modelRepository;
+        this.userApiKeyRepository = userApiKeyRepository;
+        this.applicationChannelRepository = applicationChannelRepository;
         this.objectMapper = objectMapper;
     }
 
@@ -127,10 +140,18 @@ public class ModelExperienceService {
     /**
      * 流式聊天体验
      *
+     * <p>入口同步执行体验中心授权校验（executor 提交前），校验失败抛
+     * {@link IllegalArgumentException}，由 {@code ExperienceController} 捕获转 403。</p>
+     *
      * @param request 体验请求
+     * @param userId  会话用户 ID（控制面统一身份，渠道归属校验）
+     * @param role    会话用户角色（临时配置限 ADMIN）
      * @return SSE Emitter
      */
-    public SseEmitter chatStream(ExperienceChatParams request) {
+    public SseEmitter chatStream(ExperienceChatParams request, Long userId, String role) {
+        // 授权校验（同步执行，executor 提交前；失败抛 IllegalArgumentException → 控制器转 403）
+        validateExperienceAccess(request, userId, role);
+
         // 验证请求
         if (!request.isValid()) {
             SseEmitter emitter = new SseEmitter();
@@ -177,6 +198,41 @@ public class ModelExperienceService {
         });
 
         return emitter;
+    }
+
+    /**
+     * 体验中心授权校验
+     *
+     * <p>最小补强：使用已保存配置时，体验渠道必须属于该用户任一应用的应用渠道配置
+     * （{@code user_api_keys.user_id} → 应用集合 → {@code application_channel} 渠道集合并集）；
+     * 临时配置（apiKey/baseUrl 直连上游）仅管理员可用（体验沙箱定位）。</p>
+     *
+     * @param request 体验请求
+     * @param userId  会话用户 ID（null 视为无授权渠道）
+     * @param role    会话用户角色
+     * @throws IllegalArgumentException 授权校验失败
+     */
+    private void validateExperienceAccess(ExperienceChatParams request, Long userId, String role) {
+        if (!request.useSavedConfig()) {
+            if (!RolePermissions.ROLE_ADMIN.equals(role)) {
+                throw new IllegalArgumentException("临时配置体验仅管理员可用");
+            }
+            return;
+        }
+        if (request.channelId() == null) {
+            return; // isValid 已校验，此处防御
+        }
+        if (userId == null) {
+            throw new IllegalArgumentException("体验渠道不在你的应用授权范围内");
+        }
+        Set<Long> userAppChannelIds = userApiKeyRepository.findByUserId(userId).stream()
+                .map(UserApiKey::getApplicationId)
+                .filter(Objects::nonNull)
+                .flatMap(appId -> applicationChannelRepository.findChannelIdsByApplicationId(appId).stream())
+                .collect(Collectors.toSet());
+        if (!userAppChannelIds.contains(request.channelId())) {
+            throw new IllegalArgumentException("体验渠道不在你的应用授权范围内");
+        }
     }
 
     /**
