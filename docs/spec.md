@@ -343,7 +343,7 @@
 | CH-005 | 渠道测试 | 测试渠道连通性 | 返回测试结果 | 标准版 |
 | CH-006 | 路由分组 | 创建/编辑/删除路由分组 | 支持按组路由 | 标准版 |
 
-> **概念映射**: CH-006"路由分组"对应的历史业务对象 **RouteGroup（路由分组）** + **RouteGroupProviderApiKey（路由关联）** 已废弃（V1 遗留表，无代码使用）；现按 RouterChain 链式路由（PermissionRouter/PriorityRouter/HealthRouter/LoadBalanceRouter）实现按组路由和负载均衡。
+> **概念映射**: CH-006"路由分组"对应的历史业务对象 **RouteGroup（路由分组）** + **RouteGroupProviderApiKey（路由关联）** 已废弃（V1 遗留表，无代码使用）；现按 RouterChain 链式路由（HealthRouter → PriorityRouter）实现按组路由和负载均衡。数据面授权已蕴含在认证（认证即授权）：`applicationId` 即 API Key 绑定的应用资源，路由链不再承担数据面授权判定。
 | CH-007 | 多 Key 管理 | 单渠道添加/删除/禁用多个 API Key | Key 级故障隔离 | 标准版 |
 | CH-008 | 优先级设置 | 设置渠道优先级 | 高优先级优先使用 | 标准版 |
 | CH-009 | 权重设置 | 同优先级按权重分配流量 | 流量分配符合权重比例 | 标准版 |
