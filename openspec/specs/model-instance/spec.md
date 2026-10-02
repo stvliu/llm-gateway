@@ -50,12 +50,12 @@ Channel 实体 SHALL NOT 包含 priority 和 weight 字段。路由优先级和�
 - **WHEN** 管理员创建渠道
 - **THEN** 渠道配置只包含连接参数（timeout、maxRetries）、计费模式（billingMode）和总配额（quotaLimit）
 
-### Requirement: ModelInstanceGateway 接口
-系统 SHALL 提供 ModelInstanceGateway 接口，包含以下方法：save、findById、findByChannelId、findActiveByChannelId、findActiveByModelId、findActiveByModelIdOrderByPriority、existsByChannelIdAndModelId、saveAll、deleteById。
+### Requirement: ModelInstanceRepository 接口
+系统 SHALL 提供 ModelInstanceRepository 接口，包含以下方法：save、findById、findByChannelId、findActiveByChannelId、findActiveByModelId、findActiveByModelIdAndChannelIds、existsByChannelIdAndModelId、saveAll、deleteById。
 
-#### Scenario: 按优先级排序查询活跃实例
-- **WHEN** 调用 findActiveByModelIdOrderByPriority(modelId)
-- **THEN** 返回该模型所有活跃的 ModelInstance，按 priority 升序排序
+#### Scenario: 按模型与渠道集合查询活跃实例
+- **WHEN** 调用 findActiveByModelIdAndChannelIds(modelId, channelIds)
+- **THEN** 返回该模型在指定渠道集合内的活跃 ModelInstance，按 priority 升序排序
 
 ### Requirement: InstanceSelector.select 返回排序候选列表
 
@@ -63,8 +63,8 @@ Channel 实体 SHALL NOT 包含 priority 和 weight 字段。路由优先级和�
 
 **要点**:
 - `select` 返回 `List<ModelInstance>`，按应用级 `priority` 升序排序，不收敛到单实例
-- `LoadBalanceRouter`（`@Order(9999)`）降级为透传，不执行负载均衡选择
-- 候选列表经 `RouterChain` 过滤链产出：`Permission(@100) → EndpointHealth(@200) → Priority(@300) → LoadBalance(@9999)`（已删除 `ClusterAffinity`/`PinnedModel` 路由器）
+- 数据面认证即授权：授权蕴含在认证（`Identity.applicationId` 即 Key 绑定的应用），`select` 读取应用渠道配置并带渠道条件查询活跃实例
+- 候选列表经 `RouterChain` 纯路由链产出：`HealthRouter(@200) → PriorityRouter(@300)`（已删除 `PermissionRouter`/`LoadBalanceRouter`/`ClusterAffinity`/`PinnedModel` 路由器）
 
 **方法签名**:
 ```
