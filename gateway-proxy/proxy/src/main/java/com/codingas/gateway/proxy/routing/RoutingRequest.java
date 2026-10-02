@@ -60,7 +60,7 @@ public class RoutingRequest {
      * @param applicationId      应用 ID（配置锚点）
      * @param strategy           路由策略
      * @param protocol           入站协议（可 null）
-     * @param channelPriorityMap 应用级渠道优先级映射（可空映射）
+     * @param channelPriorityMap 应用级渠道优先级映射（为 null 时归并为空映射）
      */
     public RoutingRequest(Long modelId, Long applicationId, RoutingStrategy strategy,
                           Protocol protocol, Map<Long, Integer> channelPriorityMap) {
@@ -68,7 +68,8 @@ public class RoutingRequest {
         this.applicationId = applicationId;
         this.strategy = strategy;
         this.protocol = protocol;
-        this.channelPriorityMap = channelPriorityMap;
+        // 防御 PriorityRouter.get() 的 NPE 潜伏：null 归并为空映射
+        this.channelPriorityMap = channelPriorityMap != null ? channelPriorityMap : Map.of();
     }
 
     public Long getModelId() { return modelId; }
