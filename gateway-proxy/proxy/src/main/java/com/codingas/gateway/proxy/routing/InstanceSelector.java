@@ -18,9 +18,11 @@ package com.codingas.gateway.proxy.routing;
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
 import com.codingas.gateway.iam.application.ApplicationChannel;
 import com.codingas.gateway.iam.application.ApplicationChannelRepository;
+import com.codingas.gateway.provider.channel.Channel;
+import com.codingas.gateway.provider.channel.ChannelRepository;
 import com.codingas.gateway.provider.model.ModelInstance;
-import com.codingas.gateway.protocol.Protocol;
 import com.codingas.gateway.provider.model.ModelInstanceRepository;
+import com.codingas.gateway.protocol.Protocol;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,16 +31,17 @@ import org.springframework.stereotype.Component;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
- * 模型实例选择器 — 委托给 RouterChain 执行权限过滤 + 健康过滤 + 优先级分组，返回候选列表
+ * 模型实例选择器 — 数据面认证即授权：配置读取前移 + 纯路由链
  *
- * <p>Task 3：查 {@link ApplicationChannelRepository#findByApplicationId(Long)} 取该应用所有授权渠道
- * 的 priority，构建 {@code channelPriorityMap} 填入 {@link RoutingRequest}，供 {@link PriorityRouter}
- * 按应用级 priority 升序排序（同一渠道对不同应用可有不同转移顺序）。applicationId 为 null 时传空映射。</p>
- *
- * <p>Task 8：移除容灾画像解析（{@code ResilienceResolver} 退场）。timeout 已下沉到
- * {@code Application.timeout}，不再在路由链解析画像。</p>
+ * <p>数据面授权已蕴含在认证（{@code Identity.applicationId} 即 Key 绑定的应用资源）：
+ * 本类读取应用的渠道配置（{@link ApplicationChannelRepository#findChannelIdsByApplicationId}，
+ * 配置而非授权判定），过滤活跃渠道（ABAC 属性 {@code state.isRoutable()}，proxy 层执行），
+ * 带条件查询实例（{@link ModelInstanceRepository#findActiveByModelIdAndChannelIds}，DB 层过滤），
+ * 再经 {@link RouterChain} 纯路由（优先级/健康）返回候选列表。</p>
  */
 @Component
 @RequiredArgsConstructor
@@ -48,59 +51,77 @@ public class InstanceSelector {
 
     private final ModelInstanceRepository modelInstanceRepository;
     private final RouterChain routerChain;
-    /** 应用-渠道授权网关（Task 3 取应用级渠道 priority） */
+    /** 应用-渠道配置仓储（认证即授权：配置读取，非授权判定） */
     private final ApplicationChannelRepository applicationChannelRepository;
+    /** 渠道仓储（活跃渠道过滤——ABAC 属性，proxy 层执行） */
+    private final ChannelRepository channelRepository;
 
     /**
      * 根据 modelId 和用户身份选择模型实例候选列表
      *
-     * <p>返回按应用级 priority 升序的候选列表（顺序由 {@link PriorityRouter} 保证），
-     * 供 L1 故障转移逐个尝试。LoadBalanceRouter 已降级为透传，不再收敛到单实例。</p>
+     * <p>数据面授权已蕴含在认证（{@code Identity.applicationId} 即 Key 绑定的应用资源），
+     * 本方法读取应用的渠道配置并过滤活跃渠道，带条件查询实例，再经 {@link RouterChain}
+     * 纯路由（优先级/健康）返回候选列表。</p>
      *
      * @param modelId       模型 ID
-     * @param applicationId 应用 ID（权限锚点；透传至 RoutingRequest 供 PermissionRouter 判定可见渠道）
-     * @param userId        用户 ID
-     * @param role          用户角色
+     * @param applicationId 应用 ID（数据面权限锚点，认证产物）
+     * @param userId        用户 ID（保留签名兼容，不再透传路由）
+     * @param role          用户角色（保留签名兼容，不再透传路由）
      * @param strategy      路由策略
      * @param protocol      入站协议（透传至 RoutingRequest 供 HealthRouter 派生 endpointId）
-     * @return 按应用级 priority 升序的候选实例列表（顺序由 PriorityRouter 保证，供 L1 故障转移逐个尝试）
+     * @return 按优先级升序的候选实例列表
      * @throws ResourceNotFoundException 无可用实例
      */
     public List<ModelInstance> select(Long modelId, Long applicationId, Long userId, String role,
                                       RoutingStrategy strategy, Protocol protocol) {
-        // 获取所有活跃实例（DB 按 ModelInstance.priority 粗排，PriorityRouter 用应用级映射精排覆盖顺序）
-        List<ModelInstance> allInstances = modelInstanceRepository.findActiveByModelIdOrderByPriority(modelId);
-        if (allInstances.isEmpty()) {
+        // 1. 应用渠道配置读取（配置，非授权）
+        Set<Long> configuredChannelIds = getConfiguredChannelIds(applicationId);
+        if (configuredChannelIds.isEmpty()) {
             throw new ResourceNotFoundException("ModelInstance", modelId);
         }
 
-        // 构建应用级渠道优先级映射（Task 3）：同一渠道对不同应用可有不同转移顺序
-        Map<Long, Integer> channelPriorityMap = buildChannelPriorityMap(applicationId);
+        // 2. 活跃渠道过滤（ABAC 属性：state.isRoutable）
+        Set<Long> activeChannelIds = filterRoutableChannels(configuredChannelIds);
+        if (activeChannelIds.isEmpty()) {
+            throw new ResourceNotFoundException("ModelInstance", modelId);
+        }
 
-        // 委托 RouterChain 执行过滤链（applicationId 权限锚点、protocol 派生 endpointId、
-        // channelPriorityMap 应用级转移顺序）
+        // 3. 实例查询（DB 层过滤：模型 + 活跃渠道 + 活跃实例）
+        List<ModelInstance> candidates = modelInstanceRepository
+                .findActiveByModelIdAndChannelIds(modelId, activeChannelIds);
+        if (candidates.isEmpty()) {
+            throw new ResourceNotFoundException("ModelInstance", modelId);
+        }
+
+        // 4. 纯路由链（优先级/健康）
+        Map<Long, Integer> channelPriorityMap = buildChannelPriorityMap(applicationId);
         RoutingRequest request = new RoutingRequest(modelId, applicationId, userId, role, strategy, protocol,
                 channelPriorityMap);
-        List<ModelInstance> result = routerChain.filter(allInstances, request);
+        List<ModelInstance> result = routerChain.filter(candidates, request);
 
         if (result.isEmpty()) {
             throw new ResourceNotFoundException("ModelInstance", modelId);
         }
-
-        // 返回候选列表（已按应用级 priority 升序，供 L1 故障转移逐个尝试；不再收敛到单实例）
         return result;
     }
 
-    /**
-     * 构建应用级渠道优先级映射（Task 3）
-     *
-     * <p>查 {@link ApplicationChannelRepository#findByApplicationId(Long)} 取该应用所有授权渠道，
-     * 以 channelId 为 key、priority 为 value 构建映射；priority 为 null 的渠道不放入映射
-     *（{@link PriorityRouter} 回退默认值 100）。applicationId 为 null 时返回空映射，不查网关。</p>
-     *
-     * @param applicationId 应用 ID
-     * @return 应用级渠道优先级映射（key=channelId, value=priority）；applicationId 为 null 时为空
-     */
+    /** 应用渠道配置读取（applicationId 为 null → 空集） */
+    private Set<Long> getConfiguredChannelIds(Long applicationId) {
+        if (applicationId == null) {
+            return Set.of();
+        }
+        return applicationChannelRepository.findChannelIdsByApplicationId(applicationId);
+    }
+
+    /** 活跃渠道过滤（state.isRoutable()） */
+    private Set<Long> filterRoutableChannels(Set<Long> channelIds) {
+        return channelRepository.findByIds(List.copyOf(channelIds)).stream()
+                .filter(ch -> ch.getState() != null && ch.getState().isRoutable())
+                .map(Channel::getId)
+                .collect(Collectors.toSet());
+    }
+
+    /** 构建应用级渠道优先级映射（PriorityRouter 消费） */
     private Map<Long, Integer> buildChannelPriorityMap(Long applicationId) {
         if (applicationId == null) {
             return Map.of();

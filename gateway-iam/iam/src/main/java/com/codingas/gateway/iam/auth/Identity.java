@@ -19,13 +19,13 @@ package com.codingas.gateway.iam.auth;
  * 认证后的身份上下文
  *
  * <p>携带用户 ID、角色、凭证 ID 以及应用 ID（数据面权限锚点）。
- * 数据面权限路由（{@code PermissionRouter}）依据 {@code applicationId}
- * 判定可见渠道集合；{@code applicationId} 为 null 时权限路由返回空集。</p>
+ * 数据面授权蕴含在认证（认证即授权）：{@code applicationId} 即 Key 绑定的应用资源，
+ * proxy 层据其读取应用渠道配置并过滤活跃渠道；{@code applicationId} 为 null 时渠道配置为空集。</p>
  *
  * @param userId        用户 ID
  * @param role          用户角色
  * @param credentialId  凭证 ID（UserApiKey ID）
- * @param applicationId 应用 ID（权限锚点；为 null 时权限路由返回空集）
+ * @param applicationId 应用 ID（数据面权限锚点；为 null 时渠道配置为空集）
  */
 public record Identity(
         Long userId,
@@ -39,7 +39,7 @@ public record Identity(
      * @param userId        用户 ID
      * @param role          用户角色
      * @param credentialId  凭证 ID（UserApiKey ID）
-     * @param applicationId 应用 ID（权限锚点；为 null 时权限路由返回空集）
+     * @param applicationId 应用 ID（数据面权限锚点；为 null 时渠道配置为空集）
      * @return 身份上下文
      */
     public static Identity of(Long userId, String role, Long credentialId, Long applicationId) {

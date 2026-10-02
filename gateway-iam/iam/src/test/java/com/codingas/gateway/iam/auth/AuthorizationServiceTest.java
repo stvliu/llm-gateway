@@ -1,24 +1,13 @@
 package com.codingas.gateway.iam.auth;
 
-import com.codingas.gateway.iam.application.ApplicationChannelRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
 
-@ExtendWith(MockitoExtension.class)
 @DisplayName("AuthorizationService（统一授权门面）测试")
 class AuthorizationServiceTest {
-
-    @Mock
-    private ApplicationChannelRepository applicationChannelRepository;
 
     private AuthorizationService service;
 
@@ -29,7 +18,7 @@ class AuthorizationServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new AuthorizationService(applicationChannelRepository);
+        service = new AuthorizationService();
     }
 
     // ---------- 控制面：PUBLIC ----------
@@ -119,23 +108,5 @@ class AuthorizationServiceTest {
     void unmatchedManagedPath_otherEndpoints() {
         assertThat(service.checkControl(identity("USER"), "POST", "/api/v1/providers")).isFalse();
         assertThat(service.checkControl(identity("USER"), "GET", "/api/v1/stats")).isFalse();
-    }
-
-    // ---------- 数据面：permittedChannelIds ----------
-
-    @Test
-    @DisplayName("数据面：应用可见渠道集合委托查询")
-    void permittedChannelIds_delegates() {
-        when(applicationChannelRepository.findChannelIdsByApplicationId(10L)).thenReturn(Set.of(1L, 2L));
-
-        assertThat(service.permittedChannelIds(10L)).containsExactlyInAnyOrder(1L, 2L);
-        verify(applicationChannelRepository).findChannelIdsByApplicationId(10L);
-    }
-
-    @Test
-    @DisplayName("数据面：applicationId 为 null 返回空集（D9：无权限锚点）")
-    void permittedChannelIds_nullApplicationId_returnsEmpty() {
-        assertThat(service.permittedChannelIds(null)).isEmpty();
-        verifyNoInteractions(applicationChannelRepository);
     }
 }

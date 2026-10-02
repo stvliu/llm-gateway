@@ -22,9 +22,8 @@ import java.util.Map;
 /**
  * 路由请求上下文 — 携带 RouterChain 各环节所需的信息
  *
- * <p>权限锚点为 {@code applicationId}：数据面权限路由（{@link PermissionRouter}）
- * 依据应用-渠道授权（ApplicationChannel）判定可见渠道集合，{@code applicationId} 为 null
- * 时权限路由直接返回空集。</p>
+ * <p>数据面认证即授权后，渠道可见性由 {@link InstanceSelector} 读取应用渠道配置保证
+ * （配置而非授权判定），本上下文不再承担数据面授权；{@code applicationId} 为配置锚点。</p>
  *
  * <p>{@code protocol} 为入站协议，供 {@link HealthRouter} 按协议从 channelId 派生 endpointId，
  * 统一熔断 key 为 endpoint 粒度（与 {@code KeyFailoverInvoker} 共享同一熔断器 bean）。</p>
@@ -54,7 +53,7 @@ public class RoutingRequest {
 
     /**
      * @deprecated 请改用 {@link #RoutingRequest(Long, Long, Long, String, RoutingStrategy, Protocol)}。
-     * 旧调用方未传入应用 ID，将导致 {@link PermissionRouter} 无权限锚点而返回空集。
+     * 旧调用方未传入应用 ID，将导致 {@link InstanceSelector} 无配置锚点而返回空集（空渠道配置）。
      */
     @Deprecated
     public RoutingRequest(Long modelId, Long userId, String role, RoutingStrategy strategy) {
@@ -77,7 +76,7 @@ public class RoutingRequest {
      * 传空 channelPriorityMap（{@link PriorityRouter} 回退默认值 100）。</p>
      *
      * @param modelId       模型 ID
-     * @param applicationId 应用 ID（权限锚点；为 null 时权限路由返回空集）
+     * @param applicationId 应用 ID（配置锚点；为 null 时渠道配置为空集）
      * @param userId        用户 ID
      * @param role          用户角色
      * @param strategy      路由策略
@@ -92,7 +91,7 @@ public class RoutingRequest {
      * 构造路由请求上下文（携带应用级渠道优先级映射，Task 3）
      *
      * @param modelId            模型 ID
-     * @param applicationId      应用 ID（权限锚点；为 null 时权限路由返回空集）
+     * @param applicationId      应用 ID（配置锚点；为 null 时渠道配置为空集）
      * @param userId             用户 ID
      * @param role               用户角色
      * @param strategy           路由策略

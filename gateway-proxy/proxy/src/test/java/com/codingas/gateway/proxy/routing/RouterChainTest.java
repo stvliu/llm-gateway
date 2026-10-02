@@ -137,34 +137,18 @@ class RouterChainTest {
     }
 
     @Test
-    @DisplayName("真实路由器按 @Order 排序：Permission→Health→Priority→LoadBalance")
+    @DisplayName("真实路由器按 @Order 排序：Health → Priority")
     void routers_executedInOrder_realRoutersSortedByOrder() throws Exception {
-        // Permission/LoadBalance 用桩 Router 占 @Order 槽位；Health/Priority 用真实实现以驱动 @Order 修正
-        @Order(100)
-        class PermissionStub implements Router {
-            @Override
-            public List<ModelInstance> filter(List<ModelInstance> instances, RoutingRequest request) {
-                return instances;
-            }
-        }
-        @Order(9999)
-        class LoadBalanceStub implements Router {
-            @Override
-            public List<ModelInstance> filter(List<ModelInstance> instances, RoutingRequest request) {
-                return instances;
-            }
-        }
-
+        // PermissionRouter/LoadBalanceRouter 已删除，路由链收敛为纯路由（Health → Priority）
         HealthRouter health = new HealthRouter(circuitBreakerService, endpointResolver);
         PriorityRouter priority = new PriorityRouter();
         // 故意乱序传入，验证 RouterChain 按 @Order 升序排序
-        RouterChain chain = new RouterChain(List.of(
-                new LoadBalanceStub(), priority, health, new PermissionStub()));
+        RouterChain chain = new RouterChain(List.of(priority, health));
 
         List<Router> sorted = readRouters(chain);
 
         assertThat(sorted).extracting(r -> r.getClass().getSimpleName())
-                .containsExactly("PermissionStub", "HealthRouter", "PriorityRouter", "LoadBalanceStub");
+                .containsExactly("HealthRouter", "PriorityRouter");
     }
 
     @Test
@@ -195,17 +179,17 @@ class RouterChainTest {
         when(circuitBreakerService.isAvailable(150L)).thenReturn(false);
         when(circuitBreakerService.isAvailable(250L)).thenReturn(true);
 
-        // 真实 Health + Priority + LoadBalanceRouter（Task 3.1 已降级为透传，返回候选列表）
-        LoadBalanceRouter loadBalance = new LoadBalanceRouter();
+        // 真实 Health + Priority + 透传终结路由（原 LoadBalanceRouter 已删除，透传语义内联）
+        Router passThrough = (instances, req) -> instances;
         RouterChain chain = new RouterChain(List.of(
                 new HealthRouter(circuitBreakerService, endpointResolver),
                 new PriorityRouter(),
-                loadBalance));
+                passThrough));
 
         List<ModelInstance> result = chain.filter(List.of(ch1, ch2),
                 new RoutingRequest(1L, 1L, 1L, "USER", RoutingStrategy.WEIGHTED, Protocol.OPENAI));
 
-        // Health 先过滤掉熔断的 ch1 → [ch2]；Priority 在剩余 ch2 上选 → [ch2]；LoadBalance 透传 [ch2]
+        // Health 先过滤掉熔断的 ch1 → [ch2]；Priority 在剩余 ch2 上选 → [ch2]；透传路由保持 [ch2]
         assertThat(result).hasSize(1);
         assertThat(result.getFirst().getId()).isEqualTo(2L);
     }

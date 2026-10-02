@@ -1,25 +1,23 @@
 package com.codingas.gateway.iam.auth;
 
-import com.codingas.gateway.iam.application.ApplicationChannelRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.util.AntPathMatcher;
 
 import java.util.List;
-import java.util.Set;
 
 /**
- * 统一授权门面
+ * 统一授权门面（控制面授权判定）
  *
- * <p>以「资源-动作-范围」统一模型承载两面授权判定：</p>
+ * <p>以「资源-动作-范围」统一模型承载控制面授权判定：</p>
  * <ul>
  *   <li><b>控制面</b>（{@link #checkControl}）：管理 API 的功能级授权。
  *       规则代码化于 {@link #CONTROL_RULES}（与前端 {@link RolePermissions} 权限码语义对齐），
  *       scope 语义：PUBLIC 无需登录 / LOGIN_ONLY 登录即可 / USER 需 USER 或 ADMIN 角色 /
- *       未匹配规则默认拒绝（仅 ADMIN 放行）；</li>
- *   <li><b>数据面</b>（{@link #permittedChannelIds}）：应用-渠道对象级授权，
- *       委托 {@link ApplicationChannelRepository}，D9 语义保留（无角色特权旁路，
- *       applicationId 为 null 返回空集）。</li>
+ *       未匹配规则默认拒绝（仅 ADMIN 放行）。</li>
  * </ul>
+ *
+ * <p>数据面授权已蕴含在认证（认证即授权）：{@code Identity.applicationId} 即 Key 绑定的
+ * 应用资源，渠道可见性由 proxy 层读取应用渠道配置判定，本门面不再承担数据面授权。</p>
  */
 @Service
 public class AuthorizationService {
@@ -77,12 +75,6 @@ public class AuthorizationService {
                 .toList();
     }
 
-    private final ApplicationChannelRepository applicationChannelRepository;
-
-    public AuthorizationService(ApplicationChannelRepository applicationChannelRepository) {
-        this.applicationChannelRepository = applicationChannelRepository;
-    }
-
     /**
      * 控制面授权判定（管理 API）
      *
@@ -113,22 +105,5 @@ public class AuthorizationService {
         }
         // 未匹配规则的管理路径：默认拒绝，仅 ADMIN 放行
         return identity != null && RolePermissions.ROLE_ADMIN.equals(identity.role());
-    }
-
-    /**
-     * 数据面授权：应用角色可见渠道集合
-     *
-     * <p>统一 RBAC 语义下，applicationId 即「APPLICATION 类型角色」ID——本方法
-     * 按角色解析可见渠道权限（委托 {@link ApplicationChannelRepository}）。
-     * D9 语义保留：无用户角色特权旁路；applicationId 为 null（无角色）返回空集。</p>
-     *
-     * @param applicationId 应用 ID（数据面角色锚点）
-     * @return 该角色（应用）可见的渠道 ID 集合
-     */
-    public Set<Long> permittedChannelIds(Long applicationId) {
-        if (applicationId == null) {
-            return Set.of();
-        }
-        return applicationChannelRepository.findChannelIdsByApplicationId(applicationId);
     }
 }

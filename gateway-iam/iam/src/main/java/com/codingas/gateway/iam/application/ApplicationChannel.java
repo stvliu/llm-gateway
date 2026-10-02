@@ -26,7 +26,7 @@ import lombok.NoArgsConstructor;
  * <p>统一 RBAC 语义下为「APPLICATION 角色 → 渠道资源」的授权记录：
  * applicationId 即角色 ID，action 恒为 route（路由调用，语义常量而非存储字段，
  * 实体无 action 物理列），priority 为路由转移顺序（同一渠道对不同应用可有不同优先级）。
- * 数据面 {@code AuthorizationService.permittedChannelIds} 据此解析角色可见渠道集合。</p>
+ * 数据面路由（认证即授权）依据此关联读取应用可见渠道集合——渠道为应用配置而非授权判定。</p>
  *
  * <p>应用-渠道授权关联：决定应用可见的渠道集合。</p>
  *
