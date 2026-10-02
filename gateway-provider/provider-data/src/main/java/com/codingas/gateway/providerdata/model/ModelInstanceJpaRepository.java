@@ -18,6 +18,7 @@ package com.codingas.gateway.providerdata.model;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -45,6 +46,20 @@ public interface ModelInstanceJpaRepository extends JpaRepository<ModelInstanceD
      * 按模型 + 可路由状态集合（ACTIVE/DEPRECATED）查询模型实例（按优先级升序）
      */
     List<ModelInstanceDo> findByModelIdAndStateInOrderByPriorityAsc(Long modelId, List<String> states);
+
+    /**
+     * 按模型 + 渠道 ID 集合 + 可路由状态集合（ACTIVE/DEPRECATED）查询模型实例（按优先级升序）
+     *
+     * <p>数据面路由前查询：渠道集合来自应用渠道配置（认证即授权下的配置读取），
+     * DB 层过滤替代全量拉取 + 内存过滤。</p>
+     *
+     * @param modelId    模型 ID
+     * @param channelIds 渠道 ID 集合（应用配置的可见渠道）
+     * @param states     可路由状态集合（ACTIVE/DEPRECATED）
+     * @return 活跃实例 DO 列表（priority 升序）
+     */
+    List<ModelInstanceDo> findByModelIdAndChannelIdInAndStateInOrderByPriorityAsc(
+            Long modelId, Collection<Long> channelIds, List<String> states);
 
     List<ModelInstanceDo> findByIdIn(List<Long> ids);
 }

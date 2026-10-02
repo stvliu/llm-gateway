@@ -205,6 +205,38 @@ class ModelInstanceGatewayImplTest {
     }
 
     @Test
+    @DisplayName("findActiveByModelIdAndChannelIds：委托 JPA 按渠道集合+可路由状态过滤并按优先级升序查询")
+    void findActiveByModelIdAndChannelIds_filtersByChannels() {
+        // 模拟 JPA 按 渠道集合(100/200/300) + 可路由状态(ACTIVE/DEPRECATED) 过滤后的结果：
+        // 仅 mi1(渠道 100/ACTIVE) 保留，mi2(渠道 200) 与 mi3(渠道 300/不可路由) 在 DB 层被过滤
+        when(modelInstanceRepository.findByModelIdAndChannelIdInAndStateInOrderByPriorityAsc(
+                10L, List.of(100L, 200L, 300L), List.of("ACTIVE", "DEPRECATED")))
+                .thenReturn(List.of(sampleDo(1L, 100L, 10L, "ACTIVE")));
+
+        List<ModelInstance> result = gateway.findActiveByModelIdAndChannelIds(10L, List.of(100L, 200L, 300L));
+
+        // 仅含 mi1：渠道过滤 + 活跃过滤均发生在 JPA（DB）层，此处验证委托参数与结果转换
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).getId()).isEqualTo(1L);
+        assertThat(result.get(0).getChannelId()).isEqualTo(100L);
+        assertThat(result.get(0).getState()).isEqualTo(ModelInstance.State.ACTIVE);
+        verify(modelInstanceRepository).findByModelIdAndChannelIdInAndStateInOrderByPriorityAsc(
+                10L, List.of(100L, 200L, 300L), List.of("ACTIVE", "DEPRECATED"));
+    }
+
+    @Test
+    @DisplayName("findActiveByModelIdAndChannelIds：空渠道集合返回空列表")
+    void findActiveByModelIdAndChannelIds_emptyChannels_returnsEmpty() {
+        when(modelInstanceRepository.findByModelIdAndChannelIdInAndStateInOrderByPriorityAsc(
+                10L, List.of(), List.of("ACTIVE", "DEPRECATED")))
+                .thenReturn(List.of());
+
+        assertThat(gateway.findActiveByModelIdAndChannelIds(10L, List.of())).isEmpty();
+        verify(modelInstanceRepository).findByModelIdAndChannelIdInAndStateInOrderByPriorityAsc(
+                10L, List.of(), List.of("ACTIVE", "DEPRECATED"));
+    }
+
+    @Test
     @DisplayName("findByModelId：同模型多实例（含不同状态）全量转换返回")
     void findByModelId_convertsAllStates() {
         when(modelInstanceRepository.findByModelId(100L)).thenReturn(List.of(

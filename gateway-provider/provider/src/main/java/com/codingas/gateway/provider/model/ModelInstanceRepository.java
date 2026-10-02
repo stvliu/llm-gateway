@@ -16,6 +16,7 @@
 package com.codingas.gateway.provider.model;
 
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -56,6 +57,18 @@ public interface ModelInstanceRepository {
      * 根据模型规格ID查找可路由的模型实例（ACTIVE/DEPRECATED，按优先级升序）
      */
     List<ModelInstance> findActiveByModelIdOrderByPriority(Long modelId);
+
+    /**
+     * 按模型与渠道集合查询活跃实例（按 priority 升序）
+     *
+     * <p>数据面路由前查询：渠道集合来自应用渠道配置（认证即授权下的配置读取），
+     * DB 层过滤替代全量拉取 + 内存过滤。</p>
+     *
+     * @param modelId    模型 ID
+     * @param channelIds 渠道 ID 集合（应用配置的可见渠道）
+     * @return 活跃实例列表（priority 升序）
+     */
+    List<ModelInstance> findActiveByModelIdAndChannelIds(Long modelId, Collection<Long> channelIds);
 
     /**
      * 检查渠道模型关联是否已存在
