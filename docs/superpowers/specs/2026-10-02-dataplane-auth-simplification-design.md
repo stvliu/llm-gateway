@@ -60,6 +60,9 @@
 | `gateway-provider/.../model/ModelInstanceRepository.java` | 新增 `findActiveByModelIdAndChannelIds(Long modelId, Collection<Long> channelIds)` |
 | `gateway-proxy/.../routing/InstanceSelector.java` | 配置读取前移 + 实例查询带条件；移除授权链依赖 |
 | `gateway-proxy/.../routing/RouterChain.java` | 成员自动收敛（删除的两个 Router 不在注入列表） |
+| `gateway-proxy/.../routing/RoutingRequest.java` | **字段清理**：移除 `userId`/`role` 透传字段（全链无消费者，已多次验证），保留 `applicationId`（配置锚点）+ `protocol`（路由派生）；构造器/测试同步 |
+| `gateway-proxy/.../experience/ModelExperienceService.java` | **体验中心授权补强**：渠道归属校验（见 3.4）+ 临时配置限 ADMIN |
+| `gateway-web/.../api/ExperienceController.java` | 会话用户上下文传递（渠道校验所需 userId） |
 | `PermissionRouterTest.java` | 删除（场景迁移至 InstanceSelectorTest） |
 | `InstanceSelectorTest.java` | 新增配置读取 + 活跃过滤 + 路由链场景 |
 | `RouterChainTest` 相关 | 成员变化同步 |
@@ -71,13 +74,21 @@
 - 空渠道集合 → 空候选 → `ResourceNotFoundException`（现状语义保留）
 - `AuthorizationService.permittedChannelIds` **删除**（连同其测试）：数据面认证即授权后无独立判定入口，配置读取由 `InstanceSelector` 直查 `ApplicationChannelRepository`（proxy → iam 现有依赖，无需门面中转）——YAGNI，避免无消费者死代码
 
+### 3.4b 体验中心授权补强（最小方案）
+
+体验中心（`/api/v1/experience/chat`）现状盲区：任意 USER 可传任意 `channelId`/`credentialId` 体验，且临时配置模式（`apiKey`+`baseUrl`）直连上游脱离本系统凭证体系。最小补强：
+
+- **渠道归属校验**（使用已保存配置模式）：体验的 `channelId` 必须属于**该用户任一应用的应用渠道配置**——判定：`user_api_keys.user_id = 当前会话用户` → 应用集合 → `application_channel` 渠道集合交集，`channelId` 命中任一即放行
+- **临时配置模式限 ADMIN**：`useSavedConfig=false`（`apiKey`+`baseUrl` 直连）仅 ADMIN 可用（体验沙箱定位）；USER 使用临时模式 → 403
+- 会话用户上下文：`ExperienceController` 从 `identity` attribute 取 `userId` 传入服务（控制面统一身份，`@RequestAttribute("identity")`）
+- 校验位置：`ModelExperienceService.resolveConfig`（使用已保存配置分支）+ 临时模式分支入口
+
 ### 3.5 明确不做（边界）
 
 - 控制面 RBAC 表化（roles/user_roles/permissions/role_permissions 四表 + 多角色迁移）——**暂缓**，保持 `CONTROL_RULES` 代码化 + `users.role` 单字段
-- 体验中心渠道授权补强（独立 follow-up）
 - 授权/配置读取缓存（后置优化，10k QPS 时评估）
-- `RoutingRequest` 冗余字段清理（保守保留）
 - 管理 API（角色/权限 CRUD，表化暂缓后无对象）
+- 体验中心配额/限频（超出最小补强范围，独立需求）
 
 ## 4. 风险与验证
 
@@ -97,6 +108,8 @@
 1. `PermissionRouter`/`LoadBalanceRouter` 代码与测试删除，`RouterChain` 成员 = HealthRouter + PriorityRouter
 2. `findActiveByModelIdAndChannelIds` 查询正确（渠道过滤 + 活跃 + 空集合边界）
 3. `AuthorizationService.permittedChannelIds` 及其测试删除（无消费者）
-4. 数据面调用链行为等价（候选实例集合与现状一致，含空候选 404 语义）
-5. 全量测试通过（基线 1466+，无回归）
-6. 文档（api-spec.md/架构文档）同步更新"认证即授权"语义
+4. `RoutingRequest` 移除 `userId`/`role` 透传（构造器/测试同步，无残留）
+5. 体验中心：渠道归属校验生效（USER 非归属渠道 → 拒绝）；临时配置模式仅 ADMIN
+6. 数据面调用链行为等价（候选实例集合与现状一致，含空候选 404 语义）
+7. 全量测试通过（基线 1466+，无回归）
+8. 文档（api-spec.md/架构文档）同步更新"认证即授权"语义与体验中心授权
