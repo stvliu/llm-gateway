@@ -95,8 +95,7 @@ public class InstanceSelector {
 
         // 4. 纯路由链（优先级/健康）
         Map<Long, Integer> channelPriorityMap = buildChannelPriorityMap(applicationId);
-        RoutingRequest request = new RoutingRequest(modelId, applicationId, userId, role, strategy, protocol,
-                channelPriorityMap);
+        RoutingRequest request = new RoutingRequest(modelId, applicationId, strategy, protocol, channelPriorityMap);
         List<ModelInstance> result = routerChain.filter(candidates, request);
 
         if (result.isEmpty()) {

@@ -29,6 +29,7 @@ import org.springframework.core.annotation.Order;
 
 import java.lang.reflect.Field;
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
@@ -57,7 +58,7 @@ class RouterChainTest {
     @DisplayName("空 Router 列表时返回原列表")
     void emptyRouters_returnsOriginalList() {
         List<ModelInstance> instances = List.of(new ModelInstance());
-        RoutingRequest request = new RoutingRequest(1L, 1L, "USER", RoutingStrategy.WEIGHTED);
+        RoutingRequest request = new RoutingRequest(1L, 1L, RoutingStrategy.WEIGHTED, null, null);
 
         List<ModelInstance> result = routerChain.filter(instances, request);
 
@@ -71,7 +72,7 @@ class RouterChainTest {
         RouterChain chain = new RouterChain(List.of(nonForceRouter));
 
         List<ModelInstance> instances = List.of(new ModelInstance());
-        RoutingRequest request = new RoutingRequest(1L, 1L, "USER", RoutingStrategy.WEIGHTED);
+        RoutingRequest request = new RoutingRequest(1L, 1L, RoutingStrategy.WEIGHTED, null, null);
 
         List<ModelInstance> result = chain.filter(instances, request);
 
@@ -92,7 +93,7 @@ class RouterChainTest {
         RouterChain chain = new RouterChain(List.of(forceRouter));
 
         List<ModelInstance> instances = List.of(new ModelInstance());
-        RoutingRequest request = new RoutingRequest(1L, 1L, "USER", RoutingStrategy.WEIGHTED);
+        RoutingRequest request = new RoutingRequest(1L, 1L, RoutingStrategy.WEIGHTED, null, null);
 
         List<ModelInstance> result = chain.filter(instances, request);
 
@@ -128,7 +129,7 @@ class RouterChainTest {
         mi3.setWeight(null);
 
         List<ModelInstance> result = chain.filter(List.of(mi1, mi2, mi3),
-                new RoutingRequest(1L, 1L, "USER", RoutingStrategy.WEIGHTED));
+                new RoutingRequest(1L, 1L, RoutingStrategy.WEIGHTED, null, null));
 
         // RouterA (100) 先执行：过滤掉 weight=null 的 → [mi1, mi2]
         // RouterB (200) 后执行：过滤掉 weight<=50 的 → [mi1]
@@ -187,7 +188,7 @@ class RouterChainTest {
                 passThrough));
 
         List<ModelInstance> result = chain.filter(List.of(ch1, ch2),
-                new RoutingRequest(1L, 1L, 1L, "USER", RoutingStrategy.WEIGHTED, Protocol.OPENAI));
+                new RoutingRequest(1L, 1L, RoutingStrategy.WEIGHTED, Protocol.OPENAI, Map.of()));
 
         // Health 先过滤掉熔断的 ch1 → [ch2]；Priority 在剩余 ch2 上选 → [ch2]；透传路由保持 [ch2]
         assertThat(result).hasSize(1);
@@ -205,7 +206,7 @@ class RouterChainTest {
         backup.setPriority(2);
 
         RouterChain chain = new RouterChain(List.of(new PriorityRouter()));
-        RoutingRequest request = new RoutingRequest(1L, 1L, "USER", RoutingStrategy.WEIGHTED);
+        RoutingRequest request = new RoutingRequest(1L, 1L, RoutingStrategy.WEIGHTED, null, Map.of());
 
         List<ModelInstance> result = chain.filter(List.of(primary, backup), request);
 

@@ -28,7 +28,7 @@ import java.util.Map;
  * <p>{@code protocol} 为入站协议，供 {@link HealthRouter} 按协议从 channelId 派生 endpointId，
  * 统一熔断 key 为 endpoint 粒度（与 {@code KeyFailoverInvoker} 共享同一熔断器 bean）。</p>
  *
- * <p>Task 3：{@code channelPriorityMap} 携带应用级渠道转移优先级（key=channelId, value=priority），
+ * <p>{@code channelPriorityMap} 携带应用级渠道转移优先级（key=channelId, value=priority），
  * 供 {@link PriorityRouter} 按应用级 priority 升序排序，实现同一渠道对不同应用不同转移顺序。
  * 为空表示无应用级映射（{@code PriorityRouter} 回退默认值 100）。</p>
  *
@@ -39,8 +39,6 @@ public class RoutingRequest {
 
     private final Long modelId;
     private final Long applicationId;
-    private final Long userId;
-    private final String role;
     private final RoutingStrategy strategy;
     private final Protocol protocol;
     /**
@@ -52,71 +50,32 @@ public class RoutingRequest {
     private final Map<Long, Integer> channelPriorityMap;
 
     /**
-     * @deprecated 请改用 {@link #RoutingRequest(Long, Long, Long, String, RoutingStrategy, Protocol)}。
-     * 旧调用方未传入应用 ID，将导致 {@link InstanceSelector} 无配置锚点而返回空集（空渠道配置）。
-     */
-    @Deprecated
-    public RoutingRequest(Long modelId, Long userId, String role, RoutingStrategy strategy) {
-        this(modelId, null, userId, role, strategy, null);
-    }
-
-    /**
-     * @deprecated 请改用 {@link #RoutingRequest(Long, Long, Long, String, RoutingStrategy, Protocol)}。
-     * 本构造器未传入入站协议，{@link HealthRouter} 无法派生 endpointId，将把实例视为不可用而全部过滤。
-     */
-    @Deprecated
-    public RoutingRequest(Long modelId, Long applicationId, Long userId, String role, RoutingStrategy strategy) {
-        this(modelId, applicationId, userId, role, strategy, null);
-    }
-
-    /**
-     * 构造路由请求上下文（无应用级渠道优先级映射，向后兼容）
+     * 构造路由请求上下文
      *
-     * <p>委托 {@link #RoutingRequest(Long, Long, Long, String, RoutingStrategy, Protocol, Map)}
-     * 传空 channelPriorityMap（{@link PriorityRouter} 回退默认值 100）。</p>
-     *
-     * @param modelId       模型 ID
-     * @param applicationId 应用 ID（配置锚点；为 null 时渠道配置为空集）
-     * @param userId        用户 ID
-     * @param role          用户角色
-     * @param strategy      路由策略
-     * @param protocol      入站协议（供 HealthRouter 按 channelId 派生 endpointId，统一熔断 key）
-     */
-    public RoutingRequest(Long modelId, Long applicationId, Long userId, String role,
-                          RoutingStrategy strategy, Protocol protocol) {
-        this(modelId, applicationId, userId, role, strategy, protocol, Map.of());
-    }
-
-    /**
-     * 构造路由请求上下文（携带应用级渠道优先级映射，Task 3）
+     * <p>数据面认证即授权后，{@code userId}/{@code role} 不再透传（全链无消费者）；
+     * 保留 {@code applicationId}（应用配置锚点）、{@code protocol}（HealthRouter 派生
+     * endpointId）、{@code channelPriorityMap}（PriorityRouter 应用级优先级）。</p>
      *
      * @param modelId            模型 ID
-     * @param applicationId      应用 ID（配置锚点；为 null 时渠道配置为空集）
-     * @param userId             用户 ID
-     * @param role               用户角色
+     * @param applicationId      应用 ID（配置锚点）
      * @param strategy           路由策略
-     * @param protocol           入站协议（供 HealthRouter 按 channelId 派生 endpointId，统一熔断 key）
-     * @param channelPriorityMap 应用级渠道转移优先级映射（key=channelId, value=priority；为空回退默认值 100）
+     * @param protocol           入站协议（可 null）
+     * @param channelPriorityMap 应用级渠道优先级映射（可空映射）
      */
-    public RoutingRequest(Long modelId, Long applicationId, Long userId, String role,
-                          RoutingStrategy strategy, Protocol protocol,
-                          Map<Long, Integer> channelPriorityMap) {
+    public RoutingRequest(Long modelId, Long applicationId, RoutingStrategy strategy,
+                          Protocol protocol, Map<Long, Integer> channelPriorityMap) {
         this.modelId = modelId;
         this.applicationId = applicationId;
-        this.userId = userId;
-        this.role = role;
         this.strategy = strategy;
         this.protocol = protocol;
-        this.channelPriorityMap = channelPriorityMap != null ? channelPriorityMap : Map.of();
+        this.channelPriorityMap = channelPriorityMap;
     }
 
     public Long getModelId() { return modelId; }
 
     public Long getApplicationId() { return applicationId; }
 
-    public Long getUserId() { return userId; }
-
-    public String getRole() { return role; }
+    public RoutingStrategy getStrategy() { return strategy; }
 
     public Protocol getProtocol() { return protocol; }
 

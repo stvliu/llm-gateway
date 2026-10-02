@@ -72,7 +72,7 @@ class HealthRouterTest {
         when(circuitBreakerService.isAvailable(50L)).thenReturn(true);
         when(circuitBreakerService.isAvailable(60L)).thenReturn(false);
 
-        RoutingRequest request = new RoutingRequest(1L, 1L, 1L, "USER", RoutingStrategy.WEIGHTED, Protocol.OPENAI);
+        RoutingRequest request = new RoutingRequest(1L, 1L, RoutingStrategy.WEIGHTED, Protocol.OPENAI, null);
         List<ModelInstance> result = router.filter(List.of(mi1, mi2), request);
 
         assertThat(result).hasSize(1);
@@ -94,7 +94,7 @@ class HealthRouterTest {
         when(circuitBreakerService.isAvailable(50L)).thenReturn(false);
         when(circuitBreakerService.isAvailable(60L)).thenReturn(false);
 
-        RoutingRequest request = new RoutingRequest(1L, 1L, 1L, "USER", RoutingStrategy.WEIGHTED, Protocol.OPENAI);
+        RoutingRequest request = new RoutingRequest(1L, 1L, RoutingStrategy.WEIGHTED, Protocol.OPENAI, null);
         List<ModelInstance> result = router.filter(List.of(mi1, mi2), request);
 
         assertThat(result).isEmpty();
@@ -103,7 +103,7 @@ class HealthRouterTest {
     @Test
     @DisplayName("空列表返回空")
     void emptyInput_returnsEmpty() {
-        RoutingRequest request = new RoutingRequest(1L, 1L, 1L, "USER", RoutingStrategy.WEIGHTED, Protocol.OPENAI);
+        RoutingRequest request = new RoutingRequest(1L, 1L, RoutingStrategy.WEIGHTED, Protocol.OPENAI, null);
         List<ModelInstance> result = router.filter(List.of(), request);
 
         assertThat(result).isEmpty();
@@ -128,7 +128,7 @@ class HealthRouterTest {
         when(circuitBreakerService.isAvailable(50L)).thenReturn(false);
 
         // 入站协议 OPENAI → 派生 endpointId=50L → 熔断 → 实例被过滤
-        RoutingRequest request = new RoutingRequest(1L, 1L, 1L, "USER", RoutingStrategy.WEIGHTED, Protocol.OPENAI);
+        RoutingRequest request = new RoutingRequest(1L, 1L, RoutingStrategy.WEIGHTED, Protocol.OPENAI, null);
         List<ModelInstance> result = router.filter(List.of(mi), request);
 
         assertThat(result).isEmpty();
@@ -146,7 +146,7 @@ class HealthRouterTest {
         when(circuitBreakerService.isAvailable(60L)).thenReturn(true);
 
         // 入站协议 ANTHROPIC → 派生 endpointId=60L → 健康 → 实例保留
-        RoutingRequest request = new RoutingRequest(1L, 1L, 1L, "USER", RoutingStrategy.WEIGHTED, Protocol.ANTHROPIC);
+        RoutingRequest request = new RoutingRequest(1L, 1L, RoutingStrategy.WEIGHTED, Protocol.ANTHROPIC, null);
         List<ModelInstance> result = router.filter(List.of(mi), request);
 
         assertThat(result).hasSize(1);
@@ -164,7 +164,7 @@ class HealthRouterTest {
         when(endpointResolver.resolve(100L, Protocol.GEMINI))
                 .thenThrow(new ResourceNotFoundException("ChannelEndpoint", 100L));
 
-        RoutingRequest request = new RoutingRequest(1L, 1L, 1L, "USER", RoutingStrategy.WEIGHTED, Protocol.GEMINI);
+        RoutingRequest request = new RoutingRequest(1L, 1L, RoutingStrategy.WEIGHTED, Protocol.GEMINI, null);
         List<ModelInstance> result = router.filter(List.of(mi), request);
 
         assertThat(result).isEmpty();
@@ -179,7 +179,7 @@ class HealthRouterTest {
         mi.setChannelId(100L);
 
         // 入站协议为 null：无法派生 endpointId，保守过滤实例
-        RoutingRequest request = new RoutingRequest(1L, 1L, 1L, "USER", RoutingStrategy.WEIGHTED, null);
+        RoutingRequest request = new RoutingRequest(1L, 1L, RoutingStrategy.WEIGHTED, null, null);
         List<ModelInstance> result = router.filter(List.of(mi), request);
 
         assertThat(result).isEmpty();

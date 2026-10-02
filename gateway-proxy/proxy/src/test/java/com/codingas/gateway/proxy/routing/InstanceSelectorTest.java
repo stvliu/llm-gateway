@@ -177,8 +177,6 @@ class InstanceSelectorTest {
         RoutingRequest captured = captor.getValue();
         assertThat(captured.getApplicationId()).isEqualTo(7L);
         assertThat(captured.getModelId()).isEqualTo(1L);
-        assertThat(captured.getUserId()).isEqualTo(50L);
-        assertThat(captured.getRole()).isEqualTo("user");
         assertThat(captured.getProtocol()).isEqualTo(Protocol.OPENAI);
     }
 
