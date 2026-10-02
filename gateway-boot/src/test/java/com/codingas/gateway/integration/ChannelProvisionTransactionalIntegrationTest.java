@@ -91,8 +91,8 @@ class ChannelProvisionTransactionalIntegrationTest {
     /**
      * 使用独立 H2 内存库，避免 {@link DirtiesContext} 关闭上下文时 Hibernate
      * {@code ddl-auto: create-drop} 清空共享的 {@code jdbc:h2:mem:testdb}，
-     * 导致后续复用缓存上下文的集成测试（如 PermissionRefactorIntegrationTest）命中空库报
-     * "Table not found (this database is empty)"。本类专属库的删除操作不影响其他测试。
+     * 导致后续复用缓存上下文的集成测试命中空库报 "Table not found (this database is empty)"。
+     * 本类专属库的删除操作不影响其他测试。
      */
     @DynamicPropertySource
     static void isolatedDatasource(DynamicPropertyRegistry registry) {

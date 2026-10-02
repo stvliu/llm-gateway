@@ -68,12 +68,6 @@ public class JpaModelInstanceRepository implements ModelInstanceRepository {
     }
 
     @Override
-    public List<ModelInstance> findActiveByModelIdOrderByPriority(Long modelId) {
-        return modelInstanceRepository.findByModelIdAndStateInOrderByPriorityAsc(modelId, ROUTABLE_STATES)
-                .stream().map(this::toEntity).toList();
-    }
-
-    @Override
     public List<ModelInstance> findActiveByModelIdAndChannelIds(Long modelId, Collection<Long> channelIds) {
         return modelInstanceRepository
                 .findByModelIdAndChannelIdInAndStateInOrderByPriorityAsc(modelId, channelIds, ROUTABLE_STATES)

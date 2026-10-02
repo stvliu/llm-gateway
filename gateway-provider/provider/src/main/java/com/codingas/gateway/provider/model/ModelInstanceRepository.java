@@ -54,11 +54,6 @@ public interface ModelInstanceRepository {
     List<ModelInstance> findByModelId(Long modelId);
 
     /**
-     * 根据模型规格ID查找可路由的模型实例（ACTIVE/DEPRECATED，按优先级升序）
-     */
-    List<ModelInstance> findActiveByModelIdOrderByPriority(Long modelId);
-
-    /**
      * 按模型与渠道集合查询活跃实例（按 priority 升序）
      *
      * <p>数据面路由前查询：渠道集合来自应用渠道配置（认证即授权下的配置读取），

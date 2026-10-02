@@ -31,9 +31,6 @@ import java.util.Map;
  * <p>{@code channelPriorityMap} 携带应用级渠道转移优先级（key=channelId, value=priority），
  * 供 {@link PriorityRouter} 按应用级 priority 升序排序，实现同一渠道对不同应用不同转移顺序。
  * 为空表示无应用级映射（{@code PriorityRouter} 回退默认值 100）。</p>
- *
- * <p>Task 8：移除 {@code resilienceProfile} 字段及构造参数（ResilienceProfile 实体退场，
- * timeout 下沉到 Application，不再贯穿路由链）。</p>
  */
 public class RoutingRequest {
 
@@ -75,8 +72,6 @@ public class RoutingRequest {
     public Long getModelId() { return modelId; }
 
     public Long getApplicationId() { return applicationId; }
-
-    public RoutingStrategy getStrategy() { return strategy; }
 
     public Protocol getProtocol() { return protocol; }
 

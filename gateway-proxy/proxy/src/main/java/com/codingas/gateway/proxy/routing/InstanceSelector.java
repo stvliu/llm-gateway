@@ -24,8 +24,6 @@ import com.codingas.gateway.provider.model.ModelInstance;
 import com.codingas.gateway.provider.model.ModelInstanceRepository;
 import com.codingas.gateway.protocol.Protocol;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.LinkedHashMap;
@@ -46,8 +44,6 @@ import java.util.stream.Collectors;
 @Component
 @RequiredArgsConstructor
 public class InstanceSelector {
-
-    private static final Logger log = LoggerFactory.getLogger(InstanceSelector.class);
 
     private final ModelInstanceRepository modelInstanceRepository;
     private final RouterChain routerChain;

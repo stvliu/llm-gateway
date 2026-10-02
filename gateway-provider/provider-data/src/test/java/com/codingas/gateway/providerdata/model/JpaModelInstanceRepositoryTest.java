@@ -37,8 +37,7 @@ import static org.mockito.Mockito.when;
  * JpaModelInstanceRepository 单元测试：mock Repository 验证委托与 model↔DO 双向转换
  *
  * <p>覆盖 JpaModelInstanceRepository 全部 public 方法（save/findById/findByChannelId/
- * findActiveByChannelId/findActiveByModelIdOrderByPriority/
- * existsByChannelIdAndModelId/saveAll/deleteById）。</p>
+ * findActiveByChannelId/existsByChannelIdAndModelId/saveAll/deleteById）。</p>
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("JpaModelInstanceRepository 单元测试")
@@ -190,18 +189,6 @@ class ModelInstanceGatewayImplTest {
         assertThat(active).extracting(ModelInstance::getState)
                 .containsExactlyInAnyOrder(ModelInstance.State.ACTIVE, ModelInstance.State.DEPRECATED);
         verify(modelInstanceRepository).findByChannelIdAndStateIn(10L, List.of("ACTIVE", "DEPRECATED"));
-    }
-
-    @Test
-    @DisplayName("findActiveByModelIdOrderByPriority：按优先级升序+可路由状态(ACTIVE/DEPRECATED)查询并转换")
-    void findActiveByModelIdOrderByPriority_queriesOrdered() {
-        when(modelInstanceRepository.findByModelIdAndStateInOrderByPriorityAsc(100L, List.of("ACTIVE", "DEPRECATED")))
-                .thenReturn(List.of(sampleDo(1L, 10L, 100L, "ACTIVE")));
-
-        List<ModelInstance> result = gateway.findActiveByModelIdOrderByPriority(100L);
-
-        assertThat(result).hasSize(1);
-        verify(modelInstanceRepository).findByModelIdAndStateInOrderByPriorityAsc(100L, List.of("ACTIVE", "DEPRECATED"));
     }
 
     @Test
