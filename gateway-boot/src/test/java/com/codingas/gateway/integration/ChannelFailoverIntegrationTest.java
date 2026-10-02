@@ -291,14 +291,15 @@ class ChannelFailoverIntegrationTest extends FullContextIntegrationTestBase {
     class RouterChainCompositionTests {
 
         @Test
-        @DisplayName("RouterChain 按预期顺序组成：Permission → Health → Priority → LoadBalance")
+        @DisplayName("RouterChain 组成验证：权限/负载均衡路由器已删除，仅 Health → Priority")
         void routerChain_composedByExpectedOrder() throws Exception {
             // 读取 RouterChain 已按 @Order 排序的责任链路由器类名
             List<String> routerNames = readRouterClassNames(realRouterChain);
 
-            // 保留路由器按 @Order 升序保持：Permission → EndpointHealth(Health) → Priority → LoadBalance
+            // 数据面认证即授权后，PermissionRouter/LoadBalanceRouter 已删除，链仅含纯路由：
+            // EndpointHealth(Health, @Order 200) → Priority(@Order 300)
             assertThat(routerNames)
-                    .containsSubsequence("PermissionRouter", "HealthRouter", "PriorityRouter", "LoadBalanceRouter");
+                    .containsExactly("HealthRouter", "PriorityRouter");
         }
     }
 
