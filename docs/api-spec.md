@@ -1458,11 +1458,13 @@ anthropic-version: 2023-06-01
 | 数据面（代理 API `/v1/**`） | 应用（applicationId 权限锚点） | 认证即授权（Key 绑定应用即 invoke 授权，无独立数据面授权判定）；`application_channel` 为应用渠道配置（非授权表） | 应用配置渠道集合 |
 
 控制面规则表代码化于 iam 域（`AuthorizationService.CONTROL_RULES`），与前端 `RolePermissions` 权限码语义对齐；
-数据面无独立授权判定层——授权蕴含在认证（认证即授权），应用渠道配置由 `InstanceSelector` 在配置读取阶段按 `applicationId` 直查（非授权过滤），详见「数据面授权（认证即授权，v1.x）」。
+数据面无独立授权判定层——授权蕴含在认证（认证即授权），应用渠道配置由 `InstanceSelector` 在配置读取阶段经 `ApplicationChannelConfigProvider` 本地缓存按 `applicationId` 读取（非授权过滤），详见「数据面授权（认证即授权，v1.x）」。
 
 ### 数据面授权（认证即授权，v1.x）
 
 数据面调用链：API Key 认证（Key 绑定应用）→ 应用渠道配置读取 → 实例查询（DB 层按渠道过滤）→ 路由（优先级/健康）。
+
+应用渠道配置读取经本地缓存（Caffeine，`ApplicationChannelConfigProvider`）承载：TTL 60s 兜底 + 配置写操作显式失效（`ApplicationServiceImpl` evict）+ 运维手工失效（`POST /api/v1/admin/cache/evict`，按应用或全清，仅 ADMIN），配置变更即时生效。
 
 - 授权蕴含在认证：`Identity.applicationId` 即 Key 绑定的应用资源（invoke 权限），请求参数无法覆盖
 - `application_channel` 为应用渠道配置（非授权表）；渠道/实例状态为 ABAC 属性（RouterChain 过滤）
@@ -1542,6 +1544,12 @@ anthropic-version: 2023-06-01
 - 渠道归属校验（使用已保存配置）：体验 `channelId` 必须属于当前用户任一应用的应用渠道配置（`user_api_keys.user_id` → 应用集合 → `application_channel` 渠道集合并集）；校验失败（越权渠道）→ HTTP 403
 - 临时配置限 ADMIN：`useSavedConfig=false`（`apiKey`/`baseUrl` 直连上游）仅 ADMIN 角色可用，USER 使用 → HTTP 403
 - 渠道不存在（`channelId` 无对应渠道）：异步执行内失败，以 SSE `ERROR` 事件返回（HTTP 200 + `event: ERROR`），与越权 403 形态区分
+
+### 7.21 缓存管理（CacheAdminController，`/api/v1/admin/cache`，仅 ADMIN 角色）
+
+| HTTP 动词 | 路径 | 用途 | 请求体/响应 |
+|-----------|------|------|------------|
+| POST | `/api/v1/admin/cache/evict` | 应用渠道配置缓存手工失效（运维） | query: `applicationId?`（按应用失效；缺省清空全部）→ 无业务数据 |
 
 ---
 
