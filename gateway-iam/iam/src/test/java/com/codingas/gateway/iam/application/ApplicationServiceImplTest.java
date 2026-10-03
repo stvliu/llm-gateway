@@ -30,6 +30,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.List;
 
@@ -308,6 +310,31 @@ class ApplicationServiceImplTest {
         }
 
         @Test
+        @DisplayName("事务上下文中 delete — afterCompletion 后二次失效（双 evict 防窗口期旧值回填）")
+        void delete_inTransaction_evictsAgainAfterCompletion() {
+            // 模拟事务同步激活（@Transactional 场景）
+            TransactionSynchronizationManager.initSynchronization();
+            try {
+                when(userApiKeyRepository.findByApplicationId(APP_ID)).thenReturn(List.of());
+
+                applicationService.delete(APP_ID);
+
+                // 第一道清：方法执行时立即失效一次（保留原行为）
+                verify(applicationChannelConfigProvider, times(1)).evict(APP_ID);
+                // 模拟事务提交完成，触发已注册的 afterCompletion 回调
+                for (TransactionSynchronization synchronization
+                        : TransactionSynchronizationManager.getSynchronizations()) {
+                    synchronization.afterCompletion(TransactionSynchronization.STATUS_COMMITTED);
+                }
+                // 第二道清：提交完成后再次失效，覆盖窗口期被旧数据回填的缓存
+                verify(applicationChannelConfigProvider, times(2)).evict(APP_ID);
+            } finally {
+                // 清理 ThreadLocal，避免污染同线程后续测试
+                TransactionSynchronizationManager.clearSynchronization();
+            }
+        }
+
+        @Test
         @DisplayName("应用下无 Key 引用 — 正常删除（级联清理渠道授权并失效配置缓存）")
         void delete_noApiKeys_deletesCascade() {
             when(userApiKeyRepository.findByApplicationId(APP_ID)).thenReturn(List.of());
@@ -412,6 +439,32 @@ class ApplicationServiceImplTest {
                     .isInstanceOf(GatewayRequestException.class);
             // 应用不存在（未发生写操作）时不得失效缓存
             verify(applicationChannelConfigProvider, never()).evict(any());
+        }
+
+        @Test
+        @DisplayName("事务上下文中 updateChannels — afterCompletion 后二次失效（双 evict 防窗口期旧值回填）")
+        void updateChannels_inTransaction_evictsAgainAfterCompletion() {
+            // 模拟事务同步激活（@Transactional 场景）
+            TransactionSynchronizationManager.initSynchronization();
+            try {
+                when(applicationRepository.findById(APP_ID))
+                        .thenReturn(buildSavedApplication(APP_ID, "APP-001", "应用"));
+
+                applicationService.updateChannels(APP_ID, List.of(appChannel(10L, 1)));
+
+                // 第一道清：方法执行时立即失效一次（保留原行为）
+                verify(applicationChannelConfigProvider, times(1)).evict(APP_ID);
+                // 模拟事务提交完成，触发已注册的 afterCompletion 回调
+                for (TransactionSynchronization synchronization
+                        : TransactionSynchronizationManager.getSynchronizations()) {
+                    synchronization.afterCompletion(TransactionSynchronization.STATUS_COMMITTED);
+                }
+                // 第二道清：提交完成后再次失效，覆盖窗口期被旧数据回填的缓存
+                verify(applicationChannelConfigProvider, times(2)).evict(APP_ID);
+            } finally {
+                // 清理 ThreadLocal，避免污染同线程后续测试
+                TransactionSynchronizationManager.clearSynchronization();
+            }
         }
 
         @Test

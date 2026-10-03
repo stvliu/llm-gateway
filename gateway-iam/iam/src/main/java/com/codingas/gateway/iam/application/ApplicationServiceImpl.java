@@ -25,6 +25,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.List;
 
@@ -123,8 +125,8 @@ public class ApplicationServiceImpl implements ApplicationService {
         }
         // 级联清理渠道授权关联，避免孤儿数据
         applicationChannelRepository.deleteByApplicationId(id);
-        // 渠道配置写操作后显式失效缓存（变更即时生效）
-        applicationChannelConfigProvider.evict(id);
+        // 渠道配置写操作后失效缓存（事务提交后二次失效，变更即时生效）
+        evictChannelConfigAfterCommit(id);
         applicationRepository.deleteById(id);
         log.info("Deleted application: id={}", id);
     }
@@ -158,9 +160,35 @@ public class ApplicationServiceImpl implements ApplicationService {
             channels.forEach(rel -> rel.setApplicationId(id));
             applicationChannelRepository.saveAll(channels);
         }
-        // 渠道配置写操作后显式失效缓存（含空列表清空旧关联的分支，变更即时生效）
-        applicationChannelConfigProvider.evict(id);
+        // 渠道配置写操作后失效缓存（含空列表清空旧关联的分支，事务提交后二次失效）
+        evictChannelConfigAfterCommit(id);
         log.info("Updated application channels: appId={}, count={}", id,
                 channels != null ? channels.size() : 0);
+    }
+
+    /**
+     * 渠道配置缓存双失效：立即失效一次，事务激活时提交完成后（afterCompletion）再失效一次。
+     *
+     * <p>事务内仅立即失效存在竞态窗口：evict 与事务提交之间的毫秒级间隙内，
+     * 高并发读未命中缓存后经 loader 读到未提交的旧数据并回填缓存，
+     * 旧值将存活至 TTL 60 秒，"配置变更即时生效"承诺失效。</p>
+     *
+     * <p>第一道清（立即 evict）：无事务场景即为最终清（行为不变）；
+     * 有事务场景覆盖窗口外的常规失效。第二道清（afterCompletion 再 evict）：
+     * 仅在事务同步激活时注册，提交或回滚完成后再次失效，
+     * 覆盖窗口期被旧值回填的缓存——回滚场景多失效一次无害（数据未变，重载即一致）。</p>
+     */
+    private void evictChannelConfigAfterCommit(Long applicationId) {
+        // 第一道清：立即失效（保留原行为）
+        applicationChannelConfigProvider.evict(applicationId);
+        // 第二道清：事务激活时注册同步回调，提交/回滚完成后再失效一次
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCompletion(int status) {
+                    applicationChannelConfigProvider.evict(applicationId);
+                }
+            });
+        }
     }
 }
