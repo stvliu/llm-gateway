@@ -97,4 +97,20 @@ class ApplicationChannelConfigProviderTest {
         assertThat(provider.findChannelIdsByApplicationId(100L)).containsExactlyInAnyOrder(1L, 2L);
         verify(repository, times(2)).findChannelIdsByApplicationId(100L);
     }
+
+    @Test
+    @DisplayName("clearAll：清空全部缓存后重新查询仓储")
+    void clearAll_reloadsAllFromRepository() {
+        when(repository.findChannelIdsByApplicationId(100L)).thenReturn(Set.of(1L));
+        when(repository.findChannelIdsByApplicationId(200L)).thenReturn(Set.of(2L));
+        provider.findChannelIdsByApplicationId(100L);
+        provider.findChannelIdsByApplicationId(200L);
+
+        provider.clearAll();
+        provider.findChannelIdsByApplicationId(100L);
+        provider.findChannelIdsByApplicationId(200L);
+
+        verify(repository, times(2)).findChannelIdsByApplicationId(100L);
+        verify(repository, times(2)).findChannelIdsByApplicationId(200L);
+    }
 }

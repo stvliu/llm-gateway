@@ -92,6 +92,14 @@ public class ApplicationChannelConfigProvider {
         priorityMapCache.invalidate(applicationId);
     }
 
+    /**
+     * 清空全部缓存（运维手工失效：全量重新加载）
+     */
+    public void clearAll() {
+        channelIdsCache.invalidateAll();
+        priorityMapCache.invalidateAll();
+    }
+
     private static <K, V> Cache<K, V> newCache() {
         return Caffeine.newBuilder()
                 .maximumSize(500)
