@@ -45,7 +45,9 @@ import static org.mockito.Mockito.*;
  * ApplicationServiceImpl 单元测试
  *
  * <p>验证应用根实体的 CRUD 与渠道授权绑定业务逻辑：
- * code 唯一校验、状态默认值、渠道授权先删后建、timeout 透传等。</p>
+ * code 唯一校验、状态默认值、渠道授权先删后建、timeout 透传等。
+ * 渠道配置写操作（delete/updateChannels）后须调用
+ * {@link ApplicationChannelConfigProvider#evict} 显式失效缓存。</p>
  *
  * <p>Task 8：{@code resilienceProfileId}/bindResilienceProfile 退场，改为 {@code timeout} 透传。</p>
  */
@@ -61,6 +63,9 @@ class ApplicationServiceImplTest {
 
     @Mock
     private UserApiKeyRepository userApiKeyRepository;
+
+    @Mock
+    private ApplicationChannelConfigProvider applicationChannelConfigProvider;
 
     @InjectMocks
     private ApplicationServiceImpl applicationService;
@@ -275,12 +280,14 @@ class ApplicationServiceImplTest {
     class DeleteTests {
 
         @Test
-        @DisplayName("删除应用并级联清理渠道授权关联")
+        @DisplayName("删除应用并级联清理渠道授权关联，且失效配置缓存")
         void delete_cascadesChannelAuthorizations() {
             applicationService.delete(1L);
 
             verify(applicationRepository).deleteById(1L);
             verify(applicationChannelRepository).deleteByApplicationId(1L);
+            // 写操作后显式失效配置缓存（变更即时生效）
+            verify(applicationChannelConfigProvider).evict(1L);
         }
 
         @Test
@@ -296,10 +303,12 @@ class ApplicationServiceImplTest {
                     .hasMessageContaining("API Key");
             verify(applicationRepository, never()).deleteById(any());
             verify(applicationChannelRepository, never()).deleteByApplicationId(any());
+            // 删除被拒绝（未发生写操作）时不得失效缓存
+            verify(applicationChannelConfigProvider, never()).evict(any());
         }
 
         @Test
-        @DisplayName("应用下无 Key 引用 — 正常删除（级联清理渠道授权）")
+        @DisplayName("应用下无 Key 引用 — 正常删除（级联清理渠道授权并失效配置缓存）")
         void delete_noApiKeys_deletesCascade() {
             when(userApiKeyRepository.findByApplicationId(APP_ID)).thenReturn(List.of());
 
@@ -307,6 +316,8 @@ class ApplicationServiceImplTest {
 
             verify(applicationChannelRepository).deleteByApplicationId(APP_ID);
             verify(applicationRepository).deleteById(APP_ID);
+            // 写操作后显式失效配置缓存（变更即时生效）
+            verify(applicationChannelConfigProvider).evict(APP_ID);
         }
     }
 
@@ -387,6 +398,8 @@ class ApplicationServiceImplTest {
                     .singleElement()
                     .extracting(ApplicationChannel::getPriority)
                     .isNull();
+            // 渠道配置写操作后显式失效配置缓存（变更即时生效）
+            verify(applicationChannelConfigProvider).evict(1L);
         }
 
         @Test
@@ -397,10 +410,12 @@ class ApplicationServiceImplTest {
             assertThatThrownBy(() -> applicationService.updateChannels(999L,
                     List.of(appChannel(10L, 1))))
                     .isInstanceOf(GatewayRequestException.class);
+            // 应用不存在（未发生写操作）时不得失效缓存
+            verify(applicationChannelConfigProvider, never()).evict(any());
         }
 
         @Test
-        @DisplayName("updateChannels 空渠道列表时仅清空不保存")
+        @DisplayName("updateChannels 空渠道列表时仅清空不保存，仍失效配置缓存")
         void updateChannels_emptyList_onlyDeletes() {
             when(applicationRepository.findById(1L))
                     .thenReturn(buildSavedApplication(1L, "APP-001", "应用"));
@@ -409,6 +424,8 @@ class ApplicationServiceImplTest {
 
             verify(applicationChannelRepository).deleteByApplicationId(1L);
             verify(applicationChannelRepository, never()).saveAll(any());
+            // 清空旧关联同样是写操作，须失效配置缓存
+            verify(applicationChannelConfigProvider).evict(1L);
         }
     }
 

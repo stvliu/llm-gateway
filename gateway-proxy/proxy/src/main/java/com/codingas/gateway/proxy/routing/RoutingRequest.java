@@ -41,8 +41,9 @@ public class RoutingRequest {
     /**
      * 应用级渠道转移优先级映射（key=channelId, value=priority，数值越小越优先）
      *
-     * <p>由 {@link InstanceSelector} 查 {@code ApplicationChannelRepository.findByApplicationId}
-     * 构建；为空（如 applicationId 为 null）时 {@link PriorityRouter} 回退默认值 100。</p>
+     * <p>由 {@link InstanceSelector} 经
+     * {@code ApplicationChannelConfigProvider.findPriorityMapByApplicationId}（缓存装饰）构建；
+     * 为空（如 applicationId 为 null）时 {@link PriorityRouter} 回退默认值 100。</p>
      */
     private final Map<Long, Integer> channelPriorityMap;
 

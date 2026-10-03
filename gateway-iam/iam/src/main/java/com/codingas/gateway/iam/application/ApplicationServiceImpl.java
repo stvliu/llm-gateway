@@ -47,6 +47,8 @@ public class ApplicationServiceImpl implements ApplicationService {
     private final ApplicationRepository applicationRepository;
     private final ApplicationChannelRepository applicationChannelRepository;
     private final UserApiKeyRepository userApiKeyRepository;
+    /** 应用渠道配置提供者（缓存装饰——配置写操作后显式失效，保证变更即时生效） */
+    private final ApplicationChannelConfigProvider applicationChannelConfigProvider;
 
     @Override
     @Transactional
@@ -121,6 +123,8 @@ public class ApplicationServiceImpl implements ApplicationService {
         }
         // 级联清理渠道授权关联，避免孤儿数据
         applicationChannelRepository.deleteByApplicationId(id);
+        // 渠道配置写操作后显式失效缓存（变更即时生效）
+        applicationChannelConfigProvider.evict(id);
         applicationRepository.deleteById(id);
         log.info("Deleted application: id={}", id);
     }
@@ -154,6 +158,8 @@ public class ApplicationServiceImpl implements ApplicationService {
             channels.forEach(rel -> rel.setApplicationId(id));
             applicationChannelRepository.saveAll(channels);
         }
+        // 渠道配置写操作后显式失效缓存（含空列表清空旧关联的分支，变更即时生效）
+        applicationChannelConfigProvider.evict(id);
         log.info("Updated application channels: appId={}, count={}", id,
                 channels != null ? channels.size() : 0);
     }

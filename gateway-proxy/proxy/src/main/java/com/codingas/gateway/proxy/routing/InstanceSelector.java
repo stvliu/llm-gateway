@@ -16,8 +16,7 @@
 package com.codingas.gateway.proxy.routing;
 
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
-import com.codingas.gateway.iam.application.ApplicationChannel;
-import com.codingas.gateway.iam.application.ApplicationChannelRepository;
+import com.codingas.gateway.iam.application.ApplicationChannelConfigProvider;
 import com.codingas.gateway.provider.channel.Channel;
 import com.codingas.gateway.provider.channel.ChannelRepository;
 import com.codingas.gateway.provider.model.ModelInstance;
@@ -26,7 +25,6 @@ import com.codingas.gateway.protocol.Protocol;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -36,9 +34,10 @@ import java.util.stream.Collectors;
  * 模型实例选择器 — 数据面认证即授权：配置读取前移 + 纯路由链
  *
  * <p>数据面授权已蕴含在认证（{@code Identity.applicationId} 即 Key 绑定的应用资源）：
- * 本类读取应用的渠道配置（{@link ApplicationChannelRepository#findChannelIdsByApplicationId}，
- * 配置而非授权判定），过滤活跃渠道（ABAC 属性 {@code state.isRoutable()}，proxy 层执行），
- * 带条件查询实例（{@link ModelInstanceRepository#findActiveByModelIdAndChannelIds}，DB 层过滤），
+ * 本类经 {@link ApplicationChannelConfigProvider#findChannelIdsByApplicationId}（缓存装饰）
+ * 读取应用的渠道配置（配置而非授权判定），过滤活跃渠道（ABAC 属性 {@code state.isRoutable()}，
+ * proxy 层执行），带条件查询实例
+ * （{@link ModelInstanceRepository#findActiveByModelIdAndChannelIds}，DB 层过滤），
  * 再经 {@link RouterChain} 纯路由（优先级/健康）返回候选列表。</p>
  */
 @Component
@@ -47,8 +46,8 @@ public class InstanceSelector {
 
     private final ModelInstanceRepository modelInstanceRepository;
     private final RouterChain routerChain;
-    /** 应用-渠道配置仓储（认证即授权：配置读取，非授权判定） */
-    private final ApplicationChannelRepository applicationChannelRepository;
+    /** 应用-渠道配置提供者（认证即授权：配置读取热点走本地缓存，非授权判定） */
+    private final ApplicationChannelConfigProvider applicationChannelConfigProvider;
     /** 渠道仓储（活跃渠道过滤——ABAC 属性，proxy 层执行） */
     private final ChannelRepository channelRepository;
 
@@ -100,12 +99,9 @@ public class InstanceSelector {
         return result;
     }
 
-    /** 应用渠道配置读取（applicationId 为 null → 空集） */
+    /** 应用渠道配置读取（缓存装饰；applicationId 为 null → 空集，由 Provider 内部处理） */
     private Set<Long> getConfiguredChannelIds(Long applicationId) {
-        if (applicationId == null) {
-            return Set.of();
-        }
-        return applicationChannelRepository.findChannelIdsByApplicationId(applicationId);
+        return applicationChannelConfigProvider.findChannelIdsByApplicationId(applicationId);
     }
 
     /** 活跃渠道过滤（state.isRoutable()） */
@@ -116,18 +112,8 @@ public class InstanceSelector {
                 .collect(Collectors.toSet());
     }
 
-    /** 构建应用级渠道优先级映射（PriorityRouter 消费） */
+    /** 构建应用级渠道优先级映射（缓存装饰，null 优先级剔除由 Provider 内部处理；PriorityRouter 消费） */
     private Map<Long, Integer> buildChannelPriorityMap(Long applicationId) {
-        if (applicationId == null) {
-            return Map.of();
-        }
-        List<ApplicationChannel> channels = applicationChannelRepository.findByApplicationId(applicationId);
-        Map<Long, Integer> map = new LinkedHashMap<>();
-        for (ApplicationChannel channel : channels) {
-            if (channel.getPriority() != null) {
-                map.put(channel.getChannelId(), channel.getPriority());
-            }
-        }
-        return map;
+        return applicationChannelConfigProvider.findPriorityMapByApplicationId(applicationId);
     }
 }

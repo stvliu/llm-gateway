@@ -16,8 +16,7 @@
 package com.codingas.gateway.proxy.routing;
 
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
-import com.codingas.gateway.iam.application.ApplicationChannel;
-import com.codingas.gateway.iam.application.ApplicationChannelRepository;
+import com.codingas.gateway.iam.application.ApplicationChannelConfigProvider;
 import com.codingas.gateway.provider.channel.Channel;
 import com.codingas.gateway.provider.channel.ChannelRepository;
 import com.codingas.gateway.provider.channel.ChannelState;
@@ -48,9 +47,10 @@ import static org.mockito.Mockito.when;
 /**
  * InstanceSelector 单元测试
  *
- * <p>验证 {@link InstanceSelector#select} 数据面「认证即授权」语义：读取应用渠道配置
- * （配置而非授权）、过滤活跃渠道（ABAC 属性）、带条件查询实例（DB 层过滤），再经
- * {@link RouterChain} 纯路由（优先级/健康）返回候选 {@link ModelInstance} 列表。
+ * <p>验证 {@link InstanceSelector#select} 数据面「认证即授权」语义：经
+ * {@link ApplicationChannelConfigProvider}（缓存装饰）读取应用渠道配置（配置而非授权）、
+ * 过滤活跃渠道（ABAC 属性）、带条件查询实例（DB 层过滤），再经 {@link RouterChain}
+ * 纯路由（优先级/健康）返回候选 {@link ModelInstance} 列表。
  * 授权相关断言已从 PermissionRouterTest 迁移至此（PermissionRouter 已删除）。</p>
  */
 @ExtendWith(MockitoExtension.class)
@@ -64,7 +64,7 @@ class InstanceSelectorTest {
     private RouterChain routerChain;
 
     @Mock
-    private ApplicationChannelRepository applicationChannelRepository;
+    private ApplicationChannelConfigProvider applicationChannelConfigProvider;
 
     @Mock
     private ChannelRepository channelRepository;
@@ -86,7 +86,7 @@ class InstanceSelectorTest {
         ModelInstance mi1 = buildInstance(11L, 100L, 1);
         ModelInstance mi2 = buildInstance(12L, 200L, 2);
         ModelInstance mi3 = buildInstance(13L, 300L, 3);
-        when(applicationChannelRepository.findChannelIdsByApplicationId(7L))
+        when(applicationChannelConfigProvider.findChannelIdsByApplicationId(7L))
                 .thenReturn(Set.of(100L, 200L, 300L));
         when(channelRepository.findByIds(anyList()))
                 .thenReturn(List.of(activeChannel(100L), activeChannel(200L), activeChannel(300L)));
@@ -109,7 +109,7 @@ class InstanceSelectorTest {
     void select_filtersByApplicationChannels() {
         // given — 应用 100 配置渠道 {1}，渠道 1 活跃，实例查询带条件返回 mi1
         ModelInstance mi1 = buildInstance(10L, 1L, 1);
-        when(applicationChannelRepository.findChannelIdsByApplicationId(100L)).thenReturn(Set.of(1L));
+        when(applicationChannelConfigProvider.findChannelIdsByApplicationId(100L)).thenReturn(Set.of(1L));
         when(channelRepository.findByIds(List.of(1L))).thenReturn(List.of(activeChannel(1L)));
         when(modelInstanceRepository.findActiveByModelIdAndChannelIds(10L, Set.of(1L))).thenReturn(List.of(mi1));
         when(routerChain.filter(any(), any(RoutingRequest.class))).thenReturn(List.of(mi1));
@@ -126,7 +126,7 @@ class InstanceSelectorTest {
     @Test
     @DisplayName("select：应用无渠道配置（空集合）→ ResourceNotFoundException")
     void select_emptyChannelConfig_throws() {
-        when(applicationChannelRepository.findChannelIdsByApplicationId(100L)).thenReturn(Set.of());
+        when(applicationChannelConfigProvider.findChannelIdsByApplicationId(100L)).thenReturn(Set.of());
 
         assertThatThrownBy(() -> instanceSelector.select(
                 10L, 100L, 1L, "USER", RoutingStrategy.WEIGHTED, Protocol.OPENAI))
@@ -137,7 +137,7 @@ class InstanceSelectorTest {
     @DisplayName("select：无活跃实例（查询空）→ ResourceNotFoundException")
     void select_noActiveInstances_throws() {
         // given — 渠道配置 {1}，渠道 1 活跃，但按模型+渠道查询实例为空
-        when(applicationChannelRepository.findChannelIdsByApplicationId(100L)).thenReturn(Set.of(1L));
+        when(applicationChannelConfigProvider.findChannelIdsByApplicationId(100L)).thenReturn(Set.of(1L));
         when(channelRepository.findByIds(List.of(1L))).thenReturn(List.of(activeChannel(1L)));
         when(modelInstanceRepository.findActiveByModelIdAndChannelIds(10L, Set.of(1L))).thenReturn(List.of());
 
@@ -149,7 +149,7 @@ class InstanceSelectorTest {
     @Test
     @DisplayName("RouterChain 过滤后无候选时抛出 ResourceNotFoundException")
     void select_filterReturnsEmpty_throws() {
-        when(applicationChannelRepository.findChannelIdsByApplicationId(7L)).thenReturn(Set.of(100L));
+        when(applicationChannelConfigProvider.findChannelIdsByApplicationId(7L)).thenReturn(Set.of(100L));
         when(channelRepository.findByIds(List.of(100L))).thenReturn(List.of(activeChannel(100L)));
         when(modelInstanceRepository.findActiveByModelIdAndChannelIds(1L, Set.of(100L))).thenReturn(List.of(instance));
         when(routerChain.filter(any(), any(RoutingRequest.class))).thenReturn(List.of());
@@ -163,7 +163,7 @@ class InstanceSelectorTest {
     @DisplayName("select 将 applicationId 与 protocol 透传至 RoutingRequest")
     void select_forwardsApplicationIdAndProtocolToRoutingRequest() {
         // given
-        when(applicationChannelRepository.findChannelIdsByApplicationId(7L)).thenReturn(Set.of(100L));
+        when(applicationChannelConfigProvider.findChannelIdsByApplicationId(7L)).thenReturn(Set.of(100L));
         when(channelRepository.findByIds(List.of(100L))).thenReturn(List.of(activeChannel(100L)));
         when(modelInstanceRepository.findActiveByModelIdAndChannelIds(1L, Set.of(100L))).thenReturn(List.of(instance));
         when(routerChain.filter(any(), any(RoutingRequest.class))).thenReturn(List.of(instance));
@@ -181,21 +181,17 @@ class InstanceSelectorTest {
     }
 
     @Test
-    @DisplayName("select 查应用授权渠道 priority 构建 channelPriorityMap 填入 RoutingRequest")
+    @DisplayName("select 经 Provider 取渠道 priority 映射填入 RoutingRequest")
     void select_buildsChannelPriorityMapFromApplicationChannels() {
-        // given — 应用 7 授权渠道 100(priority=1)、200(priority=2)、300(priority=null)
-        ApplicationChannel rel1 = new ApplicationChannel(7L, 100L);
-        rel1.setPriority(1);
-        ApplicationChannel rel2 = new ApplicationChannel(7L, 200L);
-        rel2.setPriority(2);
-        ApplicationChannel rel3 = new ApplicationChannel(7L, 300L);
-        when(applicationChannelRepository.findChannelIdsByApplicationId(7L))
+        // given — Provider 返回应用 7 的优先级映射（渠道 100->1、200->2；null priority 已由 Provider 剔除）
+        when(applicationChannelConfigProvider.findChannelIdsByApplicationId(7L))
                 .thenReturn(Set.of(100L, 200L, 300L));
         when(channelRepository.findByIds(anyList()))
                 .thenReturn(List.of(activeChannel(100L), activeChannel(200L), activeChannel(300L)));
         when(modelInstanceRepository.findActiveByModelIdAndChannelIds(1L, Set.of(100L, 200L, 300L)))
                 .thenReturn(List.of(instance));
-        when(applicationChannelRepository.findByApplicationId(7L)).thenReturn(List.of(rel1, rel2, rel3));
+        when(applicationChannelConfigProvider.findPriorityMapByApplicationId(7L))
+                .thenReturn(Map.of(100L, 1, 200L, 2));
         when(routerChain.filter(any(), any(RoutingRequest.class))).thenReturn(List.of(instance));
 
         // when
@@ -210,14 +206,14 @@ class InstanceSelectorTest {
     }
 
     @Test
-    @DisplayName("applicationId 为 null 时抛 ResourceNotFoundException 且不查询渠道/应用渠道仓储")
+    @DisplayName("applicationId 为 null 时透传 Provider 得空集并抛 ResourceNotFoundException，不查渠道仓储")
     void nullApplicationId_throws_noRepoCall() {
         assertThatThrownBy(() -> instanceSelector.select(
                 1L, null, 50L, "user", RoutingStrategy.WEIGHTED, Protocol.OPENAI))
                 .isInstanceOf(ResourceNotFoundException.class);
 
-        // applicationId 为 null 时配置读取返回空集直接抛异常，不查任何仓储
-        verify(applicationChannelRepository, never()).findChannelIdsByApplicationId(any());
+        // applicationId 为 null 时透传 Provider（Provider 内部返回空集），空配置短路后不查渠道仓储
+        verify(applicationChannelConfigProvider).findChannelIdsByApplicationId(null);
         verify(channelRepository, never()).findByIds(anyList());
     }
 
