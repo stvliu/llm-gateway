@@ -63,7 +63,18 @@
   "user": {
     "logout": "退出登录"
   },
-  "settings": {},
+  "settings": {
+    "cacheGroup": "缓存清理",
+    "cacheHint": "清理应用渠道配置缓存；未填写应用 ID 时可清空全部缓存",
+    "cacheEvictAll": "全部清理",
+    "cacheEvictAllConfirm": "确定清空全部应用渠道配置缓存？",
+    "cacheAppId": "应用 ID",
+    "cacheEvictByApp": "按应用清理",
+    "cacheEvictAppConfirm": "确定清理应用 {{id}} 的渠道配置缓存？",
+    "cacheEvictSuccess": "缓存已清理",
+    "cacheEvictFailed": "缓存清理失败",
+    "cacheInvalidAppId": "应用 ID 必须为正整数"
+  },
   "changePassword": {
     "title": "更改密码",
     "currentPassword": "当前密码",

@@ -56,3 +56,16 @@ export function useCleanupAuditLogs() {
     },
   });
 }
+
+/**
+ * 应用渠道配置缓存失效（运维手工清理）
+ *
+ * <p>applicationId 为空 = 清空全部缓存。成功提示与失败反馈由调用方页面处理
+ * （与审计日志清理一致）；后端数据面缓存不对应前端查询键，无需 invalidate。
+ * 显式声明 TVariables 为 number | undefined，允许全清时不传实参。</p>
+ */
+export function useEvictCache() {
+  return useMutation<void, Error, number | undefined>({
+    mutationFn: (applicationId) => settingsApi.evictCache(applicationId),
+  });
+}

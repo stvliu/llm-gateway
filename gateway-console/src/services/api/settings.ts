@@ -34,4 +34,14 @@ export const settingsApi = {
   /** 手动清理审计日志（保留 N 天前，返回删除条数） */
   cleanupAuditLogs: (days: number) =>
     api.delete<AuditCleanupResult>('/audit-logs', { params: { days } }),
+
+  /**
+   * 应用渠道配置缓存失效（运维手工清理）
+   *
+   * @param applicationId 应用 ID（可空——为空时清空全部缓存）
+   */
+  evictCache: (applicationId?: number) =>
+    api.post<void>('/admin/cache/evict', undefined, {
+      params: applicationId != null ? { applicationId } : undefined,
+    }),
 };

@@ -32,6 +32,7 @@ import {
   useSettings,
   useUpdateSetting,
   useCleanupAuditLogs,
+  useEvictCache,
 } from '@/services/query/useSettings';
 import {
   useCatalogSync,
@@ -45,8 +46,9 @@ const { Text } = Typography;
 /**
  * 系统设置页
  *
- * <p>包含两个分组：审计日志（保留天数 + 立即清理）、模型目录（自动同步开关/周期 +
- * 立即同步 + 最近同步状态）。配置项修改后立即调 PUT 并 invalidate 刷新。</p>
+ * <p>包含三个分组：审计日志（保留天数 + 立即清理）、模型目录（自动同步开关/周期 +
+ * 立即同步 + 最近同步状态）、缓存清理（全部清理 + 按应用 ID 失效）。
+ * 配置项修改后立即调 PUT 并 invalidate 刷新。</p>
  */
 export default function SettingsPage() {
   const { t } = useTranslation('common');
@@ -56,6 +58,10 @@ export default function SettingsPage() {
   const { data: settings, isLoading } = useSettings();
   const updateSetting = useUpdateSetting();
   const cleanupMutation = useCleanupAuditLogs();
+  const evictMutation = useEvictCache();
+
+  // 缓存清理：按应用 ID 失效的输入草稿（null = 未输入）
+  const [appIdDraft, setAppIdDraft] = useState<number | null>(null);
 
   // 模型目录同步状态与触发（复用 Catalog 页逻辑）
   const { data: syncStatus, isLoading: syncStatusLoading } = useCatalogSyncStatus();
@@ -140,6 +146,40 @@ export default function SettingsPage() {
     }
   };
 
+  /** 清空全部应用渠道配置缓存（危险操作，Popconfirm 确认后调用） */
+  const handleEvictAll = async () => {
+    try {
+      // 显式传 undefined = 清空全部缓存
+      await evictMutation.mutateAsync(undefined);
+      message.success(t('settings.cacheEvictSuccess', { defaultValue: '缓存已清理' }));
+    } catch (error) {
+      message.error(
+        extractErrorMessage(error) ||
+          t('settings.cacheEvictFailed', { defaultValue: '缓存清理失败' }),
+      );
+    }
+  };
+
+  /** 按应用 ID 失效应用渠道配置缓存（校验正整数后调用） */
+  const handleEvictByApp = async () => {
+    if (!Number.isInteger(appIdDraft) || (appIdDraft ?? 0) < 1) {
+      message.error(
+        t('settings.cacheInvalidAppId', { defaultValue: '应用 ID 必须为正整数' }),
+      );
+      return;
+    }
+    try {
+      await evictMutation.mutateAsync(appIdDraft ?? undefined);
+      setAppIdDraft(null);
+      message.success(t('settings.cacheEvictSuccess', { defaultValue: '缓存已清理' }));
+    } catch (error) {
+      message.error(
+        extractErrorMessage(error) ||
+          t('settings.cacheEvictFailed', { defaultValue: '缓存清理失败' }),
+      );
+    }
+  };
+
   return (
     <div>
       {/* 审计日志分组 */}
@@ -189,7 +229,11 @@ export default function SettingsPage() {
       </Card>
 
       {/* 模型目录分组 */}
-      <Card size="small" title={t('settings.catalogGroup', { defaultValue: '模型目录' })}>
+      <Card
+        size="small"
+        title={t('settings.catalogGroup', { defaultValue: '模型目录' })}
+        style={{ marginBottom: 16 }}
+      >
         <Space direction="vertical" size={16} style={{ width: '100%' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
             <Text>{t('settings.autoSync', { defaultValue: '自动同步' })}：</Text>
@@ -268,6 +312,62 @@ export default function SettingsPage() {
             >
               {t('settings.syncNow', { defaultValue: '立即同步' })}
             </Button>
+          </div>
+        </Space>
+      </Card>
+
+      {/* 缓存清理分组 */}
+      <Card size="small" title={t('settings.cacheGroup', { defaultValue: '缓存清理' })}>
+        <Space direction="vertical" size={16} style={{ width: '100%' }}>
+          {/* 全部清理（危险操作，Popconfirm 确认） */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+            <Text type="secondary" style={{ fontSize: 12 }}>
+              {t('settings.cacheHint', {
+                defaultValue: '清理应用渠道配置缓存；未填写应用 ID 时可清空全部缓存',
+              })}
+            </Text>
+            <Popconfirm
+              title={t('settings.cacheEvictAllConfirm', {
+                defaultValue: '确定清空全部应用渠道配置缓存？',
+              })}
+              okText={t('actions.confirm', { defaultValue: '确定' })}
+              cancelText={t('actions.cancel', { defaultValue: '取消' })}
+              onConfirm={handleEvictAll}
+            >
+              <Button danger icon={<ClearOutlined />} loading={evictMutation.isPending}>
+                {t('settings.cacheEvictAll', { defaultValue: '全部清理' })}
+              </Button>
+            </Popconfirm>
+          </div>
+          {/* 按应用 ID 清理 */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+            <Text>{t('settings.cacheAppId', { defaultValue: '应用 ID' })}：</Text>
+            <InputNumber
+              min={1}
+              precision={0}
+              value={appIdDraft}
+              aria-label={t('settings.cacheAppId', { defaultValue: '应用 ID' })}
+              onChange={(v) => setAppIdDraft(v ?? null)}
+              style={{ width: 160 }}
+            />
+            <Popconfirm
+              title={t('settings.cacheEvictAppConfirm', {
+                defaultValue: '确定清理应用 {{id}} 的渠道配置缓存？',
+                id: appIdDraft ?? '',
+              })}
+              okText={t('actions.confirm', { defaultValue: '确定' })}
+              cancelText={t('actions.cancel', { defaultValue: '取消' })}
+              onConfirm={handleEvictByApp}
+            >
+              <Button
+                danger
+                icon={<ClearOutlined />}
+                loading={evictMutation.isPending}
+                disabled={appIdDraft == null}
+              >
+                {t('settings.cacheEvictByApp', { defaultValue: '按应用清理' })}
+              </Button>
+            </Popconfirm>
           </div>
         </Space>
       </Card>

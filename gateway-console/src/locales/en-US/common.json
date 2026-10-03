@@ -63,7 +63,18 @@
   "user": {
     "logout": "Logout"
   },
-  "settings": {},
+  "settings": {
+    "cacheGroup": "Cache Eviction",
+    "cacheHint": "Evict cached application channel configs; leave the application ID empty to evict all entries",
+    "cacheEvictAll": "Evict All",
+    "cacheEvictAllConfirm": "Evict all cached application channel configs?",
+    "cacheAppId": "Application ID",
+    "cacheEvictByApp": "Evict by Application",
+    "cacheEvictAppConfirm": "Evict cached channel configs for application {{id}}?",
+    "cacheEvictSuccess": "Cache evicted",
+    "cacheEvictFailed": "Failed to evict cache",
+    "cacheInvalidAppId": "Application ID must be a positive integer"
+  },
   "changePassword": {
     "title": "Change Password",
     "currentPassword": "Current Password",
