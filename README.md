@@ -116,6 +116,10 @@
 - Prompts: 提供预定义的提示模板
 - Tools: 提供可调用的工具函数
 
+#### 系统管理
+- ✅ 应用渠道配置本地缓存 (Caffeine + 事务后双 evict)
+- ✅ 缓存手工失效管理端点 (按应用 evict / 全清，仅 ADMIN)
+
 ---
 
 ## 🏗️ 架构设计
@@ -129,7 +133,7 @@
 | **ORM** | Spring Data JPA | 3.5.x | Hibernate 6.x |
 | **主数据库** | PostgreSQL | 14+ | 生产环境 |
 | **开发数据库** | H2 | 2.3.232 | 本地开发调试（MODE=PostgreSQL） |
-| **数据库迁移** | Flyway | 11.0.0 | 版本化 schema 迁移（V1~V68） |
+| **数据库迁移** | Flyway | 11.0.0 | 版本化 schema 迁移（V1~V70） |
 | **缓存** | Redis + Caffeine | 7.x | 分布式缓存/会话 + 本地缓存 |
 | **安全** | Sa-Token | 1.45.0 | 轻量级权限框架 |
 | **HTTP 客户端** | OkHttp | 4.12.0 | 同步/异步调用 + SSE |
@@ -138,7 +142,7 @@
 
 ### 模块化架构
 
-采用 **17 模块多模块 Maven 结构**（模块化命名），业务按功能域拆分为核心模块 + JPA 绑定模块，协议层插件化：
+采用 **38 模块多模块 Maven 结构（17 个顶层 `gateway-*` 分组的三明治结构）**，业务按功能域拆分为核心模块 + JPA 绑定模块，协议层插件化：
 
 | 分组 | 模块 | 职责 |
 |------|------|------|
@@ -376,7 +380,7 @@ spring:
     driver-class-name: org.postgresql.Driver
 ```
 
-> schema 由 **Flyway** 版本化迁移管理（`gateway-boot/src/main/resources/db/migration/`，V1~V68），无需手动建表。
+> schema 由 **Flyway** 版本化迁移管理（`gateway-boot/src/main/resources/db/migration/`，V1~V70），无需手动建表。
 
 #### 缓存配置
 
