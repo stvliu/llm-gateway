@@ -22,13 +22,15 @@
 ## P0 — 修复质量防线（预估 2-3 天）
 
 > 目标：让每个质量检查真正成为 gate，杜绝"红着也合并"
+>
+> **2026-10-04 更新**：P0-2/P0-3/P0-4 已废弃——随根目录清理决定删除三个配置 xml（`checkstyle.xml` / `spotbugs-exclude.xml` / `owasp-suppressions.xml`），CI 维持插件默认规则，不再接线。
 
 | # | 动作 | 现状问题 | 验收标准 |
 |---|------|---------|---------|
 | P0-1 | 修复覆盖率 gate | 全部 pom 无 jacoco `check` goal 与 rules 阈值；test.yml 第 158-160 行把 `continue-on-error` 写进 `run:` 块导致 YAML 语法错误 | test.yml 的 coverage-check job 转绿；jacoco:check 配置 line/branch 阈值（建议起步 line ≥80%、branch ≥70%，逐步收紧） |
-| P0-2 | 接线 Checkstyle | `checkstyle.xml` 是孤儿配置（任何 pom 未引用），CI 落到默认 sun_checks，gateway-boot 单模块 525 违规被吞 | 根 pom 配置 maven-checkstyle-plugin 并引用自研 checkstyle.xml；先以 `failOnError=false` 跑出基线、清零违规后转硬 gate |
-| P0-3 | 接线 SpotBugs | 任何 pom 未配置 spotbugs 插件，CI `mvn spotbugs:check` 因前缀无法解析必然失败；`spotbugs-exclude.xml` 未传入 | pom 配置 spotbugs-maven-plugin（含 `-Dspotbugs.excludeFilterFile`）；CI 命令改为全限定或加 pluginGroups；同 P0-2 两步走 |
-| P0-4 | 接线 OWASP 抑制规则 | 抑制文件名 `owasp-suppressions.xml` ≠ 插件默认名，且 security.yml 未传 `-Dodc.suppressionFiles`，6 条抑制全部失效；Jackson 规则一刀切抑制所有 CVE-2024-* 过宽 | security.yml 显式传 `-Dodc.suppressionFiles=owasp-suppressions.xml`；收窄 Jackson 规则（按具体 CVE 白名单） |
+| P0-2 | ~~接线 Checkstyle~~ | `checkstyle.xml` 是孤儿配置（任何 pom 未引用），CI 落到默认 sun_checks，gateway-boot 单模块 525 违规被吞 | 根 pom 配置 maven-checkstyle-plugin 并引用自研 checkstyle.xml；先以 `failOnError=false` 跑出基线、清零违规后转硬 gate |
+| P0-3 | ~~接线 SpotBugs~~ | 任何 pom 未配置 spotbugs 插件，CI `mvn spotbugs:check` 因前缀无法解析必然失败；`spotbugs-exclude.xml` 未传入 | pom 配置 spotbugs-maven-plugin（含 `-Dspotbugs.excludeFilterFile`）；CI 命令改为全限定或加 pluginGroups；同 P0-2 两步走 |
+| P0-4 | ~~接线 OWASP 抑制规则~~ | 抑制文件名 `owasp-suppressions.xml` ≠ 插件默认名，且 security.yml 未传 `-Dodc.suppressionFiles`，6 条抑制全部失效；Jackson 规则一刀切抑制所有 CVE-2024-* 过宽 | security.yml 显式传 `-Dodc.suppressionFiles=owasp-suppressions.xml`；收窄 Jackson 规则（按具体 CVE 白名单） |
 | P0-5 | 修复 CI 缓存顺序 | build.yml 中缓存 step 排在 `mvn` 之后，缓存从未生效 | cache 步骤移到执行 mvn 之前 |
 | P0-6 | 依赖版本对齐 | spring-boot-maven-plugin 3.5.0 vs Boot 3.5.13；postgresql 属性 42.7.4 vs BOM 42.7.10 两处不一致 | 统一到 Boot BOM 版本，消除版本漂移 |
 
