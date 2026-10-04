@@ -37,7 +37,7 @@
 | **计量配额** | Token 输入/输出分别统计、用户级 / API Key 级 / 用户×渠道限额、请求次数配额 | — |
 | **安全风控** | IP 黑白名单、UA 过滤、PII 脱敏、数据掩码、审计日志、密钥加密存储（AES-256-GCM） | 国密 SM2/SM3/SM4、WORM 审计链 |
 | **可观测性** | Trace ID 全链路追踪、实时指标（延迟/QPS/Token/费用）、Prometheus / Grafana / Jaeger | — |
-| **系统管理** | 应用渠道配置本地缓存（Caffeine + 事务后双 evict）、缓存手工失效端点（按应用 evict / 全清，仅 ADMIN） | — |
+| **系统管理** | 应用渠道配置本地缓存（Caffeine + 事务后双 evict）、缓存手工失效端点（按应用失效 / 缺省全清，仅 ADMIN） | — |
 | **语义缓存** | — | 相似请求缓存（降本 30%+）、TTL 配置、命中率统计（pgvector） |
 | **MCP 协议** | — | Resources / Prompts / Tools |
 
