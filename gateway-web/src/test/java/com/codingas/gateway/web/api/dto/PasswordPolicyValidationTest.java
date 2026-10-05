@@ -77,6 +77,13 @@ class PasswordPolicyValidationTest {
         assertThat(passwordViolations(createRequest("a".repeat(65)))).isNotEmpty();
     }
 
+    @Test
+    @DisplayName("创建用户：字节级上限——24 个汉字（72 字节）通过、25 个汉字（75 字节）拒绝")
+    void userCreate_byteLimit() {
+        assertThat(passwordViolations(createRequest("字".repeat(24)))).isEmpty();
+        assertThat(passwordViolations(createRequest("字".repeat(25)))).isNotEmpty();
+    }
+
     private ChangePasswordRequest changeRequest(String newPassword) {
         return new ChangePasswordRequest("current-pass", newPassword);
     }
@@ -88,5 +95,12 @@ class PasswordPolicyValidationTest {
         assertThat(passwordViolations(changeRequest("123456"))).isEmpty();
         assertThat(passwordViolations(changeRequest("a".repeat(64)))).isEmpty();
         assertThat(passwordViolations(changeRequest("a".repeat(65)))).isNotEmpty();
+    }
+
+    @Test
+    @DisplayName("修改密码：字节级上限——24 个汉字（72 字节）通过、25 个汉字（75 字节）拒绝")
+    void changePassword_byteLimit() {
+        assertThat(passwordViolations(changeRequest("字".repeat(24)))).isEmpty();
+        assertThat(passwordViolations(changeRequest("字".repeat(25)))).isNotEmpty();
     }
 }

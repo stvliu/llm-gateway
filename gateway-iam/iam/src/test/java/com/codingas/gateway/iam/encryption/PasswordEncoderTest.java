@@ -16,10 +16,12 @@
 package com.codingas.gateway.iam.encryption;
 
 import cn.dev33.satoken.secure.SaSecureUtil;
+import com.codingas.gateway.common.exception.GatewayRequestException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * {@link PasswordEncoder} 单元测试。
@@ -91,5 +93,19 @@ class PasswordEncoderTest {
     void needsUpgrade_malformedTreatedAsUpgrade() {
         assertThat(encoder.needsUpgrade("not-a-hash")).isTrue();
         assertThat(encoder.needsUpgrade("")).isTrue();
+    }
+
+    @Test
+    @DisplayName("encode：超过 72 字节上限抛 GatewayRequestException（中文提示，映射 4xx）")
+    void encode_overByteLimit_throwsDomainException() {
+        // 30 个汉字 = UTF-8 90 字节，超过 BCrypt 72 字节上限
+        String tooLong = "字".repeat(30);
+
+        assertThatThrownBy(() -> encoder.encode(tooLong))
+                .isInstanceOf(GatewayRequestException.class)
+                .hasMessageContaining("72");
+
+        // 边界：24 个汉字 = 72 字节，恰好不抛
+        assertThat(encoder.encode("字".repeat(24))).startsWith("$2");
     }
 }

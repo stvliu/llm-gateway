@@ -16,6 +16,7 @@
 package com.codingas.gateway.iam.encryption;
 
 import cn.dev33.satoken.secure.SaSecureUtil;
+import com.codingas.gateway.common.exception.GatewayRequestException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
 
@@ -40,12 +41,21 @@ public class PasswordEncoder {
     public static final String TIMING_EQUALIZER_HASH = new BCryptPasswordEncoder().encode("timing-equalizer");
 
     /**
-     * 编码明文密码（BCrypt，自带随机盐，同密码每次编码结果不同）
+     * 编码明文密码（BCrypt，自带随机盐，同密码每次编码结果不同）。
+     *
+     * <p>前置校验 UTF-8 字节长度（BCrypt 上限 72 字节）：超限抛出
+     * {@link GatewayRequestException}（映射 4xx + 中文提示），避免库层
+     * 裸 {@link IllegalArgumentException} 的英文技术文案直接透出。</p>
      *
      * @param rawPassword 明文密码
      * @return BCrypt 哈希（$2 前缀、60 字符）
+     * @throws GatewayRequestException 密码 UTF-8 编码超过 {@value #MAX_PASSWORD_BYTES} 字节
      */
     public String encode(CharSequence rawPassword) {
+        if (rawPassword.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8).length > MAX_PASSWORD_BYTES) {
+            throw new GatewayRequestException("PASSWORD_TOO_LONG",
+                    "密码长度超过上限（UTF-8 编码不得超过 " + MAX_PASSWORD_BYTES + " 字节）");
+        }
         return bcrypt.encode(rawPassword.toString());
     }
 
