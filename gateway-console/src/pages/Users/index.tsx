@@ -24,6 +24,7 @@ import { P } from '@/constants/permissions';
 import { useUsers, useCreateUser, useUpdateUser, useDeleteUser, useResetPassword } from '@/services/query';
 import type { User, CreateUserRequest, UserRole, UserState } from '@/types/user';
 import type { ColumnsType } from 'antd/es/table';
+import { passwordRules } from '@/utils/passwordRule';
 import UserApiKeyModal from './UserApiKeyModal';
 
 export default function Users() {
@@ -233,7 +234,7 @@ export default function Users() {
             <Input disabled={!!editingUser} />
           </Form.Item>
           {!editingUser && (
-            <Form.Item name="password" label={t('user.password')} rules={[{ required: true }]}>
+            <Form.Item name="password" label={t('user.password')} rules={passwordRules(t, 'validation.passwordSize')}>
               <Input.Password />
             </Form.Item>
           )}

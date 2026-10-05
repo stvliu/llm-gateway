@@ -18,6 +18,7 @@ import { Modal, Form, Input, Button } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { authApi } from '@/services/api/auth';
 import { useMessage } from '@/hooks/useMessage';
+import { passwordRules } from '@/utils/passwordRule';
 
 interface ChangePasswordModalProps {
   open: boolean;
@@ -77,7 +78,7 @@ export function ChangePasswordModal({ open, onClose }: ChangePasswordModalProps)
         <Form.Item
           name="newPassword"
           label={t('changePassword.newPassword')}
-          rules={[{ required: true, min: 6 }]}
+          rules={passwordRules(t, 'validation.passwordSize')}
         >
           <Input.Password />
         </Form.Item>

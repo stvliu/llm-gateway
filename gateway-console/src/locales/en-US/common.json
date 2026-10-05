@@ -17,6 +17,9 @@
       "adminGuide": "Administrator Guide"
     }
   },
+  "validation": {
+    "passwordSize": "Password must be 6-64 characters and no more than 72 bytes in UTF-8"
+  },
   "app": {
     "title": "LLM Gateway"
   },

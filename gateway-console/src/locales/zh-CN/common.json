@@ -17,6 +17,9 @@
       "adminGuide": "管理员指南"
     }
   },
+  "validation": {
+    "passwordSize": "密码长度必须在 6-64 之间，且 UTF-8 编码不超过 72 字节"
+  },
   "app": {
     "title": "LLM Gateway"
   },
