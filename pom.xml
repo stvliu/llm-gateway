@@ -96,6 +96,8 @@
 
         <!-- Spring Boot 版本 -->
         <spring-boot.version>3.5.13</spring-boot.version>
+        <!-- 与 Boot 3.5.13 BOM 内嵌的 Spring Security 版本对齐 -->
+        <spring-security.version>6.5.9</spring-security.version>
 
         <!-- 第三方库版本（非 Spring Boot 生态） -->
         <redisson.version>3.52.0</redisson.version>
@@ -132,6 +134,15 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-dependencies</artifactId>
                 <version>${spring-boot.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+            <!-- 密码哈希（版本由 spring-security-bom 托管，与 Boot 3.5.13 BOM 内嵌版本对齐；Boot BOM 嵌套 import 不递归，需显式导入） -->
+            <dependency>
+                <groupId>org.springframework.security</groupId>
+                <artifactId>spring-security-bom</artifactId>
+                <version>${spring-security.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>

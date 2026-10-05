@@ -216,18 +216,30 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public LoginResult login(String username, String password, boolean rememberMe) {
-        // 查找用户
-        User user = userRepository.findByUsername(username)
-            .orElseThrow(() -> new AuthenticationFailedException("用户名或密码错误"));
+        // 查找用户（不存在时仍执行一次 BCrypt 校验对齐耗时，消除用户名枚举时序侧信道）
+        User user = userRepository.findByUsername(username).orElse(null);
+        if (user == null) {
+            passwordEncoder.matches(password, PasswordEncoder.TIMING_EQUALIZER_HASH);
+            throw new AuthenticationFailedException("用户名或密码错误");
+        }
 
         // 检查用户状态
         if (!user.isActive()) {
             throw new AuthenticationFailedException("用户已被禁用");
         }
 
-        // 验证密码
+        // 验证密码（兼容存量无盐 SHA-256 哈希）
         if (!passwordEncoder.matches(password, user.getPasswordHash())) {
             throw new AuthenticationFailedException("用户名或密码错误");
+        }
+
+        // 存量 SHA-256 哈希透明升级为 BCrypt：登录成功即重哈希写回，用户无需重置密码。
+        // 超 72 字节的存量密码无法 BCrypt 化（encode 会抛异常），跳过升级保持 SHA-256 可登录，避免升级死锁
+        if (passwordEncoder.needsUpgrade(user.getPasswordHash())
+                && password.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8).length <= PasswordEncoder.MAX_PASSWORD_BYTES) {
+            user.setPasswordHash(passwordEncoder.encode(password));
+        } else if (passwordEncoder.needsUpgrade(user.getPasswordHash())) {
+            log.warn("用户 {} 密码超过 BCrypt 72 字节上限，跳过透明升级（保持 SHA-256 存储可正常登录）", user.getUsername());
         }
 
         // 更新最后登录时间

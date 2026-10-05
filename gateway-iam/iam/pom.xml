@@ -38,10 +38,15 @@
             <artifactId>gateway-common</artifactId>
             <version>${revision}</version>
         </dependency>
-        <!-- Sa-Token（会话认证 StpUtil + 密码哈希 SaSecureUtil） -->
+        <!-- Sa-Token（会话认证 StpUtil） -->
         <dependency>
             <groupId>cn.dev33</groupId>
             <artifactId>sa-token-spring-boot3-starter</artifactId>
+        </dependency>
+        <!-- spring-security-crypto（BCrypt 密码哈希，版本由 Spring Boot BOM 管理） -->
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-crypto</artifactId>
         </dependency>
         <!-- Caffeine（应用渠道配置本地缓存，版本由 Spring Boot BOM 管理） -->
         <dependency>

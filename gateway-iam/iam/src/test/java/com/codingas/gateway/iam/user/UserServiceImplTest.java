@@ -425,6 +425,81 @@ class UserServiceImplTest {
         }
 
         @Test
+        @DisplayName("登录成功 — 存量 SHA-256 哈希透明升级为 BCrypt 写回")
+        void login_legacyHash_upgradedToBcrypt() {
+            User user = createTestUser();
+            user.setPasswordHash("legacy-sha256-hash");
+            when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
+            when(passwordEncoder.matches("pass", "legacy-sha256-hash")).thenReturn(true);
+            when(passwordEncoder.needsUpgrade("legacy-sha256-hash")).thenReturn(true);
+            when(passwordEncoder.encode("pass")).thenReturn("bcrypt-hash");
+            when(userRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+            try (MockedStatic<StpUtil> stp = mockStatic(StpUtil.class)) {
+                stp.when(() -> StpUtil.getTokenValue()).thenReturn("token-123");
+
+                service.login("testuser", "pass", false);
+
+                assertThat(user.getPasswordHash()).isEqualTo("bcrypt-hash");
+                verify(userRepository).save(user);
+            }
+        }
+
+        @Test
+        @DisplayName("登录成功 — BCrypt 哈希不触发重哈希写回")
+        void login_bcryptHash_noUpgrade() {
+            User user = createTestUser();
+            user.setPasswordHash("bcrypt-hash");
+            when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
+            when(passwordEncoder.matches("pass", "bcrypt-hash")).thenReturn(true);
+            when(passwordEncoder.needsUpgrade("bcrypt-hash")).thenReturn(false);
+            when(userRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+            try (MockedStatic<StpUtil> stp = mockStatic(StpUtil.class)) {
+                stp.when(() -> StpUtil.getTokenValue()).thenReturn("token-123");
+
+                service.login("testuser", "pass", false);
+
+                assertThat(user.getPasswordHash()).isEqualTo("bcrypt-hash");
+                verify(passwordEncoder, never()).encode(anyString());
+            }
+        }
+
+        @Test
+        @DisplayName("登录成功 — 超过 BCrypt 72 字节上限的存量密码跳过升级（保持可登录，避免死锁）")
+        void login_overLongPassword_skipsUpgrade() {
+            User user = createTestUser();
+            user.setPasswordHash("legacy-sha256-hash");
+            String longPassword = "字".repeat(30); // UTF-8 90 字节，超过 BCrypt 上限
+            when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
+            when(passwordEncoder.matches(longPassword, "legacy-sha256-hash")).thenReturn(true);
+            when(passwordEncoder.needsUpgrade("legacy-sha256-hash")).thenReturn(true);
+            when(userRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+            try (MockedStatic<StpUtil> stp = mockStatic(StpUtil.class)) {
+                stp.when(() -> StpUtil.getTokenValue()).thenReturn("token-123");
+
+                service.login("testuser", longPassword, false);
+
+                // 超长密码跳过升级，哈希保持不变（下次登录仍走 SHA-256 分支可成功）
+                assertThat(user.getPasswordHash()).isEqualTo("legacy-sha256-hash");
+                verify(passwordEncoder, never()).encode(anyString());
+            }
+        }
+
+        @Test
+        @DisplayName("用户不存在 — 同样执行一次 BCrypt 校验对齐耗时后抛统一异常（消除用户名枚举时序差）")
+        void login_userNotFound_timingEqualized() {
+            when(userRepository.findByUsername("nobody")).thenReturn(Optional.empty());
+            when(passwordEncoder.matches("pass", PasswordEncoder.TIMING_EQUALIZER_HASH)).thenReturn(false);
+
+            assertThatThrownBy(() -> service.login("nobody", "pass", false))
+                    .isInstanceOf(AuthenticationFailedException.class)
+                    .hasMessageContaining("用户名或密码错误");
+            verify(passwordEncoder).matches("pass", PasswordEncoder.TIMING_EQUALIZER_HASH);
+        }
+
+        @Test
         @DisplayName("用户不存在 — 抛 AuthenticationFailedException")
         void login_userNotFound_throws() {
             when(userRepository.findByUsername("nobody")).thenReturn(Optional.empty());
